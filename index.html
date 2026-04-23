@@ -1,0 +1,3871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>NEON ARCADE</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0014;
+    --bg-2: #13002a;
+    --neon-pink: #ff2bd6;
+    --neon-cyan: #00f0ff;
+    --neon-yellow: #fff700;
+    --neon-green: #39ff14;
+    --neon-purple: #b026ff;
+    --neon-red: #ff2e63;
+    --text: #f3eaff;
+    --skin-color: var(--neon-cyan);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'VT323', monospace;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    overscroll-behavior: none;
+  }
+
+  /* Make every interactive element respond to taps without zoom/scroll */
+  button, .game-card, .skin-card, .mem-card, .target, canvas, .wheel {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Canvas game surfaces need manipulation too so swipes/drags don't scroll */
+  canvas {
+    touch-action: none;
+  }
+
+  /* CRT scanline overlay */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.03) 0px,
+      rgba(255,255,255,0.03) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+  /* Vignette */
+  body::after {
+    content: "";
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.8) 100%);
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  #app {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255,43,214,0.15), transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(0,240,255,0.15), transparent 50%),
+      linear-gradient(135deg, var(--bg), var(--bg-2));
+  }
+
+  /* Animated grid floor */
+  .grid-bg {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,43,214,0.15) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,240,255,0.15) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridmove 4s linear infinite;
+    mask-image: linear-gradient(to bottom, transparent 40%, black 90%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 40%, black 90%);
+    transform: perspective(400px) rotateX(60deg) scale(2);
+    transform-origin: center top;
+  }
+  @keyframes gridmove {
+    from { background-position: 0 0; }
+    to { background-position: 0 50px; }
+  }
+
+  h1, h2, h3, .pixel {
+    font-family: 'Press Start 2P', monospace;
+    letter-spacing: 1px;
+  }
+
+  /* ===== HUB ===== */
+  .screen {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .screen.active { display: flex; }
+
+  .title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(28px, 5vw, 56px);
+    background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan), var(--neon-yellow));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow:
+      0 0 10px rgba(255,43,214,0.5),
+      0 0 20px rgba(0,240,255,0.3);
+    animation: flicker 4s infinite;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  @keyframes flicker {
+    0%, 95%, 100% { opacity: 1; }
+    96% { opacity: 0.6; }
+    97% { opacity: 1; }
+    98% { opacity: 0.8; }
+  }
+
+  .subtitle {
+    color: var(--neon-cyan);
+    font-size: 20px;
+    margin-bottom: 25px;
+    text-shadow: 0 0 8px var(--neon-cyan);
+  }
+
+  .hud {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .hud-pill {
+    background: rgba(0,0,0,0.6);
+    border: 2px solid var(--neon-yellow);
+    padding: 10px 20px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    color: var(--neon-yellow);
+    box-shadow: 0 0 15px rgba(255,247,0,0.4), inset 0 0 10px rgba(255,247,0,0.1);
+  }
+  .hud-pill.skin {
+    border-color: var(--skin-color);
+    color: var(--skin-color);
+    box-shadow: 0 0 15px var(--skin-color), inset 0 0 10px rgba(255,255,255,0.1);
+  }
+
+  .player-display {
+    width: 80px; height: 80px;
+    background: var(--skin-color);
+    border-radius: 50%;
+    margin: 15px 0 25px;
+    box-shadow: 0 0 30px var(--skin-color), inset -10px -10px 20px rgba(0,0,0,0.4);
+    position: relative;
+    animation: bob 2s ease-in-out infinite;
+  }
+  .player-display::before, .player-display::after {
+    content: "";
+    position: absolute;
+    width: 12px; height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    top: 26px;
+    box-shadow: inset 0 0 0 3px #000, 0 0 0 1px rgba(0,0,0,0.2);
+  }
+  .player-display::before { left: 18px; }
+  .player-display::after  { right: 18px; }
+  .player-display .avatar-mouth {
+    position: absolute;
+    width: 24px; height: 12px;
+    border: 3px solid #000;
+    border-top: none;
+    border-radius: 0 0 24px 24px;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.15);
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 28px 18px;
+    max-width: 900px;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .game-card, .btn {
+    background: rgba(10,0,25,0.8);
+    border: 2px solid var(--neon-pink);
+    padding: 22px 16px;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.15s, box-shadow 0.2s;
+    font-family: 'Press Start 2P', monospace;
+    color: var(--text);
+    position: relative;
+    overflow: visible;
+  }
+  .game-sign {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-2deg);
+    padding: 4px 10px 5px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    border: 2px solid;
+    background: var(--bg);
+    z-index: 5;
+    animation: sign-wobble 3s ease-in-out infinite;
+    pointer-events: none;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.4);
+  }
+  .game-sign.money    { color: #ffd700; border-color: #ffd700; text-shadow: 0 0 6px #ffd700; box-shadow: 0 0 12px rgba(255,215,0,0.4), 0 2px 0 rgba(0,0,0,0.4); }
+  .game-sign.skill    { color: var(--neon-red); border-color: var(--neon-red); text-shadow: 0 0 6px var(--neon-red); box-shadow: 0 0 12px rgba(255,46,99,0.4), 0 2px 0 rgba(0,0,0,0.4); }
+  .game-sign.luck     { color: var(--neon-pink); border-color: var(--neon-pink); text-shadow: 0 0 6px var(--neon-pink); box-shadow: 0 0 12px rgba(255,43,214,0.4), 0 2px 0 rgba(0,0,0,0.4); }
+  .game-sign.fastest  { color: var(--neon-cyan); border-color: var(--neon-cyan); text-shadow: 0 0 6px var(--neon-cyan); box-shadow: 0 0 12px rgba(0,240,255,0.4), 0 2px 0 rgba(0,0,0,0.4); }
+  .game-sign.fresh    { color: var(--neon-green); border-color: var(--neon-green); text-shadow: 0 0 6px var(--neon-green); box-shadow: 0 0 12px rgba(57,255,20,0.4), 0 2px 0 rgba(0,0,0,0.4); }
+  @keyframes sign-wobble {
+    0%, 100% { transform: translateX(-50%) rotate(-2deg); }
+    50%      { transform: translateX(-50%) rotate(2deg); }
+  }
+  /* small extra top margin so signs don't collide with grid gap */
+  .games-grid { padding-top: 10px; }
+  .game-card::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(45deg, transparent 48%, rgba(255,43,214,0.15) 50%, transparent 52%);
+    background-size: 20px 20px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .game-card:hover, .btn:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0 25px var(--neon-pink), inset 0 0 15px rgba(255,43,214,0.2);
+  }
+  .game-card:hover::before { opacity: 1; }
+  .game-card .icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    display: block;
+  }
+  .game-card h3 {
+    font-size: 13px;
+    color: var(--neon-cyan);
+    margin-bottom: 8px;
+    text-shadow: 0 0 8px var(--neon-cyan);
+  }
+  .game-card p {
+    font-family: 'VT323', monospace;
+    font-size: 17px;
+    color: #bbb;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 12px 24px;
+    font-size: 12px;
+    border-color: var(--neon-cyan);
+  }
+  .btn:hover { box-shadow: 0 0 20px var(--neon-cyan); }
+  .btn.yellow { border-color: var(--neon-yellow); color: var(--neon-yellow); }
+  .btn.yellow:hover { box-shadow: 0 0 20px var(--neon-yellow); }
+  .btn.pink { border-color: var(--neon-pink); color: var(--neon-pink); }
+  .btn.pink:hover { box-shadow: 0 0 20px var(--neon-pink); }
+  .btn.green { border-color: var(--neon-green); color: var(--neon-green); }
+  .btn.green:hover { box-shadow: 0 0 20px var(--neon-green); }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(0.6);
+  }
+  .btn:disabled:hover { transform: none; box-shadow: none; }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* ===== SHOP ===== */
+  .shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+    max-width: 900px;
+    width: 100%;
+    margin-bottom: 25px;
+  }
+  .skin-card {
+    background: rgba(10,0,25,0.8);
+    border: 2px solid #444;
+    padding: 20px 12px;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .skin-card.owned { border-color: var(--neon-green); box-shadow: 0 0 15px rgba(57,255,20,0.3); }
+  .skin-card.equipped { border-color: var(--neon-yellow); box-shadow: 0 0 25px var(--neon-yellow); }
+  .skin-card.exclusive { border-color: #aaddff; box-shadow: 0 0 15px rgba(170,221,255,0.4); }
+  .skin-card.exclusive.owned { border-color: var(--neon-green); }
+  .skin-card.exclusive.equipped { border-color: var(--neon-yellow); }
+  .skin-preview {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    margin: 0 auto 12px;
+    box-shadow: 0 0 20px currentColor;
+    position: relative;
+  }
+  .skin-preview::before, .skin-preview::after {
+    content: "";
+    position: absolute;
+    width: 9px; height: 9px;
+    background: #fff;
+    border-radius: 50%;
+    top: 18px;
+    box-shadow: inset 0 0 0 2px #000;
+  }
+  .skin-preview::before { left: 13px; }
+  .skin-preview::after  { right: 13px; }
+  .skin-preview .skin-mouth {
+    position: absolute;
+    width: 18px; height: 9px;
+    border: 2px solid #000;
+    border-top: none;
+    border-radius: 0 0 18px 18px;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .skin-card h4 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .skin-card .price {
+    font-size: 18px;
+    color: var(--neon-yellow);
+    margin-bottom: 10px;
+  }
+  .skin-card button {
+    width: 100%;
+    padding: 8px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    background: transparent;
+    border: 2px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .skin-card button:hover:not(:disabled) { background: var(--neon-cyan); color: #000; }
+  .skin-card button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ===== GAME AREA ===== */
+  .game-area {
+    width: min(720px, 95vw);
+    height: min(500px, 60vh);
+    background: rgba(0,0,0,0.7);
+    border: 3px solid var(--neon-purple);
+    box-shadow: 0 0 30px var(--neon-purple), inset 0 0 20px rgba(176,38,255,0.1);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .game-header {
+    display: flex;
+    justify-content: space-between;
+    width: min(720px, 95vw);
+    margin-bottom: 12px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+  }
+  .game-header .score { color: var(--neon-green); }
+  .game-header .timer { color: var(--neon-red); }
+
+  .toast {
+    position: fixed;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: rgba(0,0,0,0.9);
+    border: 2px solid var(--neon-yellow);
+    color: var(--neon-yellow);
+    padding: 14px 28px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    box-shadow: 0 0 25px var(--neon-yellow);
+    transition: transform 0.4s;
+    z-index: 1000;
+    text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.bad { border-color: var(--neon-red); color: var(--neon-red); box-shadow: 0 0 25px var(--neon-red); }
+
+  /* ===== RISK IT ===== */
+  .risk-stats {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .risk-stat {
+    background: rgba(0,0,0,0.6);
+    border: 2px solid var(--neon-cyan);
+    padding: 8px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 90px;
+    box-shadow: 0 0 10px rgba(0,240,255,0.2);
+  }
+  .rs-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    color: var(--neon-cyan);
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+  .rs-val {
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    color: var(--neon-yellow);
+    font-weight: bold;
+    text-shadow: 0 0 5px var(--neon-yellow);
+  }
+  .risk-wheel-wrap {
+    width: min(340px, 80vw);
+  }
+  .risk-wheel-wrap .wheel {
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 40px var(--neon-pink), inset 0 0 30px rgba(255,43,214,0.2);
+  }
+  .risk-wheel-wrap .wheel-center {
+    border-color: var(--neon-pink);
+    color: var(--neon-pink);
+    box-shadow: 0 0 20px var(--neon-pink), inset 0 0 10px rgba(0,0,0,0.5);
+    font-size: 10px;
+    text-align: center;
+    line-height: 1.2;
+    padding: 4px;
+  }
+  .risk-wheel-wrap .wheel-center.won {
+    color: var(--neon-green);
+    border-color: var(--neon-green);
+    box-shadow: 0 0 25px var(--neon-green);
+  }
+  .risk-wheel-wrap .wheel-center.lost {
+    color: var(--neon-red);
+    border-color: var(--neon-red);
+    box-shadow: 0 0 25px var(--neon-red);
+    animation: bust-shake 0.5s;
+  }
+  @keyframes bust-shake {
+    0%, 100% { transform: translate(-50%, -50%); }
+    25% { transform: translate(calc(-50% - 6px), -50%); }
+    75% { transform: translate(calc(-50% + 6px), -50%); }
+  }
+  .risk-btn-risk {
+    border-color: var(--neon-red) !important;
+    color: var(--neon-red) !important;
+    animation: risk-pulse 1s ease-in-out infinite;
+  }
+  .risk-btn-risk:hover {
+    box-shadow: 0 0 25px var(--neon-red) !important;
+  }
+  @keyframes risk-pulse {
+    0%, 100% { box-shadow: 0 0 5px var(--neon-red); }
+    50% { box-shadow: 0 0 20px var(--neon-red), 0 0 30px rgba(255,46,99,0.5); }
+  }
+  .risk-btn-cash {
+    border-color: var(--neon-green) !important;
+    color: var(--neon-green) !important;
+  }
+  .risk-btn-cash:hover {
+    box-shadow: 0 0 25px var(--neon-green) !important;
+  }
+  .risk-next-triple {
+    color: #ffd700 !important;
+    text-shadow: 0 0 10px #ffd700 !important;
+    animation: triple-glow 0.8s ease-in-out infinite;
+  }
+  @keyframes triple-glow {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.4); }
+  }
+
+  /* ===== REACTION ===== */
+  .reaction-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: #7a1b1b;
+    transition: background 0.1s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .reaction-area.waiting { background: #7a1b1b; }
+  .reaction-area.ready   { background: #12a034; }
+  .reaction-area.result  { background: #0a0a3a; }
+  .reaction-area.toosoon { background: #aa00aa; }
+  .rx-prompt {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(22px, 4vw, 36px);
+    color: #fff;
+    text-shadow: 0 0 15px rgba(0,0,0,0.6);
+    letter-spacing: 2px;
+    text-align: center;
+    padding: 20px;
+  }
+  .rx-timings {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .rx-time-pill {
+    background: rgba(0,0,0,0.5);
+    border: 2px solid var(--neon-yellow);
+    color: var(--neon-yellow);
+    padding: 6px 12px;
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .rx-time-pill.fail {
+    border-color: var(--neon-red);
+    color: var(--neon-red);
+  }
+
+  /* ===== CPS ===== */
+  .cps-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+  .cps-btn {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--neon-yellow), #cc9900 70%, #665500 100%);
+    border: 4px solid var(--neon-yellow);
+    box-shadow: 0 0 40px var(--neon-yellow), inset -15px -15px 30px rgba(0,0,0,0.5);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.05s, box-shadow 0.1s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    text-align: center;
+  }
+  .cps-btn:active {
+    transform: scale(0.92);
+    box-shadow: 0 0 25px var(--neon-yellow), inset -15px -15px 30px rgba(0,0,0,0.7);
+  }
+  .cps-btn.active {
+    animation: cps-pulse 0.3s ease-in-out infinite;
+  }
+  @keyframes cps-pulse {
+    0%, 100% { box-shadow: 0 0 40px var(--neon-yellow), inset -15px -15px 30px rgba(0,0,0,0.5); }
+    50%      { box-shadow: 0 0 60px #fff700, 0 0 90px #fff700, inset -15px -15px 30px rgba(0,0,0,0.5); }
+  }
+  .cps-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    color: #000;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.4);
+    margin-bottom: 6px;
+  }
+  .cps-subtitle {
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: rgba(0,0,0,0.6);
+  }
+  .cps-rate {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px var(--neon-cyan);
+    min-height: 18px;
+  }
+
+  /* ===== DAILY QUESTS ===== */
+  .quest-panel {
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 22px;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid rgba(57,255,20,0.45);
+    padding: 16px 20px;
+    box-shadow: 0 0 15px rgba(57,255,20,0.15);
+  }
+  .quest-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .quest-panel-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 13px;
+    color: var(--neon-green);
+    text-shadow: 0 0 8px var(--neon-green);
+    letter-spacing: 2px;
+  }
+  .quest-panel-reset {
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    color: #888;
+  }
+  .quests-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+  }
+  .quest-card {
+    background: rgba(10,0,25,0.7);
+    border: 2px solid #444;
+    padding: 12px 14px;
+    transition: all 0.2s;
+  }
+  .quest-card.ready {
+    border-color: var(--neon-green);
+    box-shadow: 0 0 20px rgba(57,255,20,0.4);
+    animation: quest-ready 1.5s ease-in-out infinite;
+  }
+  .quest-card.claimed {
+    border-color: #333;
+    opacity: 0.55;
+  }
+  @keyframes quest-ready {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+  .quest-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    gap: 8px;
+  }
+  .quest-name {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: var(--neon-cyan);
+    letter-spacing: 1px;
+  }
+  .quest-reward {
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    color: var(--neon-yellow);
+    font-weight: bold;
+    text-shadow: 0 0 5px var(--neon-yellow);
+    white-space: nowrap;
+  }
+  .quest-desc {
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    color: #ccc;
+    margin-bottom: 8px;
+  }
+  .quest-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .quest-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--neon-green), var(--neon-yellow));
+    box-shadow: 0 0 8px var(--neon-green);
+    transition: width 0.3s;
+  }
+  .quest-progress {
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 8px;
+    text-align: right;
+  }
+  .quest-btn {
+    width: 100%;
+    padding: 8px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    background: transparent;
+    border: 2px solid var(--neon-green);
+    color: var(--neon-green);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+  }
+  .quest-btn:hover:not(:disabled) { background: var(--neon-green); color: #000; box-shadow: 0 0 15px var(--neon-green); }
+  .quest-btn:disabled { opacity: 0.35; cursor: not-allowed; border-color: #555; color: #777; }
+
+  /* ===== MINI-GAME 1: TARGETS ===== */
+  .target {
+    position: absolute;
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    cursor: crosshair;
+    animation: pulse-t 0.8s ease-in-out infinite;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    /* background + box-shadow set by JS based on current skin */
+  }
+  @keyframes pulse-t {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+  }
+  .target .t-eye {
+    position: absolute;
+    width: 10px; height: 10px;
+    background: #fff;
+    border-radius: 50%;
+    top: 22px;
+    box-shadow: inset 0 0 0 2px #000;
+    pointer-events: none;
+  }
+  .target .t-eye.left  { left: 18px; }
+  .target .t-eye.right { right: 18px; }
+  .target .t-mouth {
+    position: absolute;
+    width: 22px; height: 11px;
+    border: 2px solid #000;
+    border-top: none;
+    border-radius: 0 0 22px 22px;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  /* ===== MEMORY ===== */
+  .memory-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 20px;
+    height: 100%;
+  }
+  .mem-card {
+    background: linear-gradient(135deg, var(--skin-color), var(--neon-purple));
+    border: 2px solid var(--skin-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: transparent;
+    transition: transform 0.3s, background 0.3s;
+    transform-style: preserve-3d;
+    box-shadow: 0 0 10px var(--skin-color);
+    position: relative;
+  }
+  .mem-card .mem-face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .mem-card .mem-face::before,
+  .mem-card .mem-face::after {
+    content: "";
+    position: absolute;
+    width: 14%; aspect-ratio: 1;
+    background: #fff;
+    border-radius: 50%;
+    top: 30%;
+    box-shadow: inset 0 0 0 3px #000;
+  }
+  .mem-card .mem-face::before { left: 22%; }
+  .mem-card .mem-face::after  { right: 22%; }
+  .mem-card .mem-mouth {
+    position: absolute;
+    width: 35%; height: 18%;
+    border: 3px solid #000;
+    border-top: none;
+    border-radius: 0 0 50% 50%;
+    bottom: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .mem-card.flipped {
+    background: rgba(255,255,255,0.1);
+    color: var(--neon-yellow);
+    transform: rotateY(180deg);
+    box-shadow: none;
+  }
+  .mem-card.matched {
+    background: rgba(57,255,20,0.2);
+    border-color: var(--neon-green);
+    color: var(--neon-green);
+    cursor: default;
+    box-shadow: 0 0 10px var(--neon-green);
+  }
+  .mem-card.flipped, .mem-card.matched { transform: none; }
+  .mem-card.flipped .mem-face, .mem-card.matched .mem-face { display: none; }
+
+  /* ===== COIN CATCHER ===== */
+  #catcher-canvas { display: block; width: 100%; height: 100%; }
+
+  /* ===== SNAKE ===== */
+  #snake-canvas { display: block; width: 100%; height: 100%; }
+
+  /* ===== BRICK BREAKER ===== */
+  #breaker-canvas { display: block; width: 100%; height: 100%; }
+
+  /* ===== PONG ===== */
+  #pong-canvas { display: block; width: 100%; height: 100%; }
+
+  /* ===== BASKETBALL ===== */
+  #basketball-canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  #basketball-canvas:active { cursor: grabbing; }
+
+  /* ===== DAILY WHEEL ===== */
+  .wheel-card {
+    border-color: var(--neon-yellow) !important;
+    animation: wheel-glow 2s ease-in-out infinite;
+  }
+  .wheel-card.used {
+    border-color: #555 !important;
+    animation: none;
+    filter: grayscale(0.6);
+  }
+  @keyframes wheel-glow {
+    0%, 100% { box-shadow: 0 0 10px rgba(255,247,0,0.3); }
+    50% { box-shadow: 0 0 30px rgba(255,247,0,0.8), inset 0 0 15px rgba(255,247,0,0.2); }
+  }
+
+  .wheel-wrap {
+    position: relative;
+    width: min(360px, 85vw);
+    aspect-ratio: 1;
+    margin: 20px auto;
+  }
+  .wheel-pointer {
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 38px;
+    color: var(--neon-red);
+    text-shadow: 0 0 15px var(--neon-red);
+    z-index: 3;
+    line-height: 1;
+  }
+  .wheel {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 6px solid var(--neon-yellow);
+    box-shadow:
+      0 0 40px var(--neon-yellow),
+      inset 0 0 30px rgba(255,247,0,0.2);
+    position: relative;
+    overflow: hidden;
+    transition: transform 5s cubic-bezier(0.17, 0.67, 0.25, 1);
+    transform: rotate(0deg);
+  }
+  .wheel-segment {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    top: 0; left: 50%;
+    transform-origin: 0% 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 20px;
+    font-family: 'Press Start 2P', monospace;
+    color: #000;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.4);
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+  }
+  .wheel-segment.jackpot-seg {
+    background: linear-gradient(135deg, #ffd700, #ffaa00, #ff8800) !important;
+    animation: jackpot-shimmer 1.2s ease-in-out infinite;
+  }
+  .wheel-segment.rare-seg {
+    background: linear-gradient(135deg, #e0f4ff, #aaddff, #6699ff) !important;
+  }
+  @keyframes jackpot-shimmer {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.35) drop-shadow(0 0 8px #ffd700); }
+  }
+  .seg-label {
+    text-align: center;
+    line-height: 1.15;
+    color: #000;
+    white-space: nowrap;
+  }
+  .seg-title {
+    font-size: 12px;
+    margin-bottom: 3px;
+    font-weight: bold;
+    color: #000;
+    text-shadow:
+      -1px -1px 0 rgba(255,255,255,0.9),
+      1px -1px 0 rgba(255,255,255,0.9),
+      -1px 1px 0 rgba(255,255,255,0.9),
+      1px 1px 0 rgba(255,255,255,0.9);
+  }
+  .seg-pct {
+    font-size: 13px;
+    font-family: 'VT323', monospace;
+    letter-spacing: 0;
+    color: #fff;
+    font-weight: bold;
+    text-shadow:
+      -1px -1px 0 #000,
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+      1px 1px 0 #000,
+      0 0 4px #000;
+  }
+  .wheel-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 25%; height: 25%;
+    background: radial-gradient(circle, var(--bg-2), var(--bg));
+    border: 3px solid var(--neon-yellow);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: var(--neon-yellow);
+    z-index: 2;
+    box-shadow: 0 0 20px var(--neon-yellow), inset 0 0 10px rgba(0,0,0,0.5);
+  }
+
+  .wheel-legend-wrap {
+    width: min(420px, 92vw);
+    margin-top: 22px;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,247,0,0.35);
+    padding: 14px 18px;
+  }
+  .wheel-legend-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: var(--neon-yellow);
+    text-align: center;
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+  }
+  .wheel-legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 18px;
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+  }
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ddd;
+  }
+  .legend-row.jackpot {
+    color: #ffd700;
+    text-shadow: 0 0 8px #ffd700;
+    animation: jackpot-shimmer 1.2s ease-in-out infinite;
+  }
+  .legend-row.rare {
+    color: #aaddff;
+    text-shadow: 0 0 6px #aaddff;
+  }
+  .legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    box-shadow: 0 0 6px currentColor;
+    flex-shrink: 0;
+  }
+  .legend-label { flex: 1; }
+  .legend-pct {
+    font-weight: bold;
+    color: var(--neon-yellow);
+    font-size: 16px;
+  }
+  .legend-row.jackpot .legend-pct { color: #ffd700; }
+  .legend-row.rare .legend-pct { color: #aaddff; }
+
+  .game-over-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 20px;
+    text-align: center;
+  }
+  .game-over-overlay h2 {
+    font-size: 28px;
+    color: var(--neon-pink);
+    text-shadow: 0 0 15px var(--neon-pink);
+  }
+  .game-over-overlay .reward {
+    font-size: 22px;
+    color: var(--neon-yellow);
+    font-family: 'VT323', monospace;
+  }
+
+  .instructions {
+    font-size: 18px;
+    color: #aaa;
+    text-align: center;
+    margin-bottom: 10px;
+    max-width: 600px;
+  }
+
+  /* ============================================================
+     MOBILE / SMALL SCREENS
+     ============================================================ */
+  @media (max-width: 768px) {
+    /* Hub: compact header */
+    .title { font-size: clamp(20px, 7vw, 32px) !important; margin-bottom: 4px; }
+    .subtitle { font-size: 14px; margin-bottom: 12px; }
+    .player-display { width: 56px; height: 56px; margin: 8px 0 14px; }
+    .player-display::before, .player-display::after { width: 9px; height: 9px; top: 18px; box-shadow: inset 0 0 0 2px #000; }
+    .player-display::before { left: 13px; }
+    .player-display::after { right: 13px; }
+    .player-display .avatar-mouth { width: 18px; height: 9px; bottom: 12px; border-width: 2px; }
+
+    /* HUD pills */
+    .hud { gap: 8px; margin-bottom: 14px; }
+    .hud-pill { font-size: 10px; padding: 7px 12px; }
+
+    /* Game grid: 2 columns on mobile, tighter */
+    .games-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 22px 10px;
+      padding-top: 6px;
+    }
+    .game-card, .btn {
+      padding: 14px 8px;
+    }
+    .game-card .icon { font-size: 30px; margin-bottom: 8px; }
+    .game-card h3 { font-size: 10px; margin-bottom: 6px; }
+    .game-card p { font-size: 13px; line-height: 1.2; }
+
+    /* Signs */
+    .game-sign { font-size: 7px; padding: 3px 7px 4px; top: -11px; }
+
+    /* Screens: tighter padding */
+    .screen { padding: 16px 10px 24px; }
+
+    /* Instructions */
+    .instructions { font-size: 14px; padding: 0 6px; margin-bottom: 6px; }
+
+    /* Game header inside games */
+    .game-header { font-size: 10px; width: 100%; padding: 0 4px; }
+
+    /* Game area: fill width, cap height so buttons stay visible */
+    .game-area {
+      width: 100% !important;
+      height: 55vh !important;
+      max-height: 460px;
+    }
+
+    /* Buttons: finger-sized */
+    .btn { font-size: 10px; padding: 12px 16px; min-height: 42px; }
+    .btn-row { gap: 8px; }
+
+    /* Shop */
+    .shop-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .skin-card { padding: 14px 8px; }
+    .skin-card h4 { font-size: 9px; }
+    .skin-card .price { font-size: 15px; }
+    .skin-card button { font-size: 8px; padding: 10px 4px; }
+
+    /* Quests */
+    .quest-panel { padding: 12px 12px; }
+    .quest-panel-title { font-size: 11px; }
+    .quest-panel-reset { font-size: 13px; }
+    .quests-grid { grid-template-columns: 1fr; gap: 8px; }
+    .quest-card { padding: 10px 12px; }
+    .quest-name { font-size: 9px; }
+    .quest-reward { font-size: 14px; }
+    .quest-desc { font-size: 14px; }
+    .quest-btn { font-size: 8px; padding: 10px; }
+
+    /* Wheel */
+    .wheel-wrap { width: min(290px, 85vw); }
+    .wheel { border-width: 4px; }
+    .seg-title { font-size: 10px; }
+    .seg-pct { font-size: 12px; }
+    .wheel-center { font-size: 9px; }
+    .wheel-legend-wrap { padding: 10px 12px; }
+    .wheel-legend { grid-template-columns: 1fr; gap: 4px 10px; font-size: 15px; }
+    .wheel-legend-title { font-size: 10px; }
+    .legend-pct { font-size: 14px; }
+
+    /* Risk It */
+    .risk-stats { gap: 8px; margin-bottom: 10px; }
+    .risk-stat { padding: 6px 12px; min-width: 70px; }
+    .rs-label { font-size: 7px; }
+    .rs-val { font-size: 18px; }
+    .risk-wheel-wrap { width: min(280px, 80vw); }
+    #risk-actions .btn { font-size: 9px; padding: 11px 10px; }
+
+    /* Reaction */
+    .rx-prompt { font-size: clamp(18px, 5vw, 28px) !important; padding: 12px; }
+    .rx-time-pill { font-size: 13px; padding: 5px 9px; }
+
+    /* CPS */
+    .cps-btn { width: 170px; height: 170px; border-width: 3px; }
+    .cps-label { font-size: 13px; }
+    .cps-subtitle { font-size: 12px; }
+    .cps-rate { font-size: 11px; }
+  }
+
+  /* Very small phones */
+  @media (max-width: 380px) {
+    .games-grid { gap: 20px 8px; }
+    .game-card h3 { font-size: 9px; }
+    .game-card p { font-size: 12px; }
+    .game-area { height: 50vh !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="grid-bg"></div>
+
+  <!-- HUB -->
+  <div id="screen-hub" class="screen active">
+    <h1 class="title">NEON ARCADE</h1>
+    <div class="subtitle">~ INSERT COIN ~</div>
+    <div class="player-display" id="player-avatar"><div class="avatar-mouth"></div></div>
+    <div class="hud">
+      <div class="hud-pill">💰 $<span id="money">0</span></div>
+      <div class="hud-pill skin">◆ <span id="current-skin">Default</span></div>
+    </div>
+
+    <div class="games-grid" id="games-grid">
+      <div class="game-card" data-game="targets" onclick="startGame('targets')">
+        <span class="icon">🎯</span>
+        <h3>TARGET BLAST</h3>
+        <p>Click targets fast. $3 per hit.</p>
+      </div>
+      <div class="game-card" data-game="memory" onclick="startGame('memory')">
+        <span class="icon">🧠</span>
+        <h3>MEMORY MATRIX</h3>
+        <p>Match all 8 pairs. Fewer moves = more cash.</p>
+      </div>
+      <div class="game-card" data-game="catcher" onclick="startGame('catcher')">
+        <span class="icon">💎</span>
+        <h3>COIN CATCHER</h3>
+        <p>Catch coins, dodge bombs. $2 per coin.</p>
+      </div>
+      <div class="game-card" data-game="snake" onclick="startGame('snake')">
+        <span class="icon">🐍</span>
+        <h3>NEON SNAKE</h3>
+        <p>Eat pellets, don't crash. $5 per pellet.</p>
+      </div>
+      <div class="game-card" data-game="breaker" onclick="startGame('breaker')">
+        <span class="icon">🧱</span>
+        <h3>BRICK BLASTER</h3>
+        <p>Break every brick. $2 each + $50 clear bonus.</p>
+      </div>
+      <div class="game-card" data-game="pong" onclick="startGame('pong')">
+        <span class="icon">🏓</span>
+        <h3>NEON PONG</h3>
+        <p>First to 5 wins. $20 per point, $100 victory bonus.</p>
+      </div>
+      <div class="game-card" data-game="basketball" onclick="startGame('basketball')">
+        <span class="icon">🔒</span>
+        <h3>LOCK-ON</h3>
+        <p>Tap when arrow hits the target! $8 per hit.</p>
+      </div>
+      <div class="game-card" data-game="risk" onclick="startGame('risk')">
+        <span class="icon">🎲</span>
+        <h3>RISK IT</h3>
+        <p>Spin for cash. Cash out or double-or-nothing!</p>
+      </div>
+      <div class="game-card" data-game="reaction" onclick="startGame('reaction')">
+        <span class="icon">⚡</span>
+        <h3>REACTION</h3>
+        <p>Tap the instant it turns green. Faster = more $!</p>
+      </div>
+      <div class="game-card" data-game="cps" onclick="startGame('cps')">
+        <span class="icon">👆</span>
+        <h3>CLICK STORM</h3>
+        <p>Click as fast as you can for 5 seconds. $1 per click!</p>
+      </div>
+      <div class="game-card wheel-card" data-game="wheel" onclick="showScreen('wheel')">
+        <span class="icon">🎰</span>
+        <h3>WHEEL</h3>
+        <p id="wheel-status">Free spin every 15 min!</p>
+      </div>
+    </div>
+
+    <div class="quest-panel">
+      <div class="quest-panel-header">
+        <span class="quest-panel-title">DAILY QUESTS</span>
+        <span class="quest-panel-reset" id="quest-reset">Resets in 24h</span>
+      </div>
+      <div id="quests" class="quests-grid"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn yellow" onclick="showScreen('shop')">🛒 SKIN SHOP</button>
+      <button class="btn green" onclick="promptCheatCode()">🔐 CODE</button>
+      <button class="btn pink" onclick="resetProgress()">RESET</button>
+    </div>
+  </div>
+
+  <!-- SHOP -->
+  <div id="screen-shop" class="screen">
+    <h1 class="title" style="font-size: clamp(22px, 4vw, 40px);">SKIN SHOP</h1>
+    <div class="hud">
+      <div class="hud-pill">💰 $<span id="money-shop">0</span></div>
+    </div>
+    <div class="shop-grid" id="shop-grid"></div>
+    <button class="btn" onclick="showScreen('hub')">← BACK TO ARCADE</button>
+  </div>
+
+  <!-- GAME: TARGETS -->
+  <div id="screen-targets" class="screen">
+    <h2 class="pixel" style="color: var(--neon-red); text-shadow: 0 0 10px var(--neon-red); margin-bottom: 15px;">🎯 TARGET BLAST</h2>
+    <div class="game-header">
+      <span class="score">HITS: <span id="t-score">0</span></span>
+      <span class="timer">TIME: <span id="t-timer">20</span></span>
+    </div>
+    <div class="game-area" id="t-area"></div>
+    <button class="btn pink" onclick="endGame('targets', true)">QUIT</button>
+  </div>
+
+  <!-- GAME: MEMORY -->
+  <div id="screen-memory" class="screen">
+    <h2 class="pixel" style="color: var(--neon-purple); text-shadow: 0 0 10px var(--neon-purple); margin-bottom: 15px;">🧠 MEMORY MATRIX</h2>
+    <div class="game-header">
+      <span class="score">MOVES: <span id="m-moves">0</span></span>
+      <span class="timer">PAIRS: <span id="m-pairs">0</span>/8</span>
+    </div>
+    <div class="game-area">
+      <div class="memory-grid" id="m-grid"></div>
+    </div>
+    <button class="btn pink" onclick="endGame('memory', true)">QUIT</button>
+  </div>
+
+  <!-- GAME: CATCHER -->
+  <div id="screen-catcher" class="screen">
+    <h2 class="pixel" style="color: var(--neon-yellow); text-shadow: 0 0 10px var(--neon-yellow); margin-bottom: 15px;">💎 COIN CATCHER</h2>
+    <div class="instructions">Move mouse / finger to steer. Green coins = $$. Red bombs = GAME OVER.</div>
+    <div class="game-header">
+      <span class="score">COINS: <span id="c-score">0</span></span>
+      <span class="timer">TIME: <span id="c-timer">30</span></span>
+    </div>
+    <div class="game-area">
+      <canvas id="catcher-canvas"></canvas>
+    </div>
+    <button class="btn pink" onclick="endGame('catcher', true)">QUIT</button>
+  </div>
+
+  <!-- GAME: SNAKE -->
+  <div id="screen-snake" class="screen">
+    <h2 class="pixel" style="color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green); margin-bottom: 15px;">🐍 NEON SNAKE</h2>
+    <div class="instructions">Arrow keys / WASD (or swipe on mobile). Don't hit walls or yourself!</div>
+    <div class="game-header">
+      <span class="score">LEN: <span id="s-score">3</span></span>
+      <span class="timer">PELLETS: <span id="s-pellets">0</span></span>
+    </div>
+    <div class="game-area">
+      <canvas id="snake-canvas"></canvas>
+    </div>
+    <button class="btn pink" onclick="endGame('snake', true)">QUIT</button>
+  </div>
+
+  <!-- GAME: BRICK BREAKER -->
+  <div id="screen-breaker" class="screen">
+    <h2 class="pixel" style="color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); margin-bottom: 15px;">🧱 BRICK BLASTER</h2>
+    <div class="instructions">Break special bricks to drop powerups — CATCH the good ones, DODGE the bad ones!<br>
+      <span style="color:#39ff14">↔ WIDE</span> · <span style="color:#00f0ff">◓ SLOW</span> · <span style="color:#ffd700">♥ +LIFE</span> ·
+      <span style="color:#ff2e63">&gt;&lt; SHRINK</span> · <span style="color:#ff7700">▶▶ FAST</span> · <span style="color:#aa0000">☠ -LIFE</span>
+    </div>
+    <div class="game-header">
+      <span class="score">BRICKS: <span id="b-score">0</span></span>
+      <span class="timer">LIVES: <span id="b-lives">3</span></span>
+    </div>
+    <div class="game-area">
+      <canvas id="breaker-canvas"></canvas>
+    </div>
+    <button class="btn pink" onclick="endGame('breaker', true)">QUIT</button>
+  </div>
+
+  <!-- GAME: PONG -->
+  <div id="screen-pong" class="screen">
+    <h2 class="pixel" style="color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); margin-bottom: 15px;">🏓 NEON PONG</h2>
+    <div class="instructions">Move mouse / finger vertically. First to 5 points wins!</div>
+    <div class="game-header">
+      <span class="score">YOU: <span id="p-player">0</span></span>
+      <span class="timer">CPU: <span id="p-cpu">0</span></span>
+    </div>
+    <div class="game-area">
+      <canvas id="pong-canvas"></canvas>
+    </div>
+    <button class="btn pink" onclick="endGame('pong', true)">QUIT</button>
+  </div>
+
+  <!-- GAME: LOCK-ON -->
+  <div id="screen-basketball" class="screen">
+    <h2 class="pixel" style="color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); margin-bottom: 15px;">🔒 LOCK-ON</h2>
+    <div class="instructions">Click / tap / press SPACE when the arrow is on the green zone. Each hit = the arrow spins faster!</div>
+    <div class="game-header">
+      <span class="score">HITS: <span id="bb-score">0</span></span>
+      <span class="timer">MISSES: <span id="bb-timer">0</span>/3</span>
+    </div>
+    <div class="game-area">
+      <canvas id="basketball-canvas"></canvas>
+    </div>
+    <button class="btn pink" onclick="endGame('basketball', true)">QUIT</button>
+  </div>
+
+  <!-- GAME: RISK IT -->
+  <div id="screen-risk" class="screen">
+    <h2 class="pixel" style="color: var(--neon-yellow); text-shadow: 0 0 10px var(--neon-yellow); margin-bottom: 10px;">🎲 RISK IT</h2>
+    <div class="instructions">Spin for cash. After landing, CASH OUT or risk it 50/50 to double! 2 doubles in a row → next is TRIPLE!</div>
+    <div class="risk-stats">
+      <div class="risk-stat"><span class="rs-label">POT</span><span class="rs-val" id="risk-pot">$0</span></div>
+      <div class="risk-stat"><span class="rs-label">STREAK</span><span class="rs-val" id="risk-streak">0</span></div>
+      <div class="risk-stat"><span class="rs-label">NEXT</span><span class="rs-val" id="risk-next">×2</span></div>
+    </div>
+    <div class="wheel-wrap risk-wheel-wrap">
+      <div class="wheel-pointer">▼</div>
+      <div class="wheel" id="risk-wheel"></div>
+      <div class="wheel-center" id="risk-center">SPIN</div>
+    </div>
+    <div class="btn-row" style="margin-top: 20px;" id="risk-actions">
+      <!-- buttons injected by JS based on phase -->
+    </div>
+    <button class="btn" onclick="endGame('risk', true)" style="margin-top: 12px;">← BACK</button>
+  </div>
+
+  <!-- GAME: REACTION -->
+  <div id="screen-reaction" class="screen">
+    <h2 class="pixel" style="color: var(--neon-red); text-shadow: 0 0 10px var(--neon-red); margin-bottom: 15px;">⚡ REACTION</h2>
+    <div class="instructions">Wait for GREEN, then tap as fast as you can! Tap too early = penalty. 5 rounds.</div>
+    <div class="game-header">
+      <span class="score">ROUND: <span id="rx-round">1</span>/5</span>
+      <span class="timer">BEST: <span id="rx-best">—</span>ms</span>
+    </div>
+    <div class="game-area reaction-area" id="rx-area">
+      <div class="rx-prompt" id="rx-prompt">TAP TO START</div>
+      <div class="rx-timings" id="rx-timings"></div>
+    </div>
+    <button class="btn pink" onclick="endGame('reaction', true)">QUIT</button>
+  </div>
+
+  <!-- GAME: CPS -->
+  <div id="screen-cps" class="screen">
+    <h2 class="pixel" style="color: var(--neon-yellow); text-shadow: 0 0 10px var(--neon-yellow); margin-bottom: 15px;">👆 CLICK STORM</h2>
+    <div class="instructions">Click the button as fast as possible for 5 seconds. $1 per click!</div>
+    <div class="game-header">
+      <span class="score">CLICKS: <span id="cps-clicks">0</span></span>
+      <span class="timer">TIME: <span id="cps-time">5.0</span>s</span>
+    </div>
+    <div class="game-area cps-area">
+      <div class="cps-btn" id="cps-btn">
+        <div class="cps-label" id="cps-label">TAP TO START</div>
+        <div class="cps-subtitle" id="cps-subtitle">5 seconds of spam</div>
+      </div>
+      <div class="cps-rate" id="cps-rate"></div>
+    </div>
+    <button class="btn pink" onclick="endGame('cps', true)">QUIT</button>
+  </div>
+
+  <!-- WHEEL -->
+  <div id="screen-wheel" class="screen">
+    <h2 class="pixel" style="color: var(--neon-yellow); text-shadow: 0 0 10px var(--neon-yellow); margin-bottom: 10px;">🎰 WHEEL</h2>
+    <div class="instructions" id="wheel-info">Spin every 15 minutes for a free reward!</div>
+    <div class="wheel-wrap">
+      <div class="wheel-pointer">▼</div>
+      <div class="wheel" id="wheel"></div>
+      <div class="wheel-center">SPIN</div>
+    </div>
+    <div class="btn-row" style="margin-top: 20px;">
+      <button class="btn yellow" id="spin-btn" onclick="spinWheel()">SPIN!</button>
+      <button class="btn" onclick="showScreen('hub')">← BACK</button>
+    </div>
+    <div class="wheel-legend-wrap">
+      <div class="wheel-legend-title">PRIZE TABLE</div>
+      <div id="wheel-legend" class="wheel-legend"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+</div>
+
+<script>
+/* =========================================================
+   STATE
+   ========================================================= */
+const state = {
+  money: 0,
+  currentSkin: 'default',
+  owned: ['default'],
+  bonusSpins: 0
+};
+
+const SKINS = [
+  { id: 'default',  name: 'DEFAULT',   color: '#00f0ff', price: 0 },
+  { id: 'pink',     name: 'HOT PINK',  color: '#ff2bd6', price: 50 },
+  { id: 'green',    name: 'TOXIC',     color: '#39ff14', price: 100 },
+  { id: 'yellow',   name: 'SUNBURST',  color: '#fff700', price: 200 },
+  { id: 'purple',   name: 'VOID',      color: '#b026ff', price: 350 },
+  { id: 'rainbow',  name: 'PRISM',     color: 'linear', price: 600 },
+  { id: 'gold',     name: 'GOLDEN',    color: '#ffd700', price: 1000 },
+  { id: 'lava',     name: 'LAVA',      color: 'lava',    price: 1000 },
+  { id: 'shadow',   name: 'SHADOW',    color: '#222',    price: 1500 },
+  { id: 'iceking',  name: 'ICE KING',  color: 'ice',     price: 0, exclusive: true }
+];
+
+/* =========================================================
+   GAME SIGNS — only the standout games get a label.
+   Keep this list short (~3) so signs feel special, not cluttered.
+   ========================================================= */
+const GAME_SIGNS = {
+  basketball: { label: '🔥 HARDEST',    cls: 'skill'   },
+  risk:       { label: '💰 BIG EARNER', cls: 'money'   },
+  reaction:   { label: '⚡ FASTEST',    cls: 'fastest' }
+};
+
+// Render one sign above each game card listed in GAME_SIGNS.
+function renderGameSigns() {
+  document.querySelectorAll('.game-sign').forEach(s => s.remove());
+  Object.keys(GAME_SIGNS).forEach(gameId => {
+    const card = document.querySelector(`.game-card[data-game="${gameId}"]`);
+    if (!card) return;
+    const def = GAME_SIGNS[gameId];
+    const sign = document.createElement('div');
+    sign.className = `game-sign ${def.cls}`;
+    sign.textContent = def.label;
+    card.appendChild(sign);
+  });
+}
+
+/* =========================================================
+   DAILY QUESTS
+   ========================================================= */
+const QUESTS_DEF = [
+  {
+    id: 'grinder',
+    name: 'GRINDER',
+    desc: 'Play 4 different mini-games',
+    goal: 4,
+    stat: 'uniqueGamesPlayed',
+    reward: { money: 100 }
+  },
+  {
+    id: 'bigearner',
+    name: 'BIG EARNER',
+    desc: 'Earn $200 from mini-games',
+    goal: 200,
+    stat: 'moneyEarned',
+    reward: { spin: 1 }
+  },
+  {
+    id: 'shotmaker',
+    name: 'SHOT MAKER',
+    desc: 'Score 20 hits in LOCK-ON',
+    goal: 20,
+    stat: 'baskets',
+    reward: { money: 300, spin: 2 }
+  },
+  {
+    id: 'gambler',
+    name: 'GAMBLER',
+    desc: 'Hit a 3x streak in RISK IT',
+    goal: 1,
+    stat: 'riskStreak3',
+    reward: { money: 250, spin: 1 }
+  }
+];
+const QUEST_RESET_MS = 24 * 60 * 60 * 1000; // resets every 24h
+
+const quests = {
+  lastReset: 0,
+  stats: { gamesPlayed: 0, moneyEarned: 0, baskets: 0, riskStreak3: 0, uniqueGamesPlayed: 0 },
+  claimed: {},
+  playedGames: {} // set of game ids played this cycle (for uniqueGamesPlayed)
+};
+
+function loadQuests() {
+  try {
+    const raw = localStorage.getItem('neonArcadeQuests');
+    if (raw) {
+      const data = JSON.parse(raw);
+      Object.assign(quests, data);
+      if (!quests.stats) quests.stats = { gamesPlayed: 0, moneyEarned: 0, baskets: 0, riskStreak3: 0, uniqueGamesPlayed: 0 };
+      // Make sure newly-added stats exist on old saves
+      if (quests.stats.riskStreak3 === undefined) quests.stats.riskStreak3 = 0;
+      if (quests.stats.uniqueGamesPlayed === undefined) quests.stats.uniqueGamesPlayed = 0;
+      if (!quests.claimed) quests.claimed = {};
+      if (!quests.playedGames) quests.playedGames = {};
+    }
+  } catch {}
+}
+
+function saveQuests() {
+  try { localStorage.setItem('neonArcadeQuests', JSON.stringify(quests)); } catch {}
+}
+
+function maybeResetQuests() {
+  const now = Date.now();
+  if (now - quests.lastReset > QUEST_RESET_MS) {
+    quests.stats = { gamesPlayed: 0, moneyEarned: 0, baskets: 0, riskStreak3: 0, uniqueGamesPlayed: 0 };
+    quests.claimed = {};
+    quests.playedGames = {};
+    quests.lastReset = now;
+    saveQuests();
+  }
+}
+
+function trackQuest(stat, amount = 1) {
+  maybeResetQuests();
+  quests.stats[stat] = (quests.stats[stat] || 0) + amount;
+  saveQuests();
+  // Re-render quests if on hub
+  if (document.getElementById('screen-hub')?.classList.contains('active')) renderQuests();
+}
+
+// Call this when a mini-game completes. Bumps both gamesPlayed (total)
+// AND uniqueGamesPlayed (distinct game ids this quest cycle).
+function trackGamePlayed(gameId) {
+  maybeResetQuests();
+  quests.stats.gamesPlayed = (quests.stats.gamesPlayed || 0) + 1;
+  if (!quests.playedGames[gameId]) {
+    quests.playedGames[gameId] = true;
+    quests.stats.uniqueGamesPlayed = (quests.stats.uniqueGamesPlayed || 0) + 1;
+  }
+  saveQuests();
+  if (document.getElementById('screen-hub')?.classList.contains('active')) renderQuests();
+}
+
+function claimQuest(id) {
+  const q = QUESTS_DEF.find(x => x.id === id);
+  if (!q || quests.claimed[id]) return;
+  const progress = quests.stats[q.stat] || 0;
+  if (progress < q.goal) return;
+  quests.claimed[id] = true;
+  let msg = '';
+  if (q.reward.money) {
+    state.money += q.reward.money;
+    msg += `+$${q.reward.money}`;
+  }
+  if (q.reward.spin) {
+    state.bonusSpins += q.reward.spin;
+    msg += (msg ? ' + ' : '') + `${q.reward.spin} SPIN`;
+  }
+  toast(`CLAIMED: ${msg}`);
+  saveQuests();
+  saveState();
+  renderQuests();
+  renderHub();
+  updateWheelUI();
+}
+
+function renderQuests() {
+  maybeResetQuests();
+  const container = document.getElementById('quests');
+  if (!container) return;
+  container.innerHTML = QUESTS_DEF.map(q => {
+    const progress = Math.min(quests.stats[q.stat] || 0, q.goal);
+    const pct = Math.floor((progress / q.goal) * 100);
+    const done = progress >= q.goal;
+    const claimed = quests.claimed[q.id];
+    const rewardBits = [];
+    if (q.reward.money) rewardBits.push(`$${q.reward.money}`);
+    if (q.reward.spin) rewardBits.push(`${q.reward.spin}🎰`);
+    const rewardText = rewardBits.join(' + ');
+    const displayProgress = q.stat === 'moneyEarned'
+      ? `$${progress} / $${q.goal}`
+      : `${progress} / ${q.goal}`;
+    return `
+      <div class="quest-card ${claimed ? 'claimed' : (done ? 'ready' : '')}">
+        <div class="quest-head">
+          <span class="quest-name">${q.name}</span>
+          <span class="quest-reward">${rewardText}</span>
+        </div>
+        <div class="quest-desc">${q.desc}</div>
+        <div class="quest-bar"><div class="quest-fill" style="width: ${pct}%"></div></div>
+        <div class="quest-progress">${displayProgress}</div>
+        <button class="quest-btn" ${(!done || claimed) ? 'disabled' : ''} onclick="claimQuest('${q.id}')">
+          ${claimed ? '✓ CLAIMED' : (done ? 'CLAIM REWARD' : 'IN PROGRESS')}
+        </button>
+      </div>
+    `;
+  }).join('');
+
+  // Update reset countdown
+  const resetEl = document.getElementById('quest-reset');
+  if (resetEl) {
+    const remaining = QUEST_RESET_MS - (Date.now() - quests.lastReset);
+    if (remaining > 0) resetEl.textContent = `Resets in ${formatTimeShort(remaining)}`;
+    else resetEl.textContent = 'Resetting...';
+  }
+}
+
+function formatTimeShort(ms) {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h > 0) return `${h}h ${m}m`;
+  const s = Math.floor((ms % 60000) / 1000);
+  return `${m}m ${s}s`;
+}
+
+/* Save and load player state (money, skins, equipped, bonus spins) */
+function saveState() {
+  try {
+    localStorage.setItem('neonArcadeState', JSON.stringify({
+      money: state.money,
+      currentSkin: state.currentSkin,
+      owned: state.owned,
+      bonusSpins: state.bonusSpins
+    }));
+  } catch {}
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem('neonArcadeState');
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (typeof data.money === 'number') state.money = data.money;
+      if (typeof data.currentSkin === 'string') state.currentSkin = data.currentSkin;
+      if (Array.isArray(data.owned)) state.owned = data.owned;
+      if (typeof data.bonusSpins === 'number') state.bonusSpins = data.bonusSpins;
+      // Ensure default is always owned
+      if (!state.owned.includes('default')) state.owned.unshift('default');
+    }
+  } catch {}
+}
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  if (name === 'shop') renderShop();
+  if (name === 'hub') { renderHub(); renderQuests(); renderGameSigns(); }
+}
+
+function renderHub() {
+  document.getElementById('money').textContent = state.money;
+  const skin = SKINS.find(s => s.id === state.currentSkin);
+  document.getElementById('current-skin').textContent = skin.name;
+  applySkinColor(skin);
+}
+
+function applySkinColor(skin) {
+  const avatar = document.getElementById('player-avatar');
+  if (skin.color === 'linear') {
+    avatar.style.background = 'linear-gradient(135deg, #ff2bd6, #00f0ff, #39ff14, #fff700)';
+    avatar.style.boxShadow = '0 0 30px #ff2bd6, inset -10px -10px 20px rgba(0,0,0,0.4)';
+    document.documentElement.style.setProperty('--skin-color', '#ff2bd6');
+  } else if (skin.color === 'lava') {
+    avatar.style.background = 'radial-gradient(circle at 35% 35%, #ffee00, #ff7700 40%, #cc0000 85%)';
+    avatar.style.boxShadow = '0 0 35px #ff5500, 0 0 60px #ff2200, inset -10px -10px 20px rgba(0,0,0,0.5)';
+    document.documentElement.style.setProperty('--skin-color', '#ff5500');
+  } else if (skin.color === 'ice') {
+    avatar.style.background = 'radial-gradient(circle at 35% 35%, #ffffff, #aaddff 45%, #2266cc 90%)';
+    avatar.style.boxShadow = '0 0 35px #aaddff, 0 0 60px #66aaff, inset -10px -10px 20px rgba(0,0,0,0.3)';
+    document.documentElement.style.setProperty('--skin-color', '#aaddff');
+  } else {
+    avatar.style.background = skin.color;
+    avatar.style.boxShadow = `0 0 30px ${skin.color}, inset -10px -10px 20px rgba(0,0,0,0.4)`;
+    document.documentElement.style.setProperty('--skin-color', skin.color);
+  }
+}
+
+/* =========================================================
+   SKIN APPLICATION HELPERS FOR CANVAS GAMES
+   ========================================================= */
+// Returns a canvas fillStyle that respects the current skin,
+// creating gradients for Prism/Lava/Ice skins.
+function skinFill(ctx, cx, cy, size) {
+  const skin = SKINS.find(s => s.id === state.currentSkin);
+  if (skin.color === 'linear') {
+    const g = ctx.createLinearGradient(cx - size, cy - size, cx + size, cy + size);
+    g.addColorStop(0,    '#ff2bd6');
+    g.addColorStop(0.33, '#00f0ff');
+    g.addColorStop(0.66, '#39ff14');
+    g.addColorStop(1,    '#fff700');
+    return g;
+  }
+  if (skin.color === 'lava') {
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(size, 8));
+    g.addColorStop(0,    '#ffee00');
+    g.addColorStop(0.4,  '#ff7700');
+    g.addColorStop(0.8,  '#cc0000');
+    g.addColorStop(1,    '#660000');
+    return g;
+  }
+  if (skin.color === 'ice') {
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(size, 8));
+    g.addColorStop(0,    '#ffffff');
+    g.addColorStop(0.5,  '#aaddff');
+    g.addColorStop(1,    '#2266cc');
+    return g;
+  }
+  return skin.color;
+}
+// Glow color for shadowColor.
+function skinGlow() {
+  const skin = SKINS.find(s => s.id === state.currentSkin);
+  if (skin.color === 'linear') {
+    const h = (Date.now() / 10) % 360;
+    return `hsl(${h}, 100%, 60%)`;
+  }
+  if (skin.color === 'lava') {
+    // flickering ember glow
+    const t = Math.sin(Date.now() / 120);
+    return t > 0 ? '#ff5500' : '#ffaa00';
+  }
+  if (skin.color === 'ice') return '#aaddff';
+  return skin.color;
+}
+// Solid color fallback (for CSS use).
+function skinSolid() {
+  const skin = SKINS.find(s => s.id === state.currentSkin);
+  if (skin.color === 'linear') return '#ff2bd6';
+  if (skin.color === 'lava')   return '#ff5500';
+  if (skin.color === 'ice')    return '#aaddff';
+  return skin.color;
+}
+
+/* =========================================================
+   FACE DRAWING — eyes + mouth on every skin character
+   ========================================================= */
+// For circular / ball-shaped characters. `size` ≈ radius.
+function drawFace(ctx, cx, cy, size) {
+  if (size < 4) return;
+  const eyeR = Math.max(1.3, size * 0.14);
+  const eyeY = cy - size * 0.2;
+  const eyeDX = size * 0.38;
+
+  ctx.save();
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
+
+  // Eyes: white sclera + black pupil for readability on any skin
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(cx - eyeDX, eyeY, eyeR, 0, Math.PI * 2);
+  ctx.arc(cx + eyeDX, eyeY, eyeR, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx - eyeDX, eyeY, eyeR * 0.55, 0, Math.PI * 2);
+  ctx.arc(cx + eyeDX, eyeY, eyeR * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mouth: outlined smile (white halo for visibility on dark skins)
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+  ctx.lineWidth = Math.max(2, size * 0.14);
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(cx, cy + size * 0.12, size * 0.32, 0.18 * Math.PI, 0.82 * Math.PI);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = Math.max(1.2, size * 0.08);
+  ctx.beginPath();
+  ctx.arc(cx, cy + size * 0.12, size * 0.32, 0.18 * Math.PI, 0.82 * Math.PI);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+// For rectangular paddle-style characters with limited height.
+function drawPaddleFace(ctx, cx, cy, halfHeight) {
+  if (halfHeight < 4) return;
+  const eyeR = Math.max(1, halfHeight * 0.35);
+  const eyeDX = halfHeight * 1.2;
+  const eyeY = cy - halfHeight * 0.15;
+
+  ctx.save();
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
+
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(cx - eyeDX, eyeY, eyeR, 0, Math.PI * 2);
+  ctx.arc(cx + eyeDX, eyeY, eyeR, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx - eyeDX, eyeY, eyeR * 0.5, 0, Math.PI * 2);
+  ctx.arc(cx + eyeDX, eyeY, eyeR * 0.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = Math.max(1, halfHeight * 0.22);
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(cx, cy + halfHeight * 0.35, halfHeight * 0.5, 0.22 * Math.PI, 0.78 * Math.PI);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function renderShop() {
+  document.getElementById('money-shop').textContent = state.money;
+  const grid = document.getElementById('shop-grid');
+  grid.innerHTML = '';
+  SKINS.forEach(skin => {
+    const owned = state.owned.includes(skin.id);
+    const equipped = state.currentSkin === skin.id;
+    const card = document.createElement('div');
+    card.className = 'skin-card' + (owned ? ' owned' : '') + (equipped ? ' equipped' : '') + (skin.exclusive ? ' exclusive' : '');
+
+    // Skin preview styling
+    let bgStyle;
+    if (skin.color === 'linear') {
+      bgStyle = 'background: linear-gradient(135deg, #ff2bd6, #00f0ff, #39ff14, #fff700); color: #ff2bd6;';
+    } else if (skin.color === 'lava') {
+      bgStyle = 'background: radial-gradient(circle at 35% 35%, #ffee00, #ff7700 40%, #cc0000 85%); color: #ff5500;';
+    } else if (skin.color === 'ice') {
+      bgStyle = 'background: radial-gradient(circle at 35% 35%, #ffffff, #aaddff 45%, #2266cc 90%); color: #aaddff;';
+    } else {
+      bgStyle = `background: ${skin.color}; color: ${skin.color};`;
+    }
+
+    // Price label
+    let priceLabel;
+    if (skin.exclusive) priceLabel = 'WHEEL ONLY';
+    else if (skin.price === 0) priceLabel = 'FREE';
+    else priceLabel = '$' + skin.price;
+
+    // Action button
+    let action;
+    if (equipped) action = '<button disabled>EQUIPPED</button>';
+    else if (owned) action = `<button onclick="equipSkin('${skin.id}')">EQUIP</button>`;
+    else if (skin.exclusive) action = '<button disabled>LOCKED</button>';
+    else action = `<button onclick="buySkin('${skin.id}')" ${state.money < skin.price ? 'disabled' : ''}>BUY</button>`;
+
+    card.innerHTML = `
+      <div class="skin-preview" style="${bgStyle}"><div class="skin-mouth"></div></div>
+      <h4>${skin.name}</h4>
+      <div class="price">${priceLabel}</div>
+      ${action}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function buySkin(id) {
+  const skin = SKINS.find(s => s.id === id);
+  if (!skin) return;
+  if (state.money < skin.price) { toast('NOT ENOUGH $$$', true); return; }
+  state.money -= skin.price;
+  state.owned.push(id);
+  state.currentSkin = id;
+  saveState();
+  toast(`${skin.name} UNLOCKED!`);
+  renderShop();
+}
+
+function equipSkin(id) {
+  state.currentSkin = id;
+  saveState();
+  toast('SKIN EQUIPPED');
+  renderShop();
+}
+
+/* =========================================================
+   CHEAT CODES — each code can only be redeemed ONCE per save.
+   Redemption is tracked in localStorage so it persists.
+   ========================================================= */
+const CHEAT_CODES = {
+  'cheatcode555': { reward: 2000, label: '$2000 UNLOCKED!' }
+};
+
+function promptCheatCode() {
+  const input = prompt('Enter cheat code:');
+  if (input === null) return; // cancelled
+  redeemCheatCode(input.trim());
+}
+
+function redeemCheatCode(rawCode) {
+  const code = String(rawCode || '').toLowerCase();
+  const def = CHEAT_CODES[code];
+  if (!def) { toast('INVALID CODE', true); return; }
+
+  // Has this code already been used?
+  let usedCodes = {};
+  try {
+    const raw = localStorage.getItem('neonArcadeCheats');
+    if (raw) usedCodes = JSON.parse(raw) || {};
+  } catch {}
+  if (usedCodes[code]) {
+    toast('CODE ALREADY USED', true);
+    return;
+  }
+
+  // Grant reward
+  state.money += def.reward;
+  saveState();
+  usedCodes[code] = Date.now();
+  try { localStorage.setItem('neonArcadeCheats', JSON.stringify(usedCodes)); } catch {}
+  toast(def.label);
+  renderHub();
+}
+
+function resetProgress() {
+  if (!confirm('Reset all progress? Money, skins, wheel cooldown, and quests will be wiped.')) return;
+  state.money = 0;
+  state.currentSkin = 'default';
+  state.owned = ['default'];
+  state.bonusSpins = 0;
+  try {
+    localStorage.removeItem('neonArcadeLastSpin');
+    localStorage.removeItem('neonArcadeQuests');
+    localStorage.removeItem('neonArcadeState');
+    localStorage.removeItem('neonArcadeCheats');
+  } catch {}
+  quests.lastReset = Date.now();
+  quests.stats = { gamesPlayed: 0, moneyEarned: 0, baskets: 0, riskStreak3: 0, uniqueGamesPlayed: 0 };
+  quests.claimed = {};
+  quests.playedGames = {};
+  saveState();
+  renderHub();
+  renderQuests();
+  updateWheelUI();
+  toast('PROGRESS RESET');
+}
+
+function toast(msg, bad = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('bad', bad);
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function addMoney(amt) {
+  state.money += amt;
+  saveState();
+  toast(`+$${amt}!`);
+}
+
+/* =========================================================
+   GAME RUNNER
+   ========================================================= */
+const games = {};
+let activeGame = null;
+let gameCleanup = null;
+
+function startGame(name) {
+  activeGame = name;
+  showScreen(name);
+  games[name]();
+}
+
+function endGame(name, quit = false) {
+  if (gameCleanup) { gameCleanup(); gameCleanup = null; }
+  showScreen('hub');
+}
+
+/* =========================================================
+   GAME 1: TARGET BLAST
+   ========================================================= */
+games.targets = function() {
+  const area = document.getElementById('t-area');
+  area.innerHTML = '';
+  let score = 0, timeLeft = 20;
+  const scoreEl = document.getElementById('t-score');
+  const timerEl = document.getElementById('t-timer');
+  scoreEl.textContent = '0';
+  timerEl.textContent = timeLeft;
+
+  // Apply skin color to a target element
+  function styleTarget(el) {
+    const skin = SKINS.find(s => s.id === state.currentSkin);
+    let bg, glow;
+    if (skin.color === 'linear') {
+      bg = 'radial-gradient(circle, #ff2bd6 25%, #00f0ff 45%, #39ff14 58%, transparent 62%)';
+      glow = '#ff2bd6';
+    } else if (skin.color === 'lava') {
+      bg = 'radial-gradient(circle, #ffee00 20%, #ff7700 45%, #cc0000 58%, transparent 62%)';
+      glow = '#ff5500';
+    } else if (skin.color === 'ice') {
+      bg = 'radial-gradient(circle, #ffffff 20%, #aaddff 45%, #2266cc 58%, transparent 62%)';
+      glow = '#aaddff';
+    } else {
+      bg = `radial-gradient(circle, ${skin.color} 30%, ${skin.color}aa 50%, ${skin.color}55 60%, transparent 62%)`;
+      glow = skin.color;
+    }
+    el.style.background = bg;
+    el.style.boxShadow = `0 0 25px ${glow}`;
+  }
+
+  function spawn() {
+    if (!activeGame) return;
+    const t = document.createElement('div');
+    t.className = 'target';
+    styleTarget(t);
+    t.innerHTML = '<div class="t-eye left"></div><div class="t-eye right"></div><div class="t-mouth"></div>';
+    const r = area.getBoundingClientRect();
+    const x = Math.random() * (r.width - 72);
+    const y = Math.random() * (r.height - 72);
+    t.style.left = x + 'px';
+    t.style.top = y + 'px';
+    const hit = (ev) => {
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      if (!t.parentNode) return;
+      score++;
+      scoreEl.textContent = score;
+      t.remove();
+    };
+    // Use pointerdown / touchstart for instant registration — no click delay
+    t.addEventListener('pointerdown', hit);
+    t.addEventListener('touchstart', hit, { passive: false });
+    area.appendChild(t);
+    setTimeout(() => { if (t.parentNode) t.remove(); }, 1500);
+  }
+
+  const spawnInt = setInterval(spawn, 650);
+  const timerInt = setInterval(() => {
+    timeLeft--;
+    timerEl.textContent = timeLeft;
+    if (timeLeft <= 0) finish();
+  }, 1000);
+
+  function finish() {
+    clearInterval(spawnInt);
+    clearInterval(timerInt);
+    const reward = score * 3;
+    addMoney(reward);
+    trackGamePlayed('targets');
+    trackQuest('moneyEarned', reward);
+    showOverlay(area, 'TIME UP!', `Hits: ${score} → +$${reward}`);
+    activeGame = null;
+  }
+
+  gameCleanup = () => {
+    clearInterval(spawnInt);
+    clearInterval(timerInt);
+    area.innerHTML = '';
+    activeGame = null;
+  };
+};
+
+/* =========================================================
+   GAME 2: MEMORY MATRIX
+   ========================================================= */
+games.memory = function() {
+  const grid = document.getElementById('m-grid');
+  const icons = ['★','♥','♦','♣','♠','✿','☀','☾'];
+  const deck = [...icons, ...icons].sort(() => Math.random() - 0.5);
+  let flipped = [], matched = 0, moves = 0, lock = false;
+  document.getElementById('m-moves').textContent = '0';
+  document.getElementById('m-pairs').textContent = '0';
+  grid.innerHTML = '';
+
+  deck.forEach((icon, i) => {
+    const card = document.createElement('div');
+    card.className = 'mem-card';
+    card.dataset.icon = icon;
+    card.innerHTML = `
+      <span class="mem-icon">${icon}</span>
+      <div class="mem-face"><div class="mem-mouth"></div></div>
+    `;
+    card.onclick = () => {
+      if (lock || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+      card.classList.add('flipped');
+      flipped.push(card);
+      if (flipped.length === 2) {
+        moves++;
+        document.getElementById('m-moves').textContent = moves;
+        if (flipped[0].dataset.icon === flipped[1].dataset.icon) {
+          flipped.forEach(c => c.classList.add('matched'));
+          matched++;
+          document.getElementById('m-pairs').textContent = matched;
+          flipped = [];
+          if (matched === 8) finish();
+        } else {
+          lock = true;
+          setTimeout(() => {
+            flipped.forEach(c => c.classList.remove('flipped'));
+            flipped = [];
+            lock = false;
+          }, 700);
+        }
+      }
+    };
+    grid.appendChild(card);
+  });
+
+  function finish() {
+    // Reward: base 80, minus 4 per move over 8
+    const reward = Math.max(20, 80 - Math.max(0, moves - 8) * 4);
+    addMoney(reward);
+    trackGamePlayed('memory');
+    trackQuest('moneyEarned', reward);
+    const area = grid.parentElement;
+    showOverlay(area, 'COMPLETE!', `Moves: ${moves} → +$${reward}`);
+    activeGame = null;
+  }
+
+  gameCleanup = () => { grid.innerHTML = ''; activeGame = null; };
+};
+
+/* =========================================================
+   GAME 3: COIN CATCHER
+   ========================================================= */
+games.catcher = function() {
+  const canvas = document.getElementById('catcher-canvas');
+  const ctx = canvas.getContext('2d');
+  const area = canvas.parentElement;
+  canvas.width = area.clientWidth;
+  canvas.height = area.clientHeight;
+
+  let paddleX = canvas.width / 2;
+  const paddleW = 90, paddleH = 22;
+  let score = 0, timeLeft = 30;
+  let items = [];
+  let running = true;
+  document.getElementById('c-score').textContent = '0';
+  document.getElementById('c-timer').textContent = timeLeft;
+
+  function onMove(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    paddleX = Math.max(paddleW / 2, Math.min(canvas.width - paddleW / 2, x));
+  }
+  canvas.addEventListener('mousemove', onMove);
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); onMove(e); }, { passive: false });
+
+  const spawnInt = setInterval(() => {
+    if (!running) return;
+    items.push({
+      x: Math.random() * (canvas.width - 30) + 15,
+      y: -20,
+      type: Math.random() < 0.75 ? 'coin' : 'bomb',
+      vy: 2 + Math.random() * 2.5
+    });
+  }, 550);
+
+  const timerInt = setInterval(() => {
+    timeLeft--;
+    document.getElementById('c-timer').textContent = timeLeft;
+    if (timeLeft <= 0) finish(false);
+  }, 1000);
+
+  function loop() {
+    if (!running) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // paddle (uses skin with rainbow support)
+    const paddleCX = paddleX;
+    const paddleCY = canvas.height - 30 + paddleH / 2;
+    ctx.fillStyle = skinFill(ctx, paddleCX, paddleCY, paddleW / 2);
+    ctx.shadowColor = skinGlow();
+    ctx.shadowBlur = 20;
+    ctx.fillRect(paddleX - paddleW / 2, canvas.height - 30, paddleW, paddleH);
+    ctx.shadowBlur = 0;
+    drawPaddleFace(ctx, paddleCX, paddleCY, paddleH / 2);
+
+    // items
+    items.forEach(it => {
+      it.y += it.vy;
+      if (it.type === 'coin') {
+        ctx.fillStyle = '#fff700';
+        ctx.shadowColor = '#fff700';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(it.x, it.y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.shadowBlur = 0;
+        ctx.font = 'bold 14px VT323';
+        ctx.textAlign = 'center';
+        ctx.fillText('$', it.x, it.y + 5);
+      } else {
+        ctx.fillStyle = '#ff2e63';
+        ctx.shadowColor = '#ff2e63';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(it.x, it.y, 13, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px VT323';
+        ctx.textAlign = 'center';
+        ctx.fillText('X', it.x, it.y + 5);
+      }
+      // collision with paddle
+      if (it.y >= canvas.height - 30 - 10 && it.y <= canvas.height - 30 + paddleH + 10 &&
+          it.x >= paddleX - paddleW / 2 - 10 && it.x <= paddleX + paddleW / 2 + 10) {
+        if (it.type === 'coin') {
+          score++;
+          document.getElementById('c-score').textContent = score;
+          it.dead = true;
+        } else {
+          finish(true);
+        }
+      }
+    });
+    items = items.filter(it => !it.dead && it.y < canvas.height + 30);
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  function finish(hitBomb) {
+    if (!running) return;
+    running = false;
+    clearInterval(spawnInt);
+    clearInterval(timerInt);
+    canvas.removeEventListener('mousemove', onMove);
+    const reward = score * 2;
+    addMoney(reward);
+    trackGamePlayed('catcher');
+    trackQuest('moneyEarned', reward);
+    showOverlay(area, hitBomb ? 'BOOM!' : 'TIME UP!', `Coins: ${score} → +$${reward}`);
+    activeGame = null;
+  }
+
+  gameCleanup = () => {
+    running = false;
+    clearInterval(spawnInt);
+    clearInterval(timerInt);
+    canvas.removeEventListener('mousemove', onMove);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    activeGame = null;
+  };
+};
+
+/* =========================================================
+   GAME 4: NEON SNAKE
+   ========================================================= */
+games.snake = function() {
+  const canvas = document.getElementById('snake-canvas');
+  const ctx = canvas.getContext('2d');
+  const area = canvas.parentElement;
+  canvas.width = area.clientWidth;
+  canvas.height = area.clientHeight;
+
+  const cell = 20;
+  const cols = Math.floor(canvas.width / cell);
+  const rows = Math.floor(canvas.height / cell);
+  let snake = [{ x: Math.floor(cols / 2), y: Math.floor(rows / 2) }];
+  for (let i = 1; i < 3; i++) snake.push({ x: snake[0].x - i, y: snake[0].y });
+  let dir = { x: 1, y: 0 };
+  let pendingDir = dir;
+  let food = spawnFood();
+  let pellets = 0;
+  let running = true;
+  document.getElementById('s-score').textContent = snake.length;
+  document.getElementById('s-pellets').textContent = '0';
+
+  function spawnFood() {
+    while (true) {
+      const f = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
+      if (!snake.some(s => s.x === f.x && s.y === f.y)) return f;
+    }
+  }
+
+  function onKey(e) {
+    const k = e.key.toLowerCase();
+    if ((k === 'arrowup' || k === 'w') && dir.y === 0) pendingDir = { x: 0, y: -1 };
+    if ((k === 'arrowdown' || k === 's') && dir.y === 0) pendingDir = { x: 0, y: 1 };
+    if ((k === 'arrowleft' || k === 'a') && dir.x === 0) pendingDir = { x: -1, y: 0 };
+    if ((k === 'arrowright' || k === 'd') && dir.x === 0) pendingDir = { x: 1, y: 0 };
+  }
+  window.addEventListener('keydown', onKey);
+
+  // Touch swipe
+  let touchStart = null;
+  function onTouchStart(e) { touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }
+  function onTouchEnd(e) {
+    if (!touchStart) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStart.x, dy = t.clientY - touchStart.y;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 20 && dir.x === 0) pendingDir = { x: 1, y: 0 };
+      else if (dx < -20 && dir.x === 0) pendingDir = { x: -1, y: 0 };
+    } else {
+      if (dy > 20 && dir.y === 0) pendingDir = { x: 0, y: 1 };
+      else if (dy < -20 && dir.y === 0) pendingDir = { x: 0, y: -1 };
+    }
+    touchStart = null;
+  }
+  canvas.addEventListener('touchstart', onTouchStart);
+  canvas.addEventListener('touchend', onTouchEnd);
+
+  const tick = setInterval(() => {
+    if (!running) return;
+    dir = pendingDir;
+    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+    if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows ||
+        snake.some(s => s.x === head.x && s.y === head.y)) {
+      return finish();
+    }
+    snake.unshift(head);
+    if (head.x === food.x && head.y === food.y) {
+      pellets++;
+      food = spawnFood();
+      document.getElementById('s-pellets').textContent = pellets;
+      document.getElementById('s-score').textContent = snake.length;
+    } else {
+      snake.pop();
+    }
+    draw();
+  }, 110);
+
+  function draw() {
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // food
+    ctx.fillStyle = '#fff700';
+    ctx.shadowColor = '#fff700';
+    ctx.shadowBlur = 15;
+    ctx.fillRect(food.x * cell + 2, food.y * cell + 2, cell - 4, cell - 4);
+
+    // snake (uses skin with rainbow support)
+    snake.forEach((s, i) => {
+      const cxCell = s.x * cell + cell / 2;
+      const cyCell = s.y * cell + cell / 2;
+      ctx.fillStyle = skinFill(ctx, cxCell, cyCell, cell);
+      ctx.shadowColor = skinGlow();
+      ctx.shadowBlur = i === 0 ? 20 : 10;
+      ctx.fillRect(s.x * cell + 1, s.y * cell + 1, cell - 2, cell - 2);
+    });
+    ctx.shadowBlur = 0;
+    // Face on the head
+    if (snake.length > 0) {
+      const head = snake[0];
+      drawFace(ctx, head.x * cell + cell / 2, head.y * cell + cell / 2, (cell - 2) / 2);
+    }
+  }
+  draw();
+
+  function finish() {
+    if (!running) return;
+    running = false;
+    clearInterval(tick);
+    window.removeEventListener('keydown', onKey);
+    canvas.removeEventListener('touchstart', onTouchStart);
+    canvas.removeEventListener('touchend', onTouchEnd);
+    const reward = pellets * 5;
+    addMoney(reward);
+    trackGamePlayed('snake');
+    trackQuest('moneyEarned', reward);
+    showOverlay(area, 'CRASHED!', `Pellets: ${pellets} → +$${reward}`);
+    activeGame = null;
+  }
+
+  gameCleanup = () => {
+    running = false;
+    clearInterval(tick);
+    window.removeEventListener('keydown', onKey);
+    canvas.removeEventListener('touchstart', onTouchStart);
+    canvas.removeEventListener('touchend', onTouchEnd);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    activeGame = null;
+  };
+};
+
+/* =========================================================
+   GAME 5: BRICK BREAKER
+   ========================================================= */
+games.breaker = function() {
+  const canvas = document.getElementById('breaker-canvas');
+  const ctx = canvas.getContext('2d');
+  const area = canvas.parentElement;
+  canvas.width = area.clientWidth;
+  canvas.height = area.clientHeight;
+
+  const paddleW_base = 100, paddleH = 18;
+  let paddleX = canvas.width / 2;
+  let ball = { x: canvas.width / 2, y: canvas.height - 60, vx: 4, vy: -4, r: 13 };
+  let bricks = [];
+  let drops = [];         // falling powerups/downgrades from destroyed special bricks
+  let lives = 3, score = 0;
+  let running = true, launched = false;
+  let activeEffects = []; // timed paddle/ball effects
+  let floatingTexts = []; // "+LIFE!" pop-ups
+
+  const rows = 5, cols = 8;
+  const brickW = (canvas.width - 40) / cols - 6;
+  const brickH = 22;
+  const colors = ['#ff2bd6','#00f0ff','#fff700','#39ff14','#b026ff'];
+
+  // Brick types: normal + special upgrades/downgrades
+  // Each special brick has ~1-in-8 chance; ratios tuned so there are several per game
+  const SPECIAL_BRICKS = [
+    { type: 'big',    color: '#39ff14', symbol: '↔', label: 'WIDE!',   good: true  },
+    { type: 'small',  color: '#ff2e63', symbol: '><', label: 'SHRINK', good: false },
+    { type: 'slow',   color: '#00f0ff', symbol: '◓', label: 'SLOW',    good: true  },
+    { type: 'fast',   color: '#ff7700', symbol: '▶▶', label: 'FAST',   good: false },
+    { type: 'life',   color: '#ffd700', symbol: '♥', label: '+LIFE',   good: true  },
+    { type: 'minus',  color: '#aa0000', symbol: '☠', label: '-LIFE',   good: false }
+  ];
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      // ~20% chance of a special brick
+      let type = 'normal', symbol = '', specialColor = null, good = null;
+      if (Math.random() < 0.2) {
+        const sp = SPECIAL_BRICKS[Math.floor(Math.random() * SPECIAL_BRICKS.length)];
+        type = sp.type;
+        symbol = sp.symbol;
+        specialColor = sp.color;
+        good = sp.good;
+      }
+      bricks.push({
+        x: 20 + c * (brickW + 6),
+        y: 40 + r * (brickH + 6),
+        w: brickW, h: brickH,
+        color: specialColor || colors[r],
+        alive: true,
+        type, symbol, good
+      });
+    }
+  }
+
+  document.getElementById('b-score').textContent = '0';
+  document.getElementById('b-lives').textContent = lives;
+
+  // Apply a timed effect (duration in ms). Clears conflicting effect first.
+  function applyEffect(kind, endTime, data) {
+    // remove any existing effect of the same kind
+    activeEffects = activeEffects.filter(e => e.kind !== kind);
+    activeEffects.push({ kind, endTime, data });
+  }
+
+  function addFloatingText(text, x, y, color) {
+    floatingTexts.push({ text, x, y, color, frames: 50, vy: -1.3 });
+  }
+
+  // Spawn a falling drop when a special brick breaks
+  function spawnDrop(b) {
+    const sp = SPECIAL_BRICKS.find(s => s.type === b.type);
+    if (!sp) return;
+    drops.push({
+      x: b.x + b.w / 2,
+      y: b.y + b.h / 2,
+      vy: 2.4,
+      type: b.type,
+      color: sp.color,
+      symbol: sp.symbol,
+      good: sp.good
+    });
+  }
+
+  // Apply a drop's effect when the paddle catches (or bomb touches) it
+  function catchDrop(d) {
+    switch (d.type) {
+      case 'big': {
+        const newW = Math.min(180, paddleW_base * 1.5);
+        applyEffect('paddle', Date.now() + 10000, { width: newW });
+        addFloatingText('WIDER!', d.x, d.y, '#39ff14');
+        break;
+      }
+      case 'small': {
+        const newW = Math.max(50, paddleW_base * 0.55);
+        applyEffect('paddle', Date.now() + 8000, { width: newW });
+        addFloatingText('SHRINK!', d.x, d.y, '#ff2e63');
+        break;
+      }
+      case 'slow': {
+        ball.vx *= 0.6; ball.vy *= 0.6;
+        addFloatingText('SLOW!', d.x, d.y, '#00f0ff');
+        break;
+      }
+      case 'fast': {
+        ball.vx *= 1.5; ball.vy *= 1.5;
+        const v = Math.hypot(ball.vx, ball.vy);
+        const max = 14;
+        if (v > max) { ball.vx *= max / v; ball.vy *= max / v; }
+        addFloatingText('FAST!', d.x, d.y, '#ff7700');
+        break;
+      }
+      case 'life': {
+        lives++;
+        document.getElementById('b-lives').textContent = lives;
+        addFloatingText('+LIFE!', d.x, d.y, '#ffd700');
+        break;
+      }
+      case 'minus': {
+        lives = Math.max(0, lives - 1);
+        document.getElementById('b-lives').textContent = lives;
+        addFloatingText('-LIFE!', d.x, d.y, '#aa0000');
+        if (lives <= 0) {
+          setTimeout(() => { if (running && lives <= 0) finish(false); }, 100);
+        }
+        break;
+      }
+    }
+  }
+
+  function onMove(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const effW = getEffectiveWidth();
+    paddleX = Math.max(effW / 2, Math.min(canvas.width - effW / 2, x));
+    if (!launched) ball.x = paddleX;
+  }
+
+  function getEffectiveWidth() {
+    const now = Date.now();
+    const e = activeEffects.find(e => e.kind === 'paddle' && e.endTime > now);
+    return e ? e.data.width : paddleW_base;
+  }
+  function onClick() { launched = true; }
+  canvas.addEventListener('mousemove', onMove);
+  canvas.addEventListener('click', onClick);
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); onMove(e); launched = true; }, { passive: false });
+  canvas.addEventListener('touchstart', onClick);
+
+  function resetBall() {
+    ball.x = paddleX;
+    ball.y = canvas.height - 60;
+    ball.vx = 4 * (Math.random() < 0.5 ? 1 : -1);
+    ball.vy = -4;
+    launched = false;
+  }
+
+  function loop() {
+    if (!running) return;
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // bricks
+    bricks.forEach(b => {
+      if (!b.alive) return;
+      ctx.fillStyle = b.color;
+      ctx.shadowColor = b.color;
+      ctx.shadowBlur = b.type === 'normal' ? 12 : 18;
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.shadowBlur = 0;
+      // symbol for special bricks
+      if (b.symbol) {
+        // backing circle to make symbol readable
+        ctx.fillStyle = b.good ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.2)';
+        ctx.fillRect(b.x + 2, b.y + 2, b.w - 4, b.h - 4);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 13px "Press Start 2P", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(b.symbol, b.x + b.w / 2, b.y + b.h / 2);
+        ctx.textBaseline = 'alphabetic';
+      }
+    });
+    ctx.shadowBlur = 0;
+
+    // expire effects
+    const now = Date.now();
+    activeEffects = activeEffects.filter(e => e.endTime > now);
+
+    // paddle (uses skin with rainbow support)
+    const effW = getEffectiveWidth();
+    const bPadCX = paddleX, bPadCY = canvas.height - 25 + paddleH / 2;
+    ctx.fillStyle = skinFill(ctx, bPadCX, bPadCY, effW / 2);
+    ctx.shadowColor = skinGlow();
+    ctx.shadowBlur = 20;
+    ctx.fillRect(paddleX - effW / 2, canvas.height - 25, effW, paddleH);
+    ctx.shadowBlur = 0;
+    drawPaddleFace(ctx, bPadCX, bPadCY, paddleH / 2);
+
+    // ball
+    if (launched) {
+      ball.x += ball.vx;
+      ball.y += ball.vy;
+    } else {
+      ball.x = paddleX;
+    }
+
+    // wall collisions
+    if (ball.x - ball.r < 0 || ball.x + ball.r > canvas.width) ball.vx *= -1;
+    if (ball.y - ball.r < 0) ball.vy *= -1;
+
+    // paddle collision
+    const padW = getEffectiveWidth();
+    if (ball.y + ball.r >= canvas.height - 25 && ball.y + ball.r <= canvas.height - 25 + paddleH + 5 &&
+        ball.x >= paddleX - padW / 2 && ball.x <= paddleX + padW / 2 && ball.vy > 0) {
+      ball.vy = -Math.abs(ball.vy);
+      // add angle based on where it hit
+      const hit = (ball.x - paddleX) / (padW / 2);
+      ball.vx = hit * 5;
+    }
+
+    // brick collisions
+    bricks.forEach(b => {
+      if (!b.alive) return;
+      if (ball.x + ball.r > b.x && ball.x - ball.r < b.x + b.w &&
+          ball.y + ball.r > b.y && ball.y - ball.r < b.y + b.h) {
+        b.alive = false;
+        score++;
+        document.getElementById('b-score').textContent = score;
+        // spawn a falling drop for special bricks
+        if (b.type !== 'normal') spawnDrop(b);
+        // choose bounce direction
+        const overlapX = Math.min(ball.x + ball.r - b.x, b.x + b.w - (ball.x - ball.r));
+        const overlapY = Math.min(ball.y + ball.r - b.y, b.y + b.h - (ball.y - ball.r));
+        if (overlapX < overlapY) ball.vx *= -1;
+        else ball.vy *= -1;
+      }
+    });
+
+    // drops physics + paddle catching
+    const paddleTopY = canvas.height - 25;
+    const paddleBotY = canvas.height - 25 + paddleH;
+    drops.forEach(d => {
+      if (d.caught || d.missed) return;
+      d.y += d.vy;
+      // check paddle catch
+      if (d.y >= paddleTopY - 12 && d.y <= paddleBotY + 4 &&
+          d.x >= paddleX - padW / 2 - 8 && d.x <= paddleX + padW / 2 + 8) {
+        d.caught = true;
+        catchDrop(d);
+      } else if (d.y > canvas.height + 30) {
+        d.missed = true;
+      }
+    });
+    drops = drops.filter(d => !d.caught && !d.missed);
+
+    // draw drops (diamond shape with symbol + glow)
+    drops.forEach(d => {
+      ctx.save();
+      ctx.translate(d.x, d.y);
+      // subtle rotation bobble
+      const bob = Math.sin(Date.now() / 200 + d.x) * 0.08;
+      ctx.rotate(bob);
+      // diamond body
+      ctx.fillStyle = d.color;
+      ctx.shadowColor = d.color;
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.moveTo(0, -14);
+      ctx.lineTo(14, 0);
+      ctx.lineTo(0, 14);
+      ctx.lineTo(-14, 0);
+      ctx.closePath();
+      ctx.fill();
+      // inner fill for contrast behind symbol
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = d.good ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.25)';
+      ctx.beginPath();
+      ctx.moveTo(0, -9);
+      ctx.lineTo(9, 0);
+      ctx.lineTo(0, 9);
+      ctx.lineTo(-9, 0);
+      ctx.closePath();
+      ctx.fill();
+      // symbol
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 11px "Press Start 2P", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(d.symbol, 0, 1);
+      ctx.textBaseline = 'alphabetic';
+      ctx.restore();
+    });
+
+    // floating effect texts
+    floatingTexts = floatingTexts.filter(f => f.frames > 0);
+    floatingTexts.forEach(f => {
+      ctx.globalAlpha = Math.min(1, f.frames / 30);
+      ctx.fillStyle = f.color;
+      ctx.shadowColor = f.color;
+      ctx.shadowBlur = 10;
+      ctx.font = 'bold 14px "Press Start 2P", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(f.text, f.x, f.y);
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+      f.y += f.vy;
+      f.frames--;
+    });
+
+    // draw ball
+    ctx.fillStyle = skinFill(ctx, ball.x, ball.y, ball.r);
+    ctx.shadowColor = skinGlow();
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    drawFace(ctx, ball.x, ball.y, ball.r);
+
+    // fell off bottom
+    if (ball.y - ball.r > canvas.height) {
+      lives--;
+      document.getElementById('b-lives').textContent = lives;
+      if (lives <= 0) return finish(false);
+      resetBall();
+    }
+
+    // all cleared
+    if (bricks.every(b => !b.alive)) return finish(true);
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  function finish(cleared) {
+    if (!running) return;
+    running = false;
+    canvas.removeEventListener('mousemove', onMove);
+    canvas.removeEventListener('click', onClick);
+    let reward = score * 2 + (cleared ? 50 : 0);
+    addMoney(reward);
+    trackGamePlayed('breaker');
+    trackQuest('moneyEarned', reward);
+    showOverlay(area, cleared ? 'CLEARED!' : 'GAME OVER', `Bricks: ${score}${cleared ? ' (+$50 bonus!)' : ''} → +$${reward}`);
+    activeGame = null;
+  }
+
+  gameCleanup = () => {
+    running = false;
+    canvas.removeEventListener('mousemove', onMove);
+    canvas.removeEventListener('click', onClick);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    activeGame = null;
+  };
+};
+
+/* =========================================================
+   GAME 6: PONG
+   ========================================================= */
+games.pong = function() {
+  const canvas = document.getElementById('pong-canvas');
+  const ctx = canvas.getContext('2d');
+  const area = canvas.parentElement;
+  canvas.width = area.clientWidth;
+  canvas.height = area.clientHeight;
+
+  const paddleH = 80, paddleW = 10;
+  let playerY = canvas.height / 2 - paddleH / 2;
+  let cpuY = canvas.height / 2 - paddleH / 2;
+  let ball = { x: canvas.width / 2, y: canvas.height / 2, vx: 5, vy: 3, r: 13 };
+  let pScore = 0, cScore = 0;
+  let running = true;
+  const WIN = 5;
+
+  document.getElementById('p-player').textContent = '0';
+  document.getElementById('p-cpu').textContent = '0';
+
+  function onMove(e) {
+    const rect = canvas.getBoundingClientRect();
+    const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+    playerY = Math.max(0, Math.min(canvas.height - paddleH, y - paddleH / 2));
+  }
+  canvas.addEventListener('mousemove', onMove);
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); onMove(e); }, { passive: false });
+
+  function resetBall(dir) {
+    ball.x = canvas.width / 2;
+    ball.y = canvas.height / 2;
+    ball.vx = 5 * dir;
+    ball.vy = (Math.random() - 0.5) * 6;
+  }
+
+  function loop() {
+    if (!running) return;
+    // fade trail
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // center line
+    ctx.strokeStyle = 'rgba(255,43,214,0.4)';
+    ctx.setLineDash([10, 10]);
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2, 0);
+    ctx.lineTo(canvas.width / 2, canvas.height);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // CPU AI: track ball with some lag/imperfection
+    const targetY = ball.y - paddleH / 2;
+    const diff = targetY - cpuY;
+    cpuY += Math.max(-4.5, Math.min(4.5, diff * 0.12));
+    cpuY = Math.max(0, Math.min(canvas.height - paddleH, cpuY));
+
+    // ball
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+    if (ball.y - ball.r < 0 || ball.y + ball.r > canvas.height) ball.vy *= -1;
+
+    // player paddle collision
+    if (ball.x - ball.r <= 20 + paddleW && ball.x > 20 &&
+        ball.y >= playerY && ball.y <= playerY + paddleH && ball.vx < 0) {
+      ball.vx = Math.abs(ball.vx) * 1.05;
+      const hit = (ball.y - (playerY + paddleH / 2)) / (paddleH / 2);
+      ball.vy = hit * 5;
+    }
+    // CPU paddle collision
+    if (ball.x + ball.r >= canvas.width - 20 - paddleW && ball.x < canvas.width - 20 &&
+        ball.y >= cpuY && ball.y <= cpuY + paddleH && ball.vx > 0) {
+      ball.vx = -Math.abs(ball.vx) * 1.05;
+      const hit = (ball.y - (cpuY + paddleH / 2)) / (paddleH / 2);
+      ball.vy = hit * 5;
+    }
+
+    // scoring
+    if (ball.x < 0) {
+      cScore++;
+      document.getElementById('p-cpu').textContent = cScore;
+      if (cScore >= WIN) return finish(false);
+      resetBall(-1);
+    } else if (ball.x > canvas.width) {
+      pScore++;
+      document.getElementById('p-player').textContent = pScore;
+      if (pScore >= WIN) return finish(true);
+      resetBall(1);
+    }
+
+    // draw paddles
+    const pPadCX = 20 + paddleW / 2, pPadCY = playerY + paddleH / 2;
+    ctx.fillStyle = skinFill(ctx, pPadCX, pPadCY, paddleH / 2);
+    ctx.shadowColor = skinGlow();
+    ctx.shadowBlur = 15;
+    ctx.fillRect(20, playerY, paddleW, paddleH);
+
+    ctx.fillStyle = '#ff2e63';
+    ctx.shadowColor = '#ff2e63';
+    ctx.fillRect(canvas.width - 20 - paddleW, cpuY, paddleW, paddleH);
+
+    // ball (uses current skin)
+    ctx.fillStyle = skinFill(ctx, ball.x, ball.y, ball.r);
+    ctx.shadowColor = skinGlow();
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    drawFace(ctx, ball.x, ball.y, ball.r);
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  function finish(won) {
+    if (!running) return;
+    running = false;
+    canvas.removeEventListener('mousemove', onMove);
+    const reward = pScore * 20 + (won ? 100 : 0);
+    addMoney(reward);
+    trackGamePlayed('pong');
+    trackQuest('moneyEarned', reward);
+    showOverlay(area, won ? 'VICTORY!' : 'DEFEATED', `Score: ${pScore}-${cScore}${won ? ' (+$100 bonus!)' : ''} → +$${reward}`);
+    activeGame = null;
+  }
+
+  gameCleanup = () => {
+    running = false;
+    canvas.removeEventListener('mousemove', onMove);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    activeGame = null;
+  };
+};
+
+/* =========================================================
+   GAME 7: BASKETBALL (SPINNING TIMING WHEEL)
+   ========================================================= */
+games.basketball = function() {
+  const canvas = document.getElementById('basketball-canvas');
+  const ctx = canvas.getContext('2d');
+  const area = canvas.parentElement;
+  canvas.width = area.clientWidth;
+  canvas.height = area.clientHeight;
+
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2 + 20;
+  const radius = Math.min(canvas.width, canvas.height) * 0.32;
+
+  let arrowAngle = -Math.PI / 2;       // start pointing up
+  let arrowSpeed = 0.035;               // radians per frame; increases each hit
+  const speedIncrement = 0.0045;
+  const maxSpeed = 0.19;
+
+  let targetAngle = 0;                  // center of the green zone
+  let targetArc = Math.PI / 5;          // width of the zone (~36°)
+  const minArc = Math.PI / 16;          // shrinks slightly as it speeds up
+  let direction = 1;                    // spin direction (flips sometimes on miss to mess with you)
+
+  let score = 0;
+  let misses = 0;
+  const maxMisses = 3;
+  let running = true;
+  let feedback = null;                  // { text, color, frames, x, y }
+  let shake = 0;
+  let pulse = 0;
+
+  function randomizeTarget() {
+    targetAngle = Math.random() * Math.PI * 2;
+  }
+  randomizeTarget();
+
+  document.getElementById('bb-score').textContent = '0';
+  document.getElementById('bb-timer').textContent = '0/3';
+
+  function isHit() {
+    // normalize both angles to [0, 2π)
+    const two = Math.PI * 2;
+    const a = ((arrowAngle % two) + two) % two;
+    const t = ((targetAngle % two) + two) % two;
+    let diff = Math.abs(a - t);
+    if (diff > Math.PI) diff = two - diff;
+    return diff <= targetArc / 2;
+  }
+
+  function attemptShot() {
+    if (!running) return;
+    if (isHit()) {
+      score++;
+      document.getElementById('bb-score').textContent = score;
+      trackQuest('baskets', 1);
+      // speed up and shrink the zone a little
+      arrowSpeed = Math.min(maxSpeed, arrowSpeed + speedIncrement);
+      targetArc = Math.max(minArc, targetArc - 0.012);
+      // flip direction on every hit — keeps you on your toes
+      direction *= -1;
+      randomizeTarget();
+      feedback = { text: 'HIT!', color: '#39ff14', frames: 40 };
+      pulse = 30;
+    } else {
+      misses++;
+      document.getElementById('bb-timer').textContent = `${misses}/${maxMisses}`;
+      feedback = { text: 'MISS!', color: '#ff2e63', frames: 40 };
+      shake = 14;
+      if (misses >= maxMisses) return finish();
+    }
+  }
+
+  function onInput(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    attemptShot();
+  }
+  function onKey(e) {
+    if (e.code === 'Space' || e.key === ' ') {
+      e.preventDefault();
+      attemptShot();
+    }
+  }
+  canvas.addEventListener('click', onInput);
+  canvas.addEventListener('touchstart', onInput, { passive: false });
+  window.addEventListener('keydown', onKey);
+
+  function loop() {
+    if (!running) return;
+
+    // update arrow
+    arrowAngle += arrowSpeed * direction;
+    if (shake > 0) shake--;
+    if (pulse > 0) pulse--;
+
+    // apply shake
+    const sx = shake ? (Math.random() - 0.5) * shake : 0;
+    const sy = shake ? (Math.random() - 0.5) * shake : 0;
+
+    // background
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    ctx.translate(sx, sy);
+
+    // outer wheel ring
+    ctx.strokeStyle = 'rgba(176,38,255,0.8)';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#b026ff';
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius + 18, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // tick marks around the wheel
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 36; i++) {
+      const a = (i / 36) * Math.PI * 2;
+      const x1 = cx + Math.cos(a) * (radius + 4);
+      const y1 = cy + Math.sin(a) * (radius + 4);
+      const x2 = cx + Math.cos(a) * (radius + 12);
+      const y2 = cy + Math.sin(a) * (radius + 12);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    // target zone (green arc)
+    const tStart = targetAngle - targetArc / 2;
+    const tEnd = targetAngle + targetArc / 2;
+    // glow behind zone
+    ctx.strokeStyle = 'rgba(57,255,20,0.25)';
+    ctx.lineWidth = 38;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, tStart, tEnd);
+    ctx.stroke();
+    // solid zone
+    ctx.strokeStyle = '#39ff14';
+    ctx.lineWidth = 16;
+    ctx.shadowColor = '#39ff14';
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, tStart, tEnd);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // target endpoints - little tick caps for clarity
+    [tStart, tEnd].forEach(a => {
+      const x1 = cx + Math.cos(a) * (radius - 12);
+      const y1 = cy + Math.sin(a) * (radius - 12);
+      const x2 = cx + Math.cos(a) * (radius + 12);
+      const y2 = cy + Math.sin(a) * (radius + 12);
+      ctx.strokeStyle = '#fff700';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    });
+
+    // center orb (uses current skin)
+    const hubR = 34 + (pulse > 0 ? pulse * 0.3 : 0);
+    ctx.fillStyle = skinFill(ctx, cx, cy, hubR);
+    ctx.shadowColor = skinGlow();
+    ctx.shadowBlur = 25;
+    ctx.beginPath();
+    ctx.arc(cx, cy, hubR, 0, Math.PI * 2);
+    ctx.fill();
+    // subtle inner highlight for depth
+    const hiGrad = ctx.createRadialGradient(cx - hubR * 0.35, cy - hubR * 0.35, 2, cx, cy, hubR);
+    hiGrad.addColorStop(0, 'rgba(255,255,255,0.35)');
+    hiGrad.addColorStop(0.5, 'rgba(255,255,255,0)');
+    ctx.fillStyle = hiGrad;
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.arc(cx, cy, hubR, 0, Math.PI * 2);
+    ctx.fill();
+    // thin rim
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, hubR, 0, Math.PI * 2);
+    ctx.stroke();
+    // face on the orb
+    drawFace(ctx, cx, cy, hubR);
+
+    // arrow (uses skin color)
+    const arrowTipX = cx + Math.cos(arrowAngle) * (radius + 22);
+    const arrowTipY = cy + Math.sin(arrowAngle) * (radius + 22);
+    const arrowBaseX = cx + Math.cos(arrowAngle) * 38;
+    const arrowBaseY = cy + Math.sin(arrowAngle) * 38;
+    const perp = arrowAngle + Math.PI / 2;
+    // arrow shaft
+    ctx.strokeStyle = skinFill(ctx, arrowBaseX, arrowBaseY, radius);
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.shadowColor = skinGlow();
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.moveTo(arrowBaseX, arrowBaseY);
+    ctx.lineTo(arrowTipX, arrowTipY);
+    ctx.stroke();
+    // arrowhead triangle
+    const headBackX = cx + Math.cos(arrowAngle) * (radius + 8);
+    const headBackY = cy + Math.sin(arrowAngle) * (radius + 8);
+    const leftX = headBackX + Math.cos(perp) * 10;
+    const leftY = headBackY + Math.sin(perp) * 10;
+    const rightX = headBackX - Math.cos(perp) * 10;
+    const rightY = headBackY - Math.sin(perp) * 10;
+    ctx.fillStyle = skinFill(ctx, arrowTipX, arrowTipY, 20);
+    ctx.beginPath();
+    ctx.moveTo(arrowTipX, arrowTipY);
+    ctx.lineTo(leftX, leftY);
+    ctx.lineTo(rightX, rightY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.lineCap = 'butt';
+    ctx.shadowBlur = 0;
+
+    // feedback text
+    if (feedback && feedback.frames > 0) {
+      const t = feedback.frames / 40;
+      ctx.globalAlpha = t;
+      ctx.fillStyle = feedback.color;
+      ctx.shadowColor = feedback.color;
+      ctx.shadowBlur = 20;
+      ctx.font = 'bold 36px "Press Start 2P", monospace';
+      ctx.textAlign = 'center';
+      const yOff = (1 - t) * 40;
+      ctx.fillText(feedback.text, cx, cy - radius - 40 - yOff);
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+      feedback.frames--;
+    }
+
+    // speed indicator
+    ctx.fillStyle = '#aaa';
+    ctx.font = '16px VT323, monospace';
+    ctx.textAlign = 'left';
+    const speedPct = Math.floor((arrowSpeed / maxSpeed) * 100);
+    ctx.fillText(`SPEED ${speedPct}%`, 12, 22);
+
+    ctx.restore();
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  function finish() {
+    if (!running) return;
+    running = false;
+    canvas.removeEventListener('click', onInput);
+    canvas.removeEventListener('touchstart', onInput);
+    window.removeEventListener('keydown', onKey);
+    const reward = score * 8;
+    addMoney(reward);
+    trackGamePlayed('basketball');
+    trackQuest('moneyEarned', reward);
+    showOverlay(area, '3 MISSES!', `Hits: ${score} → +$${reward}`);
+    activeGame = null;
+  }
+
+  gameCleanup = () => {
+    running = false;
+    canvas.removeEventListener('click', onInput);
+    canvas.removeEventListener('touchstart', onInput);
+    window.removeEventListener('keydown', onKey);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    activeGame = null;
+  };
+};
+
+/* =========================================================
+   GAME 8: RISK IT (press-your-luck)
+   ========================================================= */
+// Weighted wheel — each slot has a selection probability (sum = 100)
+const RISK_SLOTS = [
+  { value: 10,  weight: 32, color: '#00f0ff' },
+  { value: 20,  weight: 24, color: '#39ff14' },
+  { value: 30,  weight: 16, color: '#ff2bd6' },
+  { value: 40,  weight: 10, color: '#fff700' },
+  { value: 70,  weight: 8,  color: '#b026ff' },
+  { value: 100, weight: 5,  color: '#ff7700' },
+  { value: 200, weight: 3,  color: '#ff2e63' },
+  { value: 250, weight: 2,  color: '#ffd700' }
+];
+
+function pickRiskSlotIndex() {
+  const total = RISK_SLOTS.reduce((s, p) => s + p.weight, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < RISK_SLOTS.length; i++) {
+    r -= RISK_SLOTS[i].weight;
+    if (r <= 0) return i;
+  }
+  return 0;
+}
+
+games.risk = function() {
+  const wheelEl = document.getElementById('risk-wheel');
+  const centerEl = document.getElementById('risk-center');
+  const actionsEl = document.getElementById('risk-actions');
+  const potEl = document.getElementById('risk-pot');
+  const streakEl = document.getElementById('risk-streak');
+  const nextEl = document.getElementById('risk-next');
+
+  let pot = 0;
+  let streak = 0;          // consecutive successful doubles
+  let phase = 'idle';      // 'idle' | 'spinning' | 'decision' | 'risking' | 'bust'
+  let totalSpins = 0;
+  let totalCashedOut = 0;
+
+  // Build the value wheel
+  function buildRiskWheel() {
+    wheelEl.innerHTML = '';
+    wheelEl.style.transition = 'none';
+    wheelEl.style.transform = 'rotate(0deg)';
+    const seg = 360 / RISK_SLOTS.length;
+    RISK_SLOTS.forEach((slot, i) => {
+      const el = document.createElement('div');
+      el.className = 'wheel-segment';
+      el.style.transform = `rotate(${i * seg}deg) skewY(${seg - 90}deg)`;
+      el.style.background = slot.color;
+      const txt = document.createElement('div');
+      txt.className = 'seg-label';
+      // Counter-skew so text reads straight, then rotate to center on the wedge
+      txt.style.transform = `skewY(${90 - seg}deg) rotate(${seg / 2}deg)`;
+      txt.innerHTML = `<div class="seg-title">$${slot.value}</div><div class="seg-pct">${slot.weight}%</div>`;
+      el.appendChild(txt);
+      wheelEl.appendChild(el);
+    });
+    // force reflow so the next transition applies cleanly
+    void wheelEl.offsetWidth;
+    wheelEl.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.25, 1)';
+  }
+  buildRiskWheel();
+
+  function updateStats() {
+    potEl.textContent = '$' + pot;
+    streakEl.textContent = streak;
+    // show what's on the line for the NEXT risk
+    const nextMultiplier = streak >= 2 ? '×3' : '×2';
+    nextEl.textContent = nextMultiplier;
+    if (streak >= 2) nextEl.classList.add('risk-next-triple');
+    else nextEl.classList.remove('risk-next-triple');
+  }
+
+  function renderActions() {
+    actionsEl.innerHTML = '';
+    if (phase === 'idle') {
+      actionsEl.innerHTML = `<button class="btn yellow" onclick="riskSpin()">SPIN!</button>`;
+    } else if (phase === 'decision') {
+      const nextMultiplier = streak >= 2 ? 'TRIPLE' : 'DOUBLE';
+      const nextAmount = streak >= 2 ? pot * 3 : pot * 2;
+      actionsEl.innerHTML = `
+        <button class="btn risk-btn-cash" onclick="riskCashOut()">💰 CASH OUT LIKE A COWARD ($${pot})</button>
+        <button class="btn risk-btn-risk" onclick="riskRisk()">⚡ RISK IT FOR THE BISCUIT! (→ $${nextAmount} ${nextMultiplier})</button>
+      `;
+    } else if (phase === 'bust') {
+      actionsEl.innerHTML = `<button class="btn yellow" onclick="riskReset()">SPIN AGAIN</button>`;
+    } else {
+      // spinning / risking — no buttons
+      actionsEl.innerHTML = '';
+    }
+  }
+
+  // Track the cumulative wheel rotation so every new spin builds on the previous angle cleanly.
+  let currentRotation = 0;
+  function resetWheelTransition() {
+    wheelEl.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.25, 1)';
+  }
+
+  // ---- expose functions to the global scope so onclick works ----
+  window.riskSpin = function() {
+    if (phase !== 'idle') return;
+    phase = 'spinning';
+    centerEl.textContent = 'SPINNING';
+    centerEl.classList.remove('won', 'lost');
+    renderActions();
+
+    // Make sure the wheel is in "spin" mode (in case a shake left it in fast mode)
+    resetWheelTransition();
+
+    const idx = pickRiskSlotIndex();
+    const seg = 360 / RISK_SLOTS.length;
+    // Add 5 full rotations plus the offset to the chosen segment, relative to current rotation
+    const targetOffset = (360 - (idx * seg + seg / 2) + 360) % 360;
+    // Round current rotation down to a multiple of 360 and add rotations + target offset
+    currentRotation = currentRotation + 360 * 5 + targetOffset;
+    wheelEl.style.transform = `rotate(${currentRotation}deg)`;
+
+    setTimeout(() => {
+      pot = RISK_SLOTS[idx].value;
+      streak = 0;
+      totalSpins++;
+      phase = 'decision';
+      centerEl.textContent = `WON\n$${pot}`;
+      centerEl.classList.add('won');
+      toast(`Landed on $${pot}!`);
+      updateStats();
+      renderActions();
+    }, 4100);
+  };
+
+  window.riskRisk = function() {
+    if (phase !== 'decision') return;
+    phase = 'risking';
+    centerEl.textContent = '50/50...';
+    centerEl.classList.remove('won', 'lost');
+    renderActions();
+
+    // Shake animation — rapid small wobbles around the current angle
+    let shakes = 0;
+    const baseAngle = currentRotation;
+    const shakeInt = setInterval(() => {
+      wheelEl.style.transition = 'transform 0.08s linear';
+      const wobble = (shakes % 2 === 0 ? 8 : -8) + (Math.random() * 12 - 6);
+      wheelEl.style.transform = `rotate(${baseAngle + wobble}deg)`;
+      shakes++;
+      if (shakes >= 10) {
+        clearInterval(shakeInt);
+        // Snap back to baseAngle and restore normal spin transition for future spins
+        wheelEl.style.transform = `rotate(${baseAngle}deg)`;
+        setTimeout(resetWheelTransition, 100);
+      }
+    }, 80);
+
+    setTimeout(() => {
+      const won = Math.random() < 0.5;
+      if (won) {
+        const multiplier = streak >= 2 ? 3 : 2;
+        const newPot = pot * multiplier;
+        pot = newPot;
+        streak++;
+        // Quest: hit a triple (the 3rd win in a row)
+        if (multiplier === 3) {
+          trackQuest('riskStreak3', 1);
+        }
+        // after cashing in a triple, reset the streak so the next round starts fresh at x2
+        if (multiplier === 3) streak = 0;
+        phase = 'decision';
+        centerEl.textContent = `${multiplier === 3 ? 'TRIPLED!' : 'DOUBLED!'}\n$${pot}`;
+        centerEl.classList.add('won');
+        toast(multiplier === 3 ? `TRIPLE! +$${newPot - newPot/3}` : `DOUBLED to $${pot}!`);
+      } else {
+        pot = 0;
+        streak = 0;
+        phase = 'bust';
+        centerEl.textContent = 'BUST!';
+        centerEl.classList.add('lost');
+        toast('BUST! Lost it all', true);
+      }
+      updateStats();
+      renderActions();
+    }, 900);
+  };
+
+  window.riskCashOut = function() {
+    if (phase !== 'decision') return;
+    state.money += pot;
+    totalCashedOut += pot;
+    saveState();
+    toast(`CASHED OUT +$${pot}!`);
+    trackQuest('moneyEarned', pot);
+    pot = 0;
+    streak = 0;
+    phase = 'idle';
+    centerEl.textContent = 'SPIN';
+    centerEl.classList.remove('won', 'lost');
+    updateStats();
+    renderActions();
+    renderHub();
+  };
+
+  window.riskReset = function() {
+    phase = 'idle';
+    centerEl.textContent = 'SPIN';
+    centerEl.classList.remove('won', 'lost');
+    updateStats();
+    renderActions();
+  };
+
+  updateStats();
+  renderActions();
+
+  gameCleanup = () => {
+    // Count the session as a played game if they cashed out at least once
+    if (totalSpins > 0) trackGamePlayed('risk');
+    // Clean up global handlers
+    delete window.riskSpin;
+    delete window.riskRisk;
+    delete window.riskCashOut;
+    delete window.riskReset;
+    activeGame = null;
+  };
+};
+
+/* =========================================================
+   GAME 9: REACTION TIME
+   ========================================================= */
+games.reaction = function() {
+  const area = document.getElementById('rx-area');
+  const prompt = document.getElementById('rx-prompt');
+  const timingsEl = document.getElementById('rx-timings');
+  const roundEl = document.getElementById('rx-round');
+  const bestEl = document.getElementById('rx-best');
+
+  let round = 0;
+  const totalRounds = 5;
+  let phase = 'idle';   // 'idle' | 'waiting' | 'ready' | 'done'
+  let waitStart = 0;
+  let readyTime = 0;
+  let timings = [];
+  let waitTimeout = null;
+  let best = Infinity;
+
+  area.className = 'game-area reaction-area';
+  prompt.textContent = 'TAP TO START';
+  timingsEl.innerHTML = '';
+  roundEl.textContent = '1';
+  bestEl.textContent = '—';
+
+  function nextRound() {
+    round++;
+    if (round > totalRounds) return finish();
+    roundEl.textContent = round;
+    phase = 'waiting';
+    area.className = 'game-area reaction-area waiting';
+    prompt.textContent = 'WAIT...';
+    const delay = 1200 + Math.random() * 2300;
+    waitTimeout = setTimeout(() => {
+      if (phase !== 'waiting') return;
+      phase = 'ready';
+      area.className = 'game-area reaction-area ready';
+      prompt.textContent = 'TAP!';
+      readyTime = performance.now();
+    }, delay);
+  }
+
+  function renderTimings() {
+    timingsEl.innerHTML = timings.map(t =>
+      `<span class="rx-time-pill ${t < 0 ? 'fail' : ''}">${t < 0 ? 'EARLY' : t + 'ms'}</span>`
+    ).join('');
+  }
+
+  function handleTap() {
+    if (phase === 'idle' || phase === 'done') {
+      // start
+      round = 0;
+      timings = [];
+      renderTimings();
+      best = Infinity;
+      bestEl.textContent = '—';
+      nextRound();
+      return;
+    }
+    if (phase === 'waiting') {
+      // too soon
+      clearTimeout(waitTimeout);
+      timings.push(-1);
+      renderTimings();
+      area.className = 'game-area reaction-area toosoon';
+      prompt.textContent = 'TOO EARLY!';
+      phase = 'idle';
+      setTimeout(() => {
+        if (phase === 'idle') { area.className = 'game-area reaction-area'; prompt.textContent = 'TAP TO RETRY'; }
+      }, 1100);
+      return;
+    }
+    if (phase === 'ready') {
+      const ms = Math.round(performance.now() - readyTime);
+      timings.push(ms);
+      if (ms < best) { best = ms; bestEl.textContent = ms; }
+      renderTimings();
+      area.className = 'game-area reaction-area result';
+      prompt.textContent = ms + 'ms';
+      phase = 'idle';
+      setTimeout(() => { if (phase === 'idle' && round < totalRounds) nextRound(); }, 900);
+      return;
+    }
+  }
+
+  function onTap(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    handleTap();
+  }
+  area.addEventListener('pointerdown', onTap);
+
+  function finish() {
+    phase = 'done';
+    // Reward = cash based on best time. Faster = more.
+    // Typical human: 250ms. Under 200 is great; under 150 elite.
+    const valid = timings.filter(t => t > 0);
+    let reward = 0;
+    let bestMs = null;
+    if (valid.length > 0) {
+      bestMs = Math.min(...valid);
+      // Reward curve: 500 - bestMs, floor 5, cap at whatever
+      reward = Math.max(5, Math.round((500 - bestMs) / 2));
+      // penalty for early taps
+      reward -= timings.filter(t => t < 0).length * 5;
+      reward = Math.max(0, reward);
+    }
+    addMoney(reward);
+    trackGamePlayed('reaction');
+    trackQuest('moneyEarned', reward);
+    // Verdict: use AVERAGE of valid rounds. <200 = fast, 200-300 = avg, >300 = slow
+    let verdict, avgMs = null;
+    if (valid.length === 0) {
+      verdict = 'NO VALID ROUNDS';
+    } else {
+      avgMs = Math.round(valid.reduce((s, t) => s + t, 0) / valid.length);
+      if (avgMs < 200)      verdict = 'FASTER THAN AVERAGE';
+      else if (avgMs > 300) verdict = 'SLOWER THAN AVERAGE';
+      else                  verdict = 'AVERAGE';
+    }
+    const validTxt = valid.length ? `Avg: ${avgMs}ms (Best: ${bestMs}ms)` : 'No valid rounds';
+    showOverlay(area.parentElement || area, verdict, `${validTxt} → +$${reward}`);
+    activeGame = null;
+  }
+
+  gameCleanup = () => {
+    clearTimeout(waitTimeout);
+    area.removeEventListener('pointerdown', onTap);
+    area.className = 'game-area reaction-area';
+    activeGame = null;
+  };
+};
+
+/* =========================================================
+   GAME 10: CLICK STORM (CPS)
+   ========================================================= */
+games.cps = function() {
+  const btn = document.getElementById('cps-btn');
+  const label = document.getElementById('cps-label');
+  const subtitle = document.getElementById('cps-subtitle');
+  const rateEl = document.getElementById('cps-rate');
+  const clicksEl = document.getElementById('cps-clicks');
+  const timeEl = document.getElementById('cps-time');
+
+  let clicks = 0;
+  let phase = 'idle';     // 'idle' | 'running' | 'done'
+  let startTime = 0;
+  const duration = 5000;
+  let rafId = null;
+
+  clicksEl.textContent = '0';
+  timeEl.textContent = '5.0';
+  rateEl.textContent = '';
+  label.textContent = 'TAP TO START';
+  subtitle.textContent = '5 seconds of spam';
+  btn.classList.remove('active');
+
+  function start() {
+    phase = 'running';
+    clicks = 0;
+    clicksEl.textContent = '0';
+    startTime = performance.now();
+    label.textContent = 'GO!';
+    subtitle.textContent = 'CLICK CLICK CLICK';
+    btn.classList.add('active');
+    tick();
+  }
+
+  function tick() {
+    if (phase !== 'running') return;
+    const elapsed = performance.now() - startTime;
+    const remaining = Math.max(0, duration - elapsed);
+    timeEl.textContent = (remaining / 1000).toFixed(1);
+    const cps = clicks / (elapsed / 1000 || 1);
+    rateEl.textContent = isFinite(cps) ? `${cps.toFixed(1)} CPS` : '';
+    if (remaining <= 0) return finish();
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function onClick(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    if (phase === 'idle') return start();
+    if (phase === 'done') return;
+    clicks++;
+    clicksEl.textContent = clicks;
+  }
+  btn.addEventListener('pointerdown', onClick);
+
+  function finish() {
+    phase = 'done';
+    if (rafId) cancelAnimationFrame(rafId);
+    btn.classList.remove('active');
+    timeEl.textContent = '0.0';
+    const cps = clicks / 5;
+    label.textContent = 'DONE!';
+    subtitle.textContent = `${cps.toFixed(1)} CPS`;
+    const reward = clicks * 1;
+    // Streak bonus: 8+ CPS = +$20 bonus
+    const bonus = cps >= 8 ? 20 : 0;
+    // Performance verdict: higher CPS = faster
+    let verdict;
+    if (cps < 6)      verdict = 'SLOWER THAN AVERAGE';
+    else if (cps > 7) verdict = 'FASTER THAN AVERAGE';
+    else              verdict = 'AVERAGE';
+    addMoney(reward + bonus);
+    trackGamePlayed('cps');
+    trackQuest('moneyEarned', reward + bonus);
+    showOverlay(btn.parentElement, verdict,
+      `${clicks} clicks (${cps.toFixed(1)} CPS)${bonus ? ' +$' + bonus + ' SPEED BONUS!' : ''} → +$${reward + bonus}`);
+    activeGame = null;
+  }
+
+  gameCleanup = () => {
+    if (rafId) cancelAnimationFrame(rafId);
+    btn.removeEventListener('pointerdown', onClick);
+    btn.classList.remove('active');
+    activeGame = null;
+  };
+};
+
+/* =========================================================
+   DAILY WHEEL
+   ========================================================= */
+const WHEEL_PRIZES = [
+  // Arranged for visual variety. weight = actual selection probability.
+  // displayPct is what's shown to the player (may differ for rare teases).
+  { label: '$10',      type: 'money',       value: 10,      weight: 31,   displayPct: '31%',   color: '#00f0ff' },
+  { label: '$100',     type: 'money',       value: 100,     weight: 9.5,  displayPct: '9.5%',  color: '#fff700' },
+  { label: '$20',      type: 'money',       value: 20,      weight: 23,   displayPct: '23%',   color: '#39ff14' },
+  { label: 'ICE KING', type: 'skin',        value: 'iceking', weight: 5,  displayPct: '4.99%', color: '#aaddff', rare: true },
+  { label: '$35',      type: 'money',       value: 35,      weight: 13.5, displayPct: '13.5%', color: '#ff2bd6' },
+  { label: '$200',     type: 'money',       value: 200,     weight: 4.5,  displayPct: '4.5%',  color: '#ff2e63' },
+  { label: 'SKIN',     type: 'random_skin',                 weight: 13.5, displayPct: '13.5%', color: '#b026ff' },
+  { label: 'JACKPOT',  type: 'money',       value: 10000,   weight: 0,    displayPct: '0.01%', color: '#ffd700', jackpot: true }
+];
+const WHEEL_COOLDOWN = 15 * 60 * 1000; // 15 minutes
+
+function safeGet(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function safeSet(key, val) {
+  try { localStorage.setItem(key, val); return true; } catch { return false; }
+}
+
+function buildWheel() {
+  const wheel = document.getElementById('wheel');
+  wheel.innerHTML = '';
+  const seg = 360 / WHEEL_PRIZES.length;
+  WHEEL_PRIZES.forEach((p, i) => {
+    const el = document.createElement('div');
+    el.className = 'wheel-segment' + (p.jackpot ? ' jackpot-seg' : '') + (p.rare ? ' rare-seg' : '');
+    el.style.transform = `rotate(${i * seg}deg) skewY(${seg - 90}deg)`;
+    el.style.background = p.color;
+    // counter-skew for text
+    const txt = document.createElement('div');
+    txt.className = 'seg-label';
+    txt.style.transform = `skewY(${90 - seg}deg) rotate(${seg / 2}deg) translateY(8px)`;
+    txt.innerHTML = `<div class="seg-title">${p.label}</div><div class="seg-pct">${p.displayPct}</div>`;
+    el.appendChild(txt);
+    wheel.appendChild(el);
+  });
+  // build the legend below
+  const legend = document.getElementById('wheel-legend');
+  if (legend) {
+    legend.innerHTML = WHEEL_PRIZES.map(p => `
+      <div class="legend-row ${p.jackpot ? 'jackpot' : ''} ${p.rare ? 'rare' : ''}">
+        <span class="legend-dot" style="background:${p.color}"></span>
+        <span class="legend-label">${p.label}${p.jackpot ? ' 💎' : ''}${p.rare ? ' ❄' : ''}</span>
+        <span class="legend-pct">${p.displayPct}</span>
+      </div>
+    `).join('');
+  }
+}
+
+function getWheelStatus() {
+  if (state.bonusSpins > 0) return { ready: true, remaining: 0, bonus: true };
+  const last = parseInt(safeGet('neonArcadeLastSpin') || '0');
+  const elapsed = Date.now() - last;
+  if (elapsed >= WHEEL_COOLDOWN) return { ready: true, remaining: 0 };
+  return { ready: false, remaining: WHEEL_COOLDOWN - elapsed };
+}
+
+function formatTime(ms) {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  return `${h}h ${m}m ${s}s`;
+}
+
+function updateWheelUI() {
+  const status = getWheelStatus();
+  const btn = document.getElementById('spin-btn');
+  const info = document.getElementById('wheel-info');
+  const card = document.querySelector('.wheel-card');
+  const cardStatus = document.getElementById('wheel-status');
+  if (status.ready) {
+    btn.disabled = false;
+    btn.textContent = status.bonus ? `SPIN! (+${state.bonusSpins} bonus)` : 'SPIN!';
+    info.textContent = status.bonus
+      ? `You have ${state.bonusSpins} bonus spin${state.bonusSpins > 1 ? 's' : ''} ready!`
+      : 'Spin every 15 minutes for a free reward!';
+    if (card) card.classList.remove('used');
+    if (cardStatus) cardStatus.textContent = status.bonus
+      ? `${state.bonusSpins} BONUS SPIN${state.bonusSpins > 1 ? 'S' : ''}!`
+      : 'Free spin ready!';
+  } else {
+    btn.disabled = true;
+    btn.textContent = 'LOCKED';
+    info.textContent = `Next spin available in: ${formatTime(status.remaining)}`;
+    if (card) card.classList.add('used');
+    if (cardStatus) cardStatus.textContent = `Next: ${formatTime(status.remaining)}`;
+  }
+}
+
+// Pick a prize index using weighted random selection.
+// Entries with weight = 0 can never be selected.
+function pickWeightedPrizeIndex() {
+  const total = WHEEL_PRIZES.reduce((s, p) => s + p.weight, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < WHEEL_PRIZES.length; i++) {
+    r -= WHEEL_PRIZES[i].weight;
+    if (r <= 0) return i;
+  }
+  // fallback
+  return WHEEL_PRIZES.findIndex(p => p.weight > 0);
+}
+
+function getRandomUnownedSkin() {
+  const candidates = SKINS.filter(s => !state.owned.includes(s.id) && !s.exclusive && s.id !== 'default');
+  if (candidates.length === 0) return null;
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+let wheelSpinning = false;
+function spinWheel() {
+  if (wheelSpinning) return;
+  const status = getWheelStatus();
+  if (!status.ready) { toast('WHEEL ON COOLDOWN', true); return; }
+
+  wheelSpinning = true;
+  const btn = document.getElementById('spin-btn');
+  btn.disabled = true;
+  btn.textContent = 'SPINNING...';
+
+  // Consume a bonus spin if available; otherwise start the cooldown
+  if (status.bonus) {
+    state.bonusSpins--;
+    saveState();
+  } else {
+    safeSet('neonArcadeLastSpin', Date.now().toString());
+  }
+
+  const wheel = document.getElementById('wheel');
+  const prizeIndex = pickWeightedPrizeIndex();
+  const prize = WHEEL_PRIZES[prizeIndex];
+  const seg = 360 / WHEEL_PRIZES.length;
+  // spin 6 full rotations, then land on the chosen segment center
+  const targetAngle = 360 * 6 + (360 - (prizeIndex * seg + seg / 2));
+  wheel.style.transform = `rotate(${targetAngle}deg)`;
+
+  setTimeout(() => {
+    // award the prize
+    if (prize.type === 'money') {
+      state.money += prize.value;
+      toast(`WON $${prize.value}!`);
+    } else if (prize.type === 'skin') {
+      // specific skin (ice king)
+      if (!state.owned.includes(prize.value)) {
+        state.owned.push(prize.value);
+        const skinObj = SKINS.find(s => s.id === prize.value);
+        toast(`❄ UNLOCKED ${skinObj.name}! ❄`);
+      } else {
+        // already owned — compensate
+        state.money += 500;
+        toast(`${prize.label} already owned! +$500`);
+      }
+    } else if (prize.type === 'random_skin') {
+      const newSkin = getRandomUnownedSkin();
+      if (newSkin) {
+        state.owned.push(newSkin.id);
+        toast(`UNLOCKED ${newSkin.name}!`);
+      } else {
+        // all owned — give money instead
+        state.money += 300;
+        toast('All skins owned! +$300 instead');
+      }
+    }
+    saveState();
+    wheelSpinning = false;
+    updateWheelUI();
+    renderHub();
+  }, 5200);
+}
+
+/* update wheel timer and quest countdown every second */
+setInterval(() => {
+  if (document.getElementById('screen-wheel').classList.contains('active')) {
+    updateWheelUI();
+  }
+  // also update hub status
+  const cardStatus = document.getElementById('wheel-status');
+  if (cardStatus && document.getElementById('screen-hub').classList.contains('active')) {
+    const s = getWheelStatus();
+    if (s.bonus) {
+      cardStatus.textContent = `${state.bonusSpins} BONUS!`;
+    } else {
+      cardStatus.textContent = s.ready ? 'Free spin ready!' : `Next: ${formatTime(s.remaining)}`;
+    }
+    const card = document.querySelector('.wheel-card');
+    if (card) card.classList.toggle('used', !s.ready);
+
+    // refresh quest countdown
+    const resetEl = document.getElementById('quest-reset');
+    if (resetEl) {
+      maybeResetQuests();
+      const remaining = QUEST_RESET_MS - (Date.now() - quests.lastReset);
+      if (remaining > 0) resetEl.textContent = `Resets in ${formatTimeShort(remaining)}`;
+    }
+  }
+}, 1000);
+
+/* =========================================================
+   OVERLAY
+   ========================================================= */
+function showOverlay(area, title, reward) {
+  const o = document.createElement('div');
+  o.className = 'game-over-overlay';
+  o.innerHTML = `
+    <h2>${title}</h2>
+    <div class="reward">${reward}</div>
+    <div class="btn-row">
+      <button class="btn green" onclick="retryGame()">RETRY</button>
+      <button class="btn" onclick="endGame(null)">BACK</button>
+    </div>
+  `;
+  area.appendChild(o);
+}
+
+function retryGame() {
+  const screenEl = document.querySelector('.screen.active');
+  const name = screenEl.id.replace('screen-', '');
+  // clean overlay
+  const overlay = screenEl.querySelector('.game-over-overlay');
+  if (overlay) overlay.remove();
+  activeGame = name;
+  games[name]();
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+loadState();
+loadQuests();
+maybeResetQuests();
+buildWheel();
+updateWheelUI();
+renderHub();
+renderQuests();
+renderGameSigns();
+</script>
+</body>
+</html>
