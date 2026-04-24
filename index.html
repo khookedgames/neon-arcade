@@ -219,6 +219,45 @@
     50% { transform: translateY(-8px); }
   }
 
+  /* ===== ICE KING CROWN =====
+     The Ice King skin shows a golden crown above the avatar. */
+  .iceking-crown {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 52px;
+    height: 24px;
+    pointer-events: none;
+    filter: drop-shadow(0 0 6px #ffd700) drop-shadow(0 0 2px #aaddff);
+    z-index: 2;
+  }
+  /* SVG background approach — crown shape rendered inline */
+  .iceking-crown::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 24'><path d='M4 22 L6 8 L14 16 L20 4 L26 14 L32 4 L38 16 L46 8 L48 22 Z' fill='%23ffd700' stroke='%23995500' stroke-width='1.5' stroke-linejoin='round'/><circle cx='20' cy='6' r='2' fill='%23ff3366'/><circle cx='32' cy='6' r='2' fill='%2333aaff'/><circle cx='26' cy='16' r='2' fill='%2339ff14'/></svg>") no-repeat center/contain;
+  }
+  /* Smaller crown for shop previews */
+  .skin-preview-crown {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 38px;
+    height: 18px;
+    pointer-events: none;
+    filter: drop-shadow(0 0 4px #ffd700);
+    z-index: 2;
+  }
+  .skin-preview-crown::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 24'><path d='M4 22 L6 8 L14 16 L20 4 L26 14 L32 4 L38 16 L46 8 L48 22 Z' fill='%23ffd700' stroke='%23995500' stroke-width='1.5' stroke-linejoin='round'/><circle cx='20' cy='6' r='2' fill='%23ff3366'/><circle cx='32' cy='6' r='2' fill='%2333aaff'/><circle cx='26' cy='16' r='2' fill='%2339ff14'/></svg>") no-repeat center/contain;
+  }
+
   .games-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -1539,7 +1578,6 @@
       <div class="wb-history" id="wb-history"></div>
     </div>
     <div class="btn-row" style="margin-top: 10px;">
-      <button class="btn yellow" id="wb-cashout" onclick="wbCashOut()" style="display:none;">💰 CASH OUT</button>
       <button class="btn pink" onclick="endGame('whatbeats', true)">QUIT</button>
     </div>
   </div>
@@ -1832,6 +1870,10 @@ function renderHub() {
 
 function applySkinColor(skin) {
   const avatar = document.getElementById('player-avatar');
+  // Remove any existing crown
+  const oldCrown = avatar.querySelector('.iceking-crown');
+  if (oldCrown) oldCrown.remove();
+
   if (skin.color === 'linear') {
     avatar.style.background = 'linear-gradient(135deg, #ff2bd6, #00f0ff, #39ff14, #fff700)';
     avatar.style.boxShadow = '0 0 30px #ff2bd6, inset -10px -10px 20px rgba(0,0,0,0.4)';
@@ -1844,6 +1886,10 @@ function applySkinColor(skin) {
     avatar.style.background = 'radial-gradient(circle at 35% 35%, #ffffff, #aaddff 45%, #2266cc 90%)';
     avatar.style.boxShadow = '0 0 35px #aaddff, 0 0 60px #66aaff, inset -10px -10px 20px rgba(0,0,0,0.3)';
     document.documentElement.style.setProperty('--skin-color', '#aaddff');
+    // Add the crown
+    const crown = document.createElement('div');
+    crown.className = 'iceking-crown';
+    avatar.appendChild(crown);
   } else {
     avatar.style.background = skin.color;
     avatar.style.boxShadow = `0 0 30px ${skin.color}, inset -10px -10px 20px rgba(0,0,0,0.4)`;
@@ -1984,6 +2030,56 @@ function drawPaddleFace(ctx, cx, cy, halfHeight) {
   ctx.restore();
 }
 
+// Draw a golden crown above (cx, cy - size) if the Ice King skin is equipped.
+// size ≈ character radius; crown scales with it.
+function drawCrown(ctx, cx, cy, size) {
+  if (state.currentSkin !== 'iceking' || size < 5) return;
+  ctx.save();
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
+  // Crown sits above the character's head
+  const w = size * 1.8;
+  const h = size * 0.9;
+  const x = cx - w / 2;
+  const y = cy - size - h * 0.8;
+
+  // Crown body with 3 points
+  ctx.fillStyle = '#ffd700';
+  ctx.strokeStyle = '#8a5a00';
+  ctx.lineWidth = Math.max(1, size * 0.12);
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x, y + h);                            // bottom-left
+  ctx.lineTo(x + w * 0.07, y + h * 0.35);          // up to first valley
+  ctx.lineTo(x + w * 0.25, y + h * 0.7);           // down
+  ctx.lineTo(x + w * 0.4, y);                      // first peak
+  ctx.lineTo(x + w * 0.5, y + h * 0.55);           // center valley
+  ctx.lineTo(x + w * 0.6, y);                      // second peak
+  ctx.lineTo(x + w * 0.75, y + h * 0.7);
+  ctx.lineTo(x + w * 0.93, y + h * 0.35);
+  ctx.lineTo(x + w, y + h);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Gems on the peaks (only if there's room)
+  if (size >= 8) {
+    const gr = Math.max(1.5, size * 0.14);
+    const gems = [
+      { gx: x + w * 0.4, gy: y + h * 0.15, c: '#ff3366' },
+      { gx: x + w * 0.6, gy: y + h * 0.15, c: '#33aaff' },
+      { gx: x + w * 0.5, gy: y + h * 0.7,  c: '#39ff14' }
+    ];
+    gems.forEach(g => {
+      ctx.fillStyle = g.c;
+      ctx.beginPath();
+      ctx.arc(g.gx, g.gy, gr, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+  ctx.restore();
+}
+
 function renderShop() {
   document.getElementById('money-shop').textContent = state.money;
   const grid = document.getElementById('shop-grid');
@@ -1996,12 +2092,14 @@ function renderShop() {
 
     // Skin preview styling
     let bgStyle;
+    let crownHtml = '';
     if (skin.color === 'linear') {
       bgStyle = 'background: linear-gradient(135deg, #ff2bd6, #00f0ff, #39ff14, #fff700); color: #ff2bd6;';
     } else if (skin.color === 'lava') {
       bgStyle = 'background: radial-gradient(circle at 35% 35%, #ffee00, #ff7700 40%, #cc0000 85%); color: #ff5500;';
     } else if (skin.color === 'ice') {
       bgStyle = 'background: radial-gradient(circle at 35% 35%, #ffffff, #aaddff 45%, #2266cc 90%); color: #aaddff;';
+      crownHtml = '<div class="skin-preview-crown"></div>';
     } else {
       bgStyle = `background: ${skin.color}; color: ${skin.color};`;
     }
@@ -2020,7 +2118,7 @@ function renderShop() {
     else action = `<button onclick="buySkin('${skin.id}')" ${state.money < skin.price ? 'disabled' : ''}>BUY</button>`;
 
     card.innerHTML = `
-      <div class="skin-preview" style="${bgStyle}"><div class="skin-mouth"></div></div>
+      <div class="skin-preview" style="${bgStyle}">${crownHtml}<div class="skin-mouth"></div></div>
       <h4>${skin.name}</h4>
       <div class="price">${priceLabel}</div>
       ${action}
@@ -2557,6 +2655,7 @@ games.snake = function() {
     if (snake.length > 0) {
       const head = snake[0];
       drawFace(ctx, head.x * cell + cell / 2, head.y * cell + cell / 2, (cell - 2) / 2);
+      drawCrown(ctx, head.x * cell + cell / 2, head.y * cell + cell / 2, (cell - 2) / 2);
     }
   }
   draw();
@@ -2909,6 +3008,7 @@ games.breaker = function() {
     ctx.fill();
     ctx.shadowBlur = 0;
     drawFace(ctx, ball.x, ball.y, ball.r);
+    drawCrown(ctx, ball.x, ball.y, ball.r);
 
     // fell off bottom
     if (ball.y - ball.r > canvas.height) {
@@ -3057,6 +3157,7 @@ games.pong = function() {
     ctx.fill();
     ctx.shadowBlur = 0;
     drawFace(ctx, ball.x, ball.y, ball.r);
+    drawCrown(ctx, ball.x, ball.y, ball.r);
 
     requestAnimationFrame(loop);
   }
@@ -3271,6 +3372,7 @@ games.basketball = function() {
     ctx.stroke();
     // face on the orb
     drawFace(ctx, cx, cy, hubR);
+    drawCrown(ctx, cx, cy, hubR);
 
     // arrow (uses skin color)
     const arrowTipX = cx + Math.cos(arrowAngle) * (radius + 22);
@@ -3824,7 +3926,6 @@ games.whatbeats = function() {
   const submitEl = document.getElementById('wb-submit');
   const statusEl = document.getElementById('wb-status');
   const historyEl = document.getElementById('wb-history');
-  const cashoutEl = document.getElementById('wb-cashout');
 
   let current = 'PAPER';
   let streak = 0;
@@ -3842,28 +3943,84 @@ games.whatbeats = function() {
   inputEl.value = '';
   inputEl.disabled = false;
   submitEl.disabled = false;
-  cashoutEl.style.display = 'none';
 
-  // Offline fallback judge — always be lenient since we can't actually verify
-  // Returns { wins: bool, reason: string }
+  // Robust offline judge — used when the AI API isn't available.
+  // Uses a dictionary of known "beats" relationships. If the answer isn't
+  // clearly a winner, it's rejected.
+  //
+  // WINS[target] = list of things that DO beat target.
+  // LOSES[target] = list of things that DON'T beat target (explicit rejections).
+  const WINS = {
+    paper:    ['scissors','fire','water','shredder','rock on it','lighter','match','flame','knife','sword','bleach','eraser','stapler','acid'],
+    scissors: ['hammer','rock','fire','magnet','rust','larger scissors','stone','boulder','brick','tank','gravity','corrosion'],
+    rock:     ['paper','water','hammer','dynamite','explosion','tnt','earthquake','volcano','time','erosion','nuke','bomb','pickaxe','chisel','lava'],
+    fire:     ['water','rain','sand','foam','extinguisher','co2','snow','ice','blanket','vacuum','suffocation','absence of oxygen','lack of oxygen'],
+    water:    ['sponge','absorbent','dam','evaporation','heat','sun','fire (boils it)','drought','thirst','freezer','cold'],
+    ice:      ['fire','heat','sun','salt','hammer','pickaxe','lava','boiling water','hair dryer','microwave','flame','blowtorch','summer'],
+    lava:     ['water','ice','cold','freezer','liquid nitrogen','cooling','time','rock (when cooled)','ocean'],
+    wood:     ['fire','axe','saw','termites','rot','chainsaw','flame','lighter'],
+    metal:    ['rust','acid','heat','magnet','corrosion','time','saw','cutter','laser'],
+    glass:    ['hammer','rock','fist','bullet','heat','pressure','diamond','stone'],
+    steel:    ['acid','rust','heat','time','plasma','laser'],
+    plastic:  ['fire','heat','recycling','time','uv','sun','shredder'],
+    rain:     ['umbrella','roof','raincoat','shelter','sun'],
+    wind:     ['walls','shelter','building','barrier','calm'],
+    sun:      ['cloud','night','eclipse','moon','shade','umbrella'],
+    cloud:    ['wind','sun','rain (it falls)'],
+    darkness: ['light','fire','flashlight','sun','torch','lamp','match','candle'],
+    light:    ['darkness','shadow','eclipse','blackout','curtain','shade'],
+    knife:    ['gun','shield','armor','chainmail','time','rust'],
+    sword:    ['gun','shield','armor'],
+    gun:      ['bulletproof vest','tank','armor','shield','superman','distance'],
+    dog:      ['cat','bear','lion','tiger','wolf','poison','car'],
+    cat:      ['dog','lion','tiger','bear','vacuum','water'],
+    bear:     ['gun','tank','fire','bigger bear'],
+    lion:     ['elephant','gun','tank','tiger'],
+    elephant: ['mouse','gun','hunter','disease'],
+    mouse:    ['cat','trap','owl','snake'],
+    human:    ['bear','lion','nature','disease','time','gravity','nuke','bomb','earthquake']
+  };
+  const LOSES = {
+    paper:    ['paper','rock (paper covers rock)','air','nothing','void','empty','idea','thought','wind (paper blocks it)','dust','mist'],
+    rock:     ['rock','scissors','paper (trick)','feather','foam','cotton','pillow'],
+    scissors: ['scissors','paper','cloth','yarn'],
+    fire:     ['fire','paper','wood','grass','gas','oil','fuel','gasoline','air','oxygen'],
+    water:    ['water','fire','ice','sand','dust','paper','sun','steam'],
+    ice:      ['ice','water','snow'],
+    lava:     ['lava','fire','heat','flame'],
+    sun:      ['sun','fire','heat','planet','earth'],
+    darkness: ['darkness','shadow','night','void']
+  };
+
   function offlineJudge(answer, target) {
     const a = answer.toLowerCase().trim();
     const t = target.toLowerCase().trim();
     if (!a) return { wins: false, reason: 'Empty answer' };
     if (a === t) return { wins: false, reason: "Can't be the same thing" };
     if (a.length < 2) return { wins: false, reason: 'Too short' };
-    // A few hardcoded losing cases
-    const losers = {
-      paper: ['paper', 'blank paper', 'nothing', 'air'],
-      fire:  ['paper', 'wood', 'grass', 'air'],
-      water: ['fire', 'paper', 'sand']
-    };
-    if (losers[t] && losers[t].includes(a)) return { wins: false, reason: `${answer} doesn't beat ${target}` };
-    // Lenient: assume creative answers win
+    // Explicit loser check first — catches obvious wrong answers
+    if (LOSES[t] && LOSES[t].some(x => x.toLowerCase() === a || a === x.toLowerCase())) {
+      return { wins: false, reason: `${answer} doesn't beat ${target}` };
+    }
+    // Match against known winners (including substring for multi-word)
+    if (WINS[t]) {
+      for (const win of WINS[t]) {
+        const w = win.toLowerCase();
+        if (a === w || a.includes(w) || w.includes(a)) {
+          return { wins: true, reason: `${answer} beats ${target}` };
+        }
+      }
+      // We have a winners list for this target but answer matched none
+      return { wins: false, reason: `${answer} doesn't beat ${target}` };
+    }
+    // Unknown target — no hardcoded rules. Reject gibberish and accept sensible-looking answers
+    // but cautiously. Words under 3 chars or with lots of repeated chars get rejected.
+    if (/^(.)\1+$/.test(a)) return { wins: false, reason: 'Not a real answer' };
+    // Accept as a last resort (since we genuinely can't judge obscure pairings offline)
     return { wins: true, reason: `${answer} beats ${target}` };
   }
 
-  // Try to judge via the AI API; fall back to offlineJudge on failure
+  // Strict AI judge via Claude Haiku
   async function judgeAnswer(answer, target) {
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -3874,7 +4031,7 @@ games.whatbeats = function() {
           max_tokens: 60,
           messages: [{
             role: 'user',
-            content: `In the game "What Beats X", the player must name something that defeats, destroys, or overcomes the current item.\n\nCurrent item: ${target}\nPlayer's answer: ${answer}\n\nDoes the answer beat the current item? Respond in JSON only, no preamble:\n{"wins": true or false, "reason": "short explanation under 10 words"}\n\nBe lenient toward creative or funny answers. Reject exact duplicates, obvious non-sequiturs, or clearly weaker things.`
+            content: `You are a STRICT judge for the game "What Beats X". The player must name something that REALISTICALLY defeats, destroys, or overcomes the current item.\n\nCurrent item: ${target}\nPlayer's answer: ${answer}\n\nRULES:\n- REJECT if the answer cannot realistically beat the item (e.g. "paper" does NOT beat "rock", "air" does NOT beat "fire")\n- REJECT if the answer is weaker than or unrelated to the item\n- REJECT identical items, empty answers, or gibberish\n- ACCEPT only if there is a clear, logical reason the answer would defeat the item (e.g. scissors beat paper, water beats fire, lava beats ice)\n- Classic game logic (rock-paper-scissors style) applies\n\nRespond in JSON only, no preamble:\n{"wins": true or false, "reason": "short explanation under 10 words"}`
           }]
         })
       });
@@ -3898,7 +4055,7 @@ games.whatbeats = function() {
     const answer = inputEl.value.trim();
     if (!answer) return;
 
-    // Reject repeats: any word already used in the chain (case-insensitive)
+    // Reject repeats before hitting the AI
     const answerLower = answer.toLowerCase();
     const usedBefore = history.some(h => h.toLowerCase() === answerLower);
     if (usedBefore) {
@@ -3917,7 +4074,6 @@ games.whatbeats = function() {
 
     if (result.wins) {
       streak++;
-      // Flat $5 per win
       const gain = 5;
       pot += gain;
       history.push(answer.toUpperCase());
@@ -3929,27 +4085,20 @@ games.whatbeats = function() {
       statusEl.textContent = `✓ ${result.reason} (+$${gain})`;
       historyEl.textContent = history.slice(0, -1).join(' → ') + ' → ' + current;
       inputEl.value = '';
-      cashoutEl.style.display = 'inline-block';
+      pending = false;
+      submitEl.disabled = false;
+      inputEl.disabled = false;
+      inputEl.focus();
     } else {
-      // Game over
+      // Player loses — show the reason briefly, then end the game with their earned money
       statusEl.className = 'wb-status lose';
       statusEl.textContent = `✗ ${result.reason}`;
-      setTimeout(() => finish(false), 1500);
-      return;
+      setTimeout(() => finish(), 1500);
     }
-
-    pending = false;
-    submitEl.disabled = false;
-    inputEl.disabled = false;
-    inputEl.focus();
   }
 
   // Expose for button handlers
   window.wbSubmit = submit;
-  window.wbCashOut = function() {
-    if (pending || ended) return;
-    finish(true);
-  };
 
   function onKeyDown(e) {
     if (e.key === 'Enter' && !pending && !ended) {
@@ -3960,19 +4109,18 @@ games.whatbeats = function() {
   inputEl.addEventListener('keydown', onKeyDown);
   inputEl.focus();
 
-  function finish(cashedOut) {
+  function finish() {
     if (ended) return;
     ended = true;
     inputEl.disabled = true;
     submitEl.disabled = true;
-    cashoutEl.style.display = 'none';
-    const reward = cashedOut ? pot : Math.floor(pot / 2); // lose half if you failed
-    addMoney(reward);
+    // Player keeps everything they earned — no penalty
+    addMoney(pot);
     trackGamePlayed('whatbeats');
-    trackQuest('moneyEarned', reward);
+    trackQuest('moneyEarned', pot);
     const area = document.querySelector('#screen-whatbeats .game-area');
-    showOverlay(area, cashedOut ? 'CASHED OUT!' : 'CHAIN BROKEN',
-      `${streak} win${streak === 1 ? '' : 's'} → +$${reward}`);
+    const title = streak === 0 ? 'GAME OVER' : 'CHAIN BROKEN';
+    showOverlay(area, title, `${streak} win${streak === 1 ? '' : 's'} → +$${pot}`);
     activeGame = null;
   }
 
@@ -3980,7 +4128,6 @@ games.whatbeats = function() {
     ended = true;
     inputEl.removeEventListener('keydown', onKeyDown);
     delete window.wbSubmit;
-    delete window.wbCashOut;
     activeGame = null;
   };
 };
