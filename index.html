@@ -70,19 +70,19 @@
     position: fixed; inset: 0;
     background: repeating-linear-gradient(
       to bottom,
-      rgba(255,255,255,0.03) 0px,
-      rgba(255,255,255,0.03) 1px,
+      rgba(255,255,255,0.025) 0px,
+      rgba(255,255,255,0.025) 1px,
       transparent 1px,
       transparent 3px
     );
     pointer-events: none;
     z-index: 9999;
   }
-  /* Vignette */
+  /* Vignette — slightly stronger to soften peripheral glow */
   body::after {
     content: "";
     position: fixed; inset: 0;
-    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.8) 100%);
+    background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.85) 100%);
     pointer-events: none;
     z-index: 9998;
   }
@@ -92,8 +92,8 @@
     width: 100%;
     height: 100%;
     background:
-      radial-gradient(circle at 20% 20%, rgba(255,43,214,0.15), transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba(0,240,255,0.15), transparent 50%),
+      radial-gradient(circle at 20% 20%, rgba(255,43,214,0.07), transparent 55%),
+      radial-gradient(circle at 80% 80%, rgba(0,240,255,0.07), transparent 55%),
       linear-gradient(135deg, var(--bg), var(--bg-2));
   }
 
@@ -141,8 +141,8 @@
     background-clip: text;
     color: transparent;
     text-shadow:
-      0 0 10px rgba(255,43,214,0.5),
-      0 0 20px rgba(0,240,255,0.3);
+      0 0 6px rgba(255,43,214,0.35),
+      0 0 14px rgba(0,240,255,0.2);
     animation: flicker 4s infinite;
     margin-bottom: 10px;
     text-align: center;
@@ -365,7 +365,243 @@
     justify-content: center;
   }
 
+  /* ===== DISCOUNT / POTION BANNERS ===== */
+  .discount-banner {
+    width: 100%;
+    max-width: 900px;
+    background: linear-gradient(90deg, rgba(255,43,214,0.15), rgba(255,247,0,0.15));
+    border: 2px solid var(--neon-pink);
+    color: var(--neon-yellow);
+    padding: 10px 14px;
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    text-align: center;
+    margin-bottom: 14px;
+    box-shadow: 0 0 12px rgba(255,43,214,0.4);
+    animation: discount-pulse 2.5s ease-in-out infinite;
+  }
+  .discount-banner strong {
+    color: var(--neon-pink);
+    text-shadow: 0 0 6px var(--neon-pink);
+  }
+  .discount-time {
+    margin-left: 8px;
+    color: #aaa;
+    font-size: 14px;
+  }
+  @keyframes discount-pulse {
+    0%, 100% { box-shadow: 0 0 12px rgba(255,43,214,0.4); }
+    50%      { box-shadow: 0 0 22px rgba(255,247,0,0.5); }
+  }
+  .potion-active-banner {
+    width: 100%;
+    max-width: 900px;
+    background: rgba(57,255,20,0.1);
+    border: 2px solid var(--neon-green);
+    color: var(--neon-green);
+    padding: 10px 14px;
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    text-align: center;
+    margin-top: 14px;
+    box-shadow: 0 0 10px rgba(57,255,20,0.3);
+  }
+  .potion-active-banner strong {
+    color: var(--neon-green);
+    text-shadow: 0 0 6px var(--neon-green);
+  }
+  /* Strike-through "fake" or original price; bright sale price */
+  .strike {
+    text-decoration: line-through;
+    color: #888;
+    font-size: 0.78em;
+    margin-right: 8px;
+  }
+  .sale {
+    color: var(--neon-yellow);
+    text-shadow: 0 0 8px var(--neon-yellow);
+  }
+  /* Potion card variant — uses a green tint to differentiate from extras */
+  .extra-card.potion-card {
+    border-color: var(--neon-green);
+  }
+  .extra-card.potion-card h4 {
+    color: var(--neon-green);
+    text-shadow: 0 0 6px var(--neon-green);
+  }
+  .extra-card.potion-card button {
+    border-color: var(--neon-green);
+    color: var(--neon-green);
+  }
+  .extra-card.potion-card button:hover:not(:disabled) {
+    background: var(--neon-green);
+    color: #000;
+    box-shadow: 0 0 15px var(--neon-green);
+  }
+  /* 3-tab adjustment: ensure middle tab has equal borders */
+  .shop-tab:not(:first-child):not(:last-child) {
+    border-left-width: 1px;
+    border-right-width: 1px;
+  }
+
+  /* ===== ADMIN PANEL ===== */
+  .admin-btn {
+    border-color: #ffd700 !important;
+    color: #ffd700 !important;
+    animation: admin-glow 2s ease-in-out infinite;
+  }
+  @keyframes admin-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(255,215,0,0.4); }
+    50%      { box-shadow: 0 0 18px rgba(255,215,0,0.8); }
+  }
+  .admin-warning {
+    background: rgba(255, 100, 0, 0.15);
+    border: 1px solid #ff7700;
+    color: #ffaa66;
+    padding: 8px 14px;
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    margin-bottom: 14px;
+    text-align: center;
+    max-width: 600px;
+  }
+  .admin-section {
+    width: 100%;
+    max-width: 700px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid #555;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .admin-section-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: #ffd700;
+    text-shadow: 0 0 6px #ffd700;
+    margin-bottom: 12px;
+    letter-spacing: 2px;
+  }
+  .admin-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .admin-action {
+    padding: 8px 12px !important;
+    font-size: 9px !important;
+    min-height: 36px !important;
+    flex: 0 0 auto;
+  }
+  .admin-skin-pill {
+    background: transparent;
+    border: 2px solid #555;
+    color: #aaa;
+    padding: 6px 12px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+  }
+  .admin-skin-pill.owned {
+    border-color: var(--neon-green);
+    color: var(--neon-green);
+  }
+  .admin-skin-pill:hover {
+    border-color: var(--neon-yellow);
+    color: var(--neon-yellow);
+    box-shadow: 0 0 10px rgba(255,247,0,0.4);
+  }
+
   /* ===== SHOP ===== */
+  .shop-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 420px;
+  }
+  .shop-tab {
+    flex: 1;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid var(--neon-pink);
+    color: #aaa;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    padding: 12px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+  .shop-tab:first-child  { border-right-width: 1px; }
+  .shop-tab:last-child   { border-left-width: 1px; }
+  .shop-tab.active {
+    background: var(--neon-pink);
+    color: #000;
+    box-shadow: 0 0 15px var(--neon-pink);
+  }
+  .shop-tab:hover:not(.active) {
+    color: #fff;
+    box-shadow: inset 0 0 15px rgba(255,43,214,0.3);
+  }
+  .extra-card {
+    background: rgba(10,0,25,0.8);
+    border: 2px solid var(--neon-cyan);
+    padding: 18px 14px;
+    text-align: center;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .extra-card.owned {
+    border-color: var(--neon-green);
+    box-shadow: 0 0 15px rgba(57,255,20,0.3);
+  }
+  .extra-card .extra-icon {
+    font-size: 38px;
+    margin-bottom: 4px;
+  }
+  .extra-card h4 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 6px var(--neon-cyan);
+    letter-spacing: 1px;
+  }
+  .extra-card .extra-desc {
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    color: #ccc;
+    line-height: 1.3;
+    flex: 1;
+    min-height: 50px;
+  }
+  .extra-card .extra-price {
+    font-size: 20px;
+    color: var(--neon-yellow);
+    font-weight: bold;
+    text-shadow: 0 0 6px var(--neon-yellow);
+  }
+  .extra-card button {
+    width: 100%;
+    padding: 10px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    background: transparent;
+    border: 2px solid var(--neon-yellow);
+    color: var(--neon-yellow);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+  }
+  .extra-card button:hover:not(:disabled) {
+    background: var(--neon-yellow);
+    color: #000;
+    box-shadow: 0 0 15px var(--neon-yellow);
+  }
+  .extra-card button:disabled { opacity: 0.4; cursor: not-allowed; }
+
   .shop-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -1477,21 +1713,87 @@
     </div>
 
     <div class="btn-row">
-      <button class="btn yellow" onclick="showScreen('shop')">🛒 SKIN SHOP</button>
+      <button class="btn yellow" onclick="showScreen('shop')">🛒 SHOP</button>
       <button class="btn green" onclick="promptCheatCode()">🔐 CODE</button>
       <button class="btn" onclick="toggleTheme()" id="theme-btn">🌙 DARK</button>
+      <button class="btn admin-btn" id="admin-btn" onclick="showScreen('admin')" style="display:none;">👑 ADMIN</button>
       <button class="btn pink" onclick="resetProgress()">RESET</button>
     </div>
   </div>
 
   <!-- SHOP -->
   <div id="screen-shop" class="screen">
-    <h1 class="title" style="font-size: clamp(22px, 4vw, 40px);">SKIN SHOP</h1>
+    <h1 class="title" style="font-size: clamp(22px, 4vw, 40px);">SHOP</h1>
     <div class="hud">
       <div class="hud-pill">💰 $<span id="money-shop">0</span></div>
     </div>
+    <div class="shop-tabs">
+      <button class="shop-tab active" id="tab-skins" onclick="setShopTab('skins')">🎨 SKINS</button>
+      <button class="shop-tab" id="tab-extras" onclick="setShopTab('extras')">⚙ EXTRAS</button>
+      <button class="shop-tab" id="tab-potions" onclick="setShopTab('potions')">🧪 POTIONS</button>
+    </div>
     <div class="shop-grid" id="shop-grid"></div>
     <button class="btn" onclick="showScreen('hub')">← BACK TO ARCADE</button>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div id="screen-admin" class="screen">
+    <h1 class="title" style="font-size: clamp(22px, 4vw, 40px); background: linear-gradient(90deg, #ffd700, #ff7700, #ffd700); -webkit-background-clip: text; background-clip: text;">👑 ADMIN PANEL</h1>
+    <div class="admin-warning">All changes apply instantly. With great power comes great gameplay imbalance.</div>
+
+    <div class="hud" style="margin-bottom: 20px;">
+      <div class="hud-pill">💰 $<span id="admin-money">0</span></div>
+      <div class="hud-pill">🎰 <span id="admin-spins">0</span> spins</div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">💰 MONEY</div>
+      <div class="admin-row">
+        <button class="btn green admin-action" onclick="adminAddMoney(100)">+$100</button>
+        <button class="btn green admin-action" onclick="adminAddMoney(1000)">+$1000</button>
+        <button class="btn green admin-action" onclick="adminAddMoney(10000)">+$10K</button>
+        <button class="btn green admin-action" onclick="adminAddMoney(100000)">+$100K</button>
+        <button class="btn pink admin-action" onclick="adminSetMoney(0)">CLEAR</button>
+        <button class="btn yellow admin-action" onclick="adminCustomMoney()">CUSTOM</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">🎨 SKINS</div>
+      <div class="admin-row">
+        <button class="btn green admin-action" onclick="adminGrantAllSkins()">UNLOCK ALL SKINS</button>
+        <button class="btn pink admin-action" onclick="adminRevokeAllSkins()">REVOKE ALL</button>
+      </div>
+      <div class="admin-row" id="admin-skin-list"></div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">🎰 WHEEL & SPINS</div>
+      <div class="admin-row">
+        <button class="btn green admin-action" onclick="adminAddSpins(10)">+10 SPINS</button>
+        <button class="btn green admin-action" onclick="adminAddSpins(100)">+100 SPINS</button>
+        <button class="btn yellow admin-action" onclick="adminResetCooldown()">RESET COOLDOWN</button>
+        <button class="btn admin-action" onclick="adminToggleSkipSpin()" id="admin-skipspin-btn">⚡ SKIP ANIM: ?</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">📜 QUESTS</div>
+      <div class="admin-row">
+        <button class="btn green admin-action" onclick="adminCompleteQuests()">COMPLETE ALL</button>
+        <button class="btn pink admin-action" onclick="adminResetQuests()">RESET DAILY QUESTS</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">⚠ DANGER ZONE</div>
+      <div class="admin-row">
+        <button class="btn pink admin-action" onclick="adminWipeCheats()">UNLOCK ALL CHEAT CODES AGAIN</button>
+        <button class="btn pink admin-action" onclick="adminDisableMode()">EXIT ADMIN MODE</button>
+      </div>
+    </div>
+
+    <button class="btn" onclick="showScreen('hub')" style="margin-top: 20px;">← BACK TO ARCADE</button>
   </div>
 
   <!-- GAME: TARGETS -->
@@ -1699,7 +2001,15 @@ const state = {
   currentSkin: 'default',
   owned: ['default'],
   bonusSpins: 0,
-  skipSpinAnim: false
+  skipSpinAnim: false,
+  adminMode: false,
+  ownedExtras: [],
+  // Active luck potion: { mult: 2|4|8, expiresAt: ms } or null
+  activePotion: null,
+  // Per-cycle quest extras consumed: { skipquests: bool, shufflequests: bool }
+  questExtraUsed: { skipquests: false, shufflequests: false },
+  // Cycle-tracked discount: { itemId, kind: 'skin'|'extra'|'potion', pct: number, expiresAt: ms }
+  discount: null
 };
 
 const SKINS = [
@@ -1711,9 +2021,72 @@ const SKINS = [
   { id: 'rainbow',  name: 'PRISM',     color: 'linear', price: 600 },
   { id: 'gold',     name: 'GOLDEN',    color: '#ffd700', price: 1000 },
   { id: 'lava',     name: 'LAVA',      color: 'lava',    price: 1000 },
-  { id: 'shadow',   name: 'SHADOW',    color: '#222',    price: 1500 },
+  { id: 'midnight', name: 'MIDNIGHT', color: '#3d5af1', price: 1500 },
   { id: 'iceking',  name: 'ICE KING',  color: 'ice',     price: 0, exclusive: true }
 ];
+
+/* =========================================================
+   EXTRAS — non-skin permanent unlocks.
+   ========================================================= */
+const EXTRAS = [
+  { id: 'skipspin',     name: 'INSTANT SPIN',  icon: '⚡', desc: 'Skip the 5s wheel spin animation. Spins finish instantly.', price: 200 },
+  { id: 'skipquests',   name: 'SKIP QUESTS',   icon: '⏭', desc: 'Instantly clear current quest progress. No rewards. One use per cycle.', price: 1000, consumable: true },
+  { id: 'shufflequests',name: 'SHUFFLE QUESTS',icon: '🔀', desc: 'Reroll your 3 daily + 1 bonus quest with new random ones. One use per cycle.', price: 300, consumable: true }
+];
+
+/* =========================================================
+   POTIONS — temporary 15-minute buffs that boost wheel luck.
+   Drinking one replaces any active potion (no stacking).
+   ========================================================= */
+const POTIONS = [
+  { id: 'luck2x', name: '2× LUCK',  icon: '🧪', mult: 2, price: 100, fakePrice: null,  desc: '2× wheel luck for 15 min. Better prizes more likely.' },
+  { id: 'luck4x', name: '4× LUCK',  icon: '🧪', mult: 4, price: 300, fakePrice: null,  desc: '4× wheel luck for 15 min. Big prizes drop way more.' },
+  { id: 'luck8x', name: '8× LUCK',  icon: '🧪', mult: 8, price: 999, fakePrice: 1999,  desc: '8× wheel luck for 15 min. Insane odds. ON SALE!' }
+];
+const POTION_DURATION_MS = 15 * 60 * 1000;
+
+const DISCOUNT_DURATION_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+// Returns true if the active potion is still valid
+function potionActive() {
+  return !!(state.activePotion && state.activePotion.expiresAt > Date.now());
+}
+// Effective wheel-luck multiplier (1 if no potion)
+function getLuckMult() {
+  return potionActive() ? state.activePotion.mult : 1;
+}
+
+// Discount lifecycle
+function ensureDiscount() {
+  if (state.discount && state.discount.expiresAt > Date.now()) return;
+  // Roll a new discount
+  const buyableSkins = SKINS.filter(s => !s.exclusive && s.price > 0).map(s => ({ id: s.id, kind: 'skin' }));
+  const allItems = [
+    ...buyableSkins,
+    ...EXTRAS.map(e => ({ id: e.id, kind: 'extra' })),
+    ...POTIONS.map(p => ({ id: p.id, kind: 'potion' }))
+  ];
+  const pick = allItems[Math.floor(Math.random() * allItems.length)];
+  // 25% to 50% in 5% steps
+  const pcts = [25, 30, 35, 40, 45, 50];
+  const pct = pcts[Math.floor(Math.random() * pcts.length)];
+  state.discount = {
+    itemId: pick.id,
+    kind: pick.kind,
+    pct: pct,
+    expiresAt: Date.now() + DISCOUNT_DURATION_MS
+  };
+  saveState();
+}
+
+// Returns the discounted price for an item, or null if no discount applies.
+// itemKind is 'skin' | 'extra' | 'potion'.
+function getDiscountedPrice(itemKind, id, basePrice) {
+  if (!state.discount) return null;
+  if (state.discount.expiresAt <= Date.now()) return null;
+  if (state.discount.kind !== itemKind || state.discount.itemId !== id) return null;
+  return Math.floor(basePrice * (1 - state.discount.pct / 100));
+}
 
 /* =========================================================
    GAME SIGNS — only the standout games get a label.
@@ -1743,48 +2116,65 @@ function renderGameSigns() {
 /* =========================================================
    DAILY QUESTS
    ========================================================= */
-const QUESTS_DEF = [
-  {
-    id: 'grinder',
-    name: 'GRINDER',
-    desc: 'Play 4 different mini-games',
-    goal: 4,
-    stat: 'uniqueGamesPlayed',
-    reward: { money: 100 }
-  },
-  {
-    id: 'bigearner',
-    name: 'BIG EARNER',
-    desc: 'Earn $200 from mini-games',
-    goal: 200,
-    stat: 'moneyEarned',
-    reward: { spin: 1 }
-  },
-  {
-    id: 'shotmaker',
-    name: 'SHOT MAKER',
-    desc: 'Score 20 hits in LOCK-ON',
-    goal: 20,
-    stat: 'baskets',
-    reward: { money: 300, spin: 2 }
-  },
-  {
-    id: 'gambler',
-    name: 'GAMBLER',
-    desc: 'Hit a 3x streak in RISK IT',
-    goal: 1,
-    stat: 'riskStreak3',
-    reward: { money: 250, spin: 1 }
-  }
+/* =========================================================
+   QUESTS — pool of 9 daily + 3 bonus. Each 12h cycle:
+     • 3 random daily quests are selected
+     • 1 random bonus quest is selected
+   Tracked stats accumulate freely; only the selected quests
+   render on the hub and pay rewards.
+   ========================================================= */
+const QUESTS_POOL = [
+  // === Daily quests pool (9) ===
+  { id: 'grinder',     name: 'GRINDER',      desc: 'Play 4 different mini-games',     goal: 4,    stat: 'uniqueGamesPlayed', reward: { money: 100 } },
+  { id: 'bigearner',   name: 'BIG EARNER',   desc: 'Earn $200 from mini-games',       goal: 200,  stat: 'moneyEarned',       reward: { spin: 1 } },
+  { id: 'shotmaker',   name: 'SHOT MAKER',   desc: 'Score 20 hits in LOCK-ON',        goal: 20,   stat: 'baskets',           reward: { money: 300, spin: 2 } },
+  { id: 'gambler',     name: 'GAMBLER',      desc: 'Hit a 3x streak in RISK IT',      goal: 1,    stat: 'riskStreak3',       reward: { money: 250, spin: 1 } },
+  { id: 'speedster',   name: 'SPEEDSTER',    desc: 'Click 30 targets in TARGET BLAST',goal: 30,   stat: 'targetHits',        reward: { money: 150 } },
+  { id: 'spammer',     name: 'SPAMMER',      desc: 'Get 35 clicks in CLICK STORM',    goal: 35,   stat: 'cpsClicks',         reward: { money: 200 } },
+  { id: 'reflexes',    name: 'REFLEXES',     desc: 'Get under 250ms in REACTION',     goal: 1,    stat: 'reactionFast',      reward: { money: 200, spin: 1 } },
+  { id: 'survivor',    name: 'SURVIVOR',     desc: 'Eat 10 pellets in NEON SNAKE',    goal: 10,   stat: 'snakePellets',      reward: { money: 175 } },
+  { id: 'wordsmith',   name: 'WORDSMITH',    desc: 'Get 5 wins in WHAT BEATS PAPER',  goal: 5,    stat: 'wbWins',            reward: { money: 200 } }
 ];
-const QUEST_RESET_MS = 24 * 60 * 60 * 1000; // resets every 24h
+const BONUS_POOL = [
+  { id: 'jackpot_hunter', name: 'JACKPOT HUNTER',  desc: 'Earn $500 in one cycle',           goal: 500,  stat: 'moneyEarned',       reward: { money: 750, spin: 4 },  bonus: true },
+  { id: 'streak_king',    name: 'STREAK KING',     desc: 'Hit a 3x streak in RISK IT once',  goal: 1,    stat: 'riskStreak3',       reward: { money: 1000, spin: 3 }, bonus: true },
+  { id: 'arcade_master',  name: 'ARCADE MASTER',   desc: 'Play 6 different mini-games',      goal: 6,    stat: 'uniqueGamesPlayed', reward: { money: 600, spin: 4 },  bonus: true }
+];
+const QUEST_RESET_MS = 12 * 60 * 60 * 1000; // 12 hours
 
 const quests = {
   lastReset: 0,
-  stats: { gamesPlayed: 0, moneyEarned: 0, baskets: 0, riskStreak3: 0, uniqueGamesPlayed: 0 },
+  // Active quest IDs for this cycle (3 daily + 1 bonus)
+  activeDaily: [],   // array of quest ids
+  activeBonus: null, // quest id
+  stats: {
+    gamesPlayed: 0, moneyEarned: 0, baskets: 0, riskStreak3: 0, uniqueGamesPlayed: 0,
+    targetHits: 0, cpsClicks: 0, reactionFast: 0, snakePellets: 0, wbWins: 0
+  },
   claimed: {},
-  playedGames: {} // set of game ids played this cycle (for uniqueGamesPlayed)
+  playedGames: {}
 };
+
+function freshStats() {
+  return {
+    gamesPlayed: 0, moneyEarned: 0, baskets: 0, riskStreak3: 0, uniqueGamesPlayed: 0,
+    targetHits: 0, cpsClicks: 0, reactionFast: 0, snakePellets: 0, wbWins: 0
+  };
+}
+
+// Find quest definition by ID — checks both pools.
+function findQuestDef(id) {
+  return QUESTS_POOL.find(q => q.id === id) || BONUS_POOL.find(q => q.id === id);
+}
+
+// Pick the active quests for this cycle.
+function pickActiveQuests() {
+  // Shuffle daily pool, take 3
+  const daily = [...QUESTS_POOL].sort(() => Math.random() - 0.5).slice(0, 3).map(q => q.id);
+  const bonus = BONUS_POOL[Math.floor(Math.random() * BONUS_POOL.length)].id;
+  quests.activeDaily = daily;
+  quests.activeBonus = bonus;
+}
 
 function loadQuests() {
   try {
@@ -1792,12 +2182,16 @@ function loadQuests() {
     if (raw) {
       const data = JSON.parse(raw);
       Object.assign(quests, data);
-      if (!quests.stats) quests.stats = { gamesPlayed: 0, moneyEarned: 0, baskets: 0, riskStreak3: 0, uniqueGamesPlayed: 0 };
-      // Make sure newly-added stats exist on old saves
-      if (quests.stats.riskStreak3 === undefined) quests.stats.riskStreak3 = 0;
-      if (quests.stats.uniqueGamesPlayed === undefined) quests.stats.uniqueGamesPlayed = 0;
+      // Back-compat: ensure all stat keys exist
+      if (!quests.stats) quests.stats = freshStats();
+      const fresh = freshStats();
+      Object.keys(fresh).forEach(k => {
+        if (quests.stats[k] === undefined) quests.stats[k] = 0;
+      });
       if (!quests.claimed) quests.claimed = {};
       if (!quests.playedGames) quests.playedGames = {};
+      if (!Array.isArray(quests.activeDaily)) quests.activeDaily = [];
+      if (typeof quests.activeBonus !== 'string') quests.activeBonus = null;
     }
   } catch {}
 }
@@ -1808,12 +2202,20 @@ function saveQuests() {
 
 function maybeResetQuests() {
   const now = Date.now();
-  if (now - quests.lastReset > QUEST_RESET_MS) {
-    quests.stats = { gamesPlayed: 0, moneyEarned: 0, baskets: 0, riskStreak3: 0, uniqueGamesPlayed: 0 };
+  // Force a pick if cycle is over OR no active quests yet (first run)
+  if (now - quests.lastReset > QUEST_RESET_MS || !quests.activeDaily.length) {
+    quests.stats = freshStats();
     quests.claimed = {};
     quests.playedGames = {};
     quests.lastReset = now;
+    pickActiveQuests();
     saveQuests();
+    // Also reset cycle-locked consumable extras
+    if (state.questExtraUsed) {
+      state.questExtraUsed.skipquests = false;
+      state.questExtraUsed.shufflequests = false;
+      saveState();
+    }
   }
 }
 
@@ -1821,7 +2223,6 @@ function trackQuest(stat, amount = 1) {
   maybeResetQuests();
   quests.stats[stat] = (quests.stats[stat] || 0) + amount;
   saveQuests();
-  // Re-render quests if on hub
   if (document.getElementById('screen-hub')?.classList.contains('active')) renderQuests();
 }
 
@@ -1839,7 +2240,7 @@ function trackGamePlayed(gameId) {
 }
 
 function claimQuest(id) {
-  const q = QUESTS_DEF.find(x => x.id === id);
+  const q = findQuestDef(id);
   if (!q || quests.claimed[id]) return;
   const progress = quests.stats[q.stat] || 0;
   if (progress < q.goal) return;
@@ -1865,22 +2266,30 @@ function renderQuests() {
   maybeResetQuests();
   const container = document.getElementById('quests');
   if (!container) return;
-  container.innerHTML = QUESTS_DEF.map(q => {
-    const progress = Math.min(quests.stats[q.stat] || 0, q.goal);
-    const pct = Math.floor((progress / q.goal) * 100);
-    const done = progress >= q.goal;
+  // Build the active list: 3 dailies first, then the bonus
+  const activeIds = [...quests.activeDaily];
+  if (quests.activeBonus) activeIds.push(quests.activeBonus);
+  container.innerHTML = activeIds.map(id => {
+    const q = findQuestDef(id);
+    if (!q) return '';
+    const goal = q.goal;
+    const progress = Math.min(quests.stats[q.stat] || 0, goal);
+    const pct = Math.floor((progress / goal) * 100);
+    const done = progress >= goal;
     const claimed = quests.claimed[q.id];
     const rewardBits = [];
     if (q.reward.money) rewardBits.push(`$${q.reward.money}`);
     if (q.reward.spin) rewardBits.push(`${q.reward.spin}🎰`);
     const rewardText = rewardBits.join(' + ');
     const displayProgress = q.stat === 'moneyEarned'
-      ? `$${progress} / $${q.goal}`
-      : `${progress} / ${q.goal}`;
+      ? `$${progress} / $${goal}`
+      : `${progress} / ${goal}`;
+    const bonusClass = q.bonus ? ' bonus' : '';
+    const bonusBadge = q.bonus ? '<span class="quest-bonus-badge">⭐ BONUS</span>' : '';
     return `
-      <div class="quest-card ${claimed ? 'claimed' : (done ? 'ready' : '')}">
+      <div class="quest-card${bonusClass} ${claimed ? 'claimed' : (done ? 'ready' : '')}">
         <div class="quest-head">
-          <span class="quest-name">${q.name}</span>
+          <span class="quest-name">${q.name}${bonusBadge}</span>
           <span class="quest-reward">${rewardText}</span>
         </div>
         <div class="quest-desc">${q.desc}</div>
@@ -1893,7 +2302,6 @@ function renderQuests() {
     `;
   }).join('');
 
-  // Update reset countdown
   const resetEl = document.getElementById('quest-reset');
   if (resetEl) {
     const remaining = QUEST_RESET_MS - (Date.now() - quests.lastReset);
@@ -1918,7 +2326,12 @@ function saveState() {
       currentSkin: state.currentSkin,
       owned: state.owned,
       bonusSpins: state.bonusSpins,
-      skipSpinAnim: state.skipSpinAnim
+      skipSpinAnim: state.skipSpinAnim,
+      adminMode: state.adminMode,
+      ownedExtras: state.ownedExtras,
+      activePotion: state.activePotion,
+      questExtraUsed: state.questExtraUsed,
+      discount: state.discount
     }));
   } catch {}
 }
@@ -1932,6 +2345,11 @@ function loadState() {
       if (Array.isArray(data.owned)) state.owned = data.owned;
       if (typeof data.bonusSpins === 'number') state.bonusSpins = data.bonusSpins;
       if (typeof data.skipSpinAnim === 'boolean') state.skipSpinAnim = data.skipSpinAnim;
+      if (typeof data.adminMode === 'boolean') state.adminMode = data.adminMode;
+      if (Array.isArray(data.ownedExtras)) state.ownedExtras = data.ownedExtras;
+      if (data.activePotion && typeof data.activePotion === 'object') state.activePotion = data.activePotion;
+      if (data.questExtraUsed && typeof data.questExtraUsed === 'object') state.questExtraUsed = data.questExtraUsed;
+      if (data.discount && typeof data.discount === 'object') state.discount = data.discount;
       // Ensure default is always owned
       if (!state.owned.includes('default')) state.owned.unshift('default');
     }
@@ -1944,8 +2362,9 @@ function loadState() {
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
-  if (name === 'shop') renderShop();
+  if (name === 'shop') { setShopTab('skins'); }
   if (name === 'hub') { renderHub(); renderQuests(); renderGameSigns(); }
+  if (name === 'admin') refreshAdminUI();
 }
 
 function renderHub() {
@@ -1953,6 +2372,9 @@ function renderHub() {
   const skin = SKINS.find(s => s.id === state.currentSkin);
   document.getElementById('current-skin').textContent = skin.name;
   applySkinColor(skin);
+  // Toggle admin button visibility
+  const adminBtn = document.getElementById('admin-btn');
+  if (adminBtn) adminBtn.style.display = state.adminMode ? 'inline-block' : 'none';
 }
 
 function applySkinColor(skin) {
@@ -2167,17 +2589,42 @@ function drawCrown(ctx, cx, cy, size) {
   ctx.restore();
 }
 
+let currentShopTab = 'skins';
+function setShopTab(tab) {
+  currentShopTab = tab;
+  document.getElementById('tab-skins').classList.toggle('active', tab === 'skins');
+  document.getElementById('tab-extras').classList.toggle('active', tab === 'extras');
+  document.getElementById('tab-potions').classList.toggle('active', tab === 'potions');
+  renderShop();
+}
+
 function renderShop() {
+  ensureDiscount();
   document.getElementById('money-shop').textContent = state.money;
   const grid = document.getElementById('shop-grid');
   grid.innerHTML = '';
+
+  // Insert discount banner above the grid (rebuilt each render)
+  const existingBanner = document.getElementById('discount-banner');
+  if (existingBanner) existingBanner.remove();
+  if (state.discount && state.discount.expiresAt > Date.now()) {
+    const itemName = lookupItemName(state.discount.kind, state.discount.itemId);
+    const banner = document.createElement('div');
+    banner.id = 'discount-banner';
+    banner.className = 'discount-banner';
+    banner.innerHTML = `🔥 SALE: <strong>${itemName}</strong> ${state.discount.pct}% OFF! <span class="discount-time" id="discount-time"></span>`;
+    grid.parentElement.insertBefore(banner, grid);
+  }
+
+  if (currentShopTab === 'extras')  { renderExtrasTab(grid); return; }
+  if (currentShopTab === 'potions') { renderPotionsTab(grid); return; }
+  // Default: skins tab
   SKINS.forEach(skin => {
     const owned = state.owned.includes(skin.id);
     const equipped = state.currentSkin === skin.id;
     const card = document.createElement('div');
     card.className = 'skin-card' + (owned ? ' owned' : '') + (equipped ? ' equipped' : '') + (skin.exclusive ? ' exclusive' : '');
 
-    // Skin preview styling
     let bgStyle;
     let crownHtml = '';
     if (skin.color === 'linear') {
@@ -2191,18 +2638,25 @@ function renderShop() {
       bgStyle = `background: ${skin.color}; color: ${skin.color};`;
     }
 
-    // Price label
     let priceLabel;
+    let actualPrice = skin.price;
     if (skin.exclusive) priceLabel = 'WHEEL ONLY';
     else if (skin.price === 0) priceLabel = 'FREE';
-    else priceLabel = '$' + skin.price;
+    else {
+      const discounted = getDiscountedPrice('skin', skin.id, skin.price);
+      if (discounted !== null) {
+        actualPrice = discounted;
+        priceLabel = `<span class="strike">$${skin.price}</span> <span class="sale">$${discounted}</span>`;
+      } else {
+        priceLabel = '$' + skin.price;
+      }
+    }
 
-    // Action button
     let action;
     if (equipped) action = '<button disabled>EQUIPPED</button>';
     else if (owned) action = `<button onclick="equipSkin('${skin.id}')">EQUIP</button>`;
     else if (skin.exclusive) action = '<button disabled>LOCKED</button>';
-    else action = `<button onclick="buySkin('${skin.id}')" ${state.money < skin.price ? 'disabled' : ''}>BUY</button>`;
+    else action = `<button onclick="buySkin('${skin.id}')" ${state.money < actualPrice ? 'disabled' : ''}>BUY</button>`;
 
     card.innerHTML = `
       <div class="skin-preview" style="${bgStyle}">${crownHtml}<div class="skin-mouth"></div></div>
@@ -2212,6 +2666,169 @@ function renderShop() {
     `;
     grid.appendChild(card);
   });
+}
+
+// Look up the readable name for any item ID (used in discount banner)
+function lookupItemName(kind, id) {
+  if (kind === 'skin') { const s = SKINS.find(x => x.id === id); return s ? s.name : '?'; }
+  if (kind === 'extra'){ const e = EXTRAS.find(x => x.id === id); return e ? e.name : '?'; }
+  if (kind === 'potion'){ const p = POTIONS.find(x => x.id === id); return p ? p.name : '?'; }
+  return '?';
+}
+
+function renderExtrasTab(grid) {
+  EXTRAS.forEach(item => {
+    const owned = isExtraOwned(item.id);
+    const consumable = item.consumable;
+    const consumed = consumable && state.questExtraUsed && state.questExtraUsed[item.id];
+    const card = document.createElement('div');
+    card.className = 'extra-card' + (owned && !consumable ? ' owned' : '');
+
+    // Discounted price?
+    let actualPrice = item.price;
+    let priceHtml;
+    const discounted = getDiscountedPrice('extra', item.id, item.price);
+    if (discounted !== null) {
+      actualPrice = discounted;
+      priceHtml = `<span class="strike">$${item.price}</span> <span class="sale">$${discounted}</span>`;
+    } else {
+      priceHtml = `$${item.price}`;
+    }
+
+    let action;
+    if (consumable) {
+      if (consumed) action = '<button disabled>USED THIS CYCLE</button>';
+      else action = `<button onclick="buyExtra('${item.id}')" ${state.money < actualPrice ? 'disabled' : ''}>USE</button>`;
+    } else {
+      if (owned) action = '<button disabled>✓ OWNED</button>';
+      else action = `<button onclick="buyExtra('${item.id}')" ${state.money < actualPrice ? 'disabled' : ''}>BUY</button>`;
+    }
+
+    card.innerHTML = `
+      <div class="extra-icon">${item.icon}</div>
+      <h4>${item.name}</h4>
+      <div class="extra-desc">${item.desc}</div>
+      <div class="extra-price">${owned && !consumable ? 'OWNED' : priceHtml}</div>
+      ${action}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderPotionsTab(grid) {
+  POTIONS.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'extra-card potion-card';
+
+    let actualPrice = item.price;
+    // First check the global discount
+    const discounted = getDiscountedPrice('potion', item.id, item.price);
+    let priceHtml;
+    if (discounted !== null) {
+      actualPrice = discounted;
+      priceHtml = `<span class="strike">$${item.price}</span> <span class="sale">$${discounted}</span>`;
+    } else if (item.fakePrice) {
+      // Show fake "was $X" pricing
+      priceHtml = `<span class="strike">$${item.fakePrice}</span> <span class="sale">$${item.price}</span>`;
+    } else {
+      priceHtml = `$${item.price}`;
+    }
+
+    const isActive = potionActive() && state.activePotion.mult === item.mult;
+    let action;
+    if (potionActive()) {
+      if (isActive) action = '<button disabled>ACTIVE</button>';
+      else action = '<button disabled>POTION ACTIVE</button>';
+    } else {
+      action = `<button onclick="buyPotion('${item.id}')" ${state.money < actualPrice ? 'disabled' : ''}>DRINK</button>`;
+    }
+
+    card.innerHTML = `
+      <div class="extra-icon">${item.icon}</div>
+      <h4>${item.name}</h4>
+      <div class="extra-desc">${item.desc}</div>
+      <div class="extra-price">${priceHtml}</div>
+      ${action}
+    `;
+    grid.appendChild(card);
+  });
+
+  // Active potion timer banner under the cards
+  if (potionActive()) {
+    const remain = state.activePotion.expiresAt - Date.now();
+    const banner = document.createElement('div');
+    banner.id = 'potion-active-banner';
+    banner.className = 'potion-active-banner';
+    banner.innerHTML = `🧪 <strong>${state.activePotion.mult}× LUCK</strong> active — <span id="potion-active-time"></span>`;
+    grid.parentElement.insertBefore(banner, grid.nextSibling);
+  }
+}
+
+function isExtraOwned(id) {
+  if (id === 'skipspin') return !!state.skipSpinAnim;
+  // Consumable extras don't get permanently "owned"
+  const def = EXTRAS.find(e => e.id === id);
+  if (def && def.consumable) return false;
+  return state.ownedExtras.includes(id);
+}
+
+function buyExtra(id) {
+  const item = EXTRAS.find(x => x.id === id);
+  if (!item) return;
+  if (!item.consumable && isExtraOwned(id)) return;
+  if (item.consumable && state.questExtraUsed[id]) {
+    toast('Already used this cycle', true);
+    return;
+  }
+  // Use discounted price if available
+  const discounted = getDiscountedPrice('extra', item.id, item.price);
+  const price = discounted !== null ? discounted : item.price;
+  if (state.money < price) { toast('NOT ENOUGH $$$', true); return; }
+  state.money -= price;
+
+  if (id === 'skipspin') {
+    state.skipSpinAnim = true;
+  } else if (id === 'skipquests') {
+    // Clear progress, no rewards. Quests visually re-render with 0 progress.
+    quests.stats = freshStats();
+    quests.claimed = {};
+    quests.playedGames = {};
+    state.questExtraUsed.skipquests = true;
+    saveQuests();
+    renderQuests();
+    toast('QUESTS CLEARED — fresh slate, no rewards');
+  } else if (id === 'shufflequests') {
+    pickActiveQuests();
+    state.questExtraUsed.shufflequests = true;
+    saveQuests();
+    renderQuests();
+    toast('QUESTS REROLLED!');
+  } else {
+    state.ownedExtras.push(id);
+  }
+  saveState();
+  if (!item.consumable) toast(`${item.name} UNLOCKED!`);
+  renderShop();
+  renderHub();
+}
+
+function buyPotion(id) {
+  const item = POTIONS.find(x => x.id === id);
+  if (!item) return;
+  if (potionActive()) { toast('Potion already active', true); return; }
+  const discounted = getDiscountedPrice('potion', item.id, item.price);
+  const price = discounted !== null ? discounted : item.price;
+  if (state.money < price) { toast('NOT ENOUGH $$$', true); return; }
+  state.money -= price;
+  state.activePotion = {
+    id: item.id,
+    mult: item.mult,
+    expiresAt: Date.now() + POTION_DURATION_MS
+  };
+  saveState();
+  toast(`${item.name} ACTIVATED — 15min!`);
+  renderShop();
+  renderHub();
 }
 
 function buySkin(id) {
@@ -2331,7 +2948,8 @@ const CHEAT_CODES = {
   'allskins':      { type: 'skins', label: 'ALL SKINS UNLOCKED!' },
   'spinforthewin': { type: 'spins', amount: 30, label: '30 BONUS SPINS ADDED!' },
   'skipspin':      { type: 'skipspin', label: 'SPIN ANIMATION SKIP UNLOCKED!' },
-  'elbillug':      { type: 'gullible', label: '' }
+  'elbillug':      { type: 'gullible', label: '' },
+  'adminmode':     { type: 'admin', label: 'ADMIN MODE UNLOCKED 👑' }
 };
 
 function promptCheatCode() {
@@ -2368,6 +2986,8 @@ function redeemCheatCode(rawCode) {
     state.bonusSpins += def.amount;
   } else if (def.type === 'skipspin') {
     state.skipSpinAnim = true;
+  } else if (def.type === 'admin') {
+    state.adminMode = true;
   } else if (def.type === 'gullible') {
     // No reward! Just the prank popup.
     saveState();
@@ -2384,6 +3004,132 @@ function redeemCheatCode(rawCode) {
   updateWheelUI();
 }
 
+/* =========================================================
+   ADMIN PANEL
+   ========================================================= */
+function refreshAdminUI() {
+  if (!document.getElementById('screen-admin')?.classList.contains('active')) return;
+  const moneyEl = document.getElementById('admin-money');
+  const spinsEl = document.getElementById('admin-spins');
+  if (moneyEl) moneyEl.textContent = state.money;
+  if (spinsEl) spinsEl.textContent = state.bonusSpins;
+  // Skip spin button label
+  const skipBtn = document.getElementById('admin-skipspin-btn');
+  if (skipBtn) skipBtn.textContent = state.skipSpinAnim ? '⚡ SKIP ANIM: ON' : '⚡ SKIP ANIM: OFF';
+  // Skin pills
+  const list = document.getElementById('admin-skin-list');
+  if (list) {
+    list.innerHTML = SKINS.map(s => {
+      const owned = state.owned.includes(s.id);
+      return `<button class="admin-skin-pill ${owned ? 'owned' : ''}" onclick="adminToggleSkin('${s.id}')">${owned ? '✓ ' : ''}${s.name}</button>`;
+    }).join('');
+  }
+}
+
+function adminAddMoney(n) {
+  state.money += n;
+  saveState();
+  refreshAdminUI();
+  toast(`+$${n}`);
+}
+function adminSetMoney(n) {
+  state.money = n;
+  saveState();
+  refreshAdminUI();
+  toast(`Money set to $${n}`);
+}
+function adminCustomMoney() {
+  const v = prompt('Set money to: (number)');
+  if (v === null) return;
+  const n = parseInt(v, 10);
+  if (isNaN(n)) { toast('Not a number', true); return; }
+  state.money = n;
+  saveState();
+  refreshAdminUI();
+  toast(`Money: $${n}`);
+}
+function adminGrantAllSkins() {
+  SKINS.forEach(s => {
+    if (!state.owned.includes(s.id)) state.owned.push(s.id);
+  });
+  saveState();
+  refreshAdminUI();
+  toast('All skins granted');
+}
+function adminRevokeAllSkins() {
+  state.owned = ['default'];
+  state.currentSkin = 'default';
+  saveState();
+  refreshAdminUI();
+  renderHub();
+  toast('All skins revoked');
+}
+function adminToggleSkin(id) {
+  if (id === 'default') return; // can't remove default
+  const idx = state.owned.indexOf(id);
+  if (idx === -1) {
+    state.owned.push(id);
+  } else {
+    state.owned.splice(idx, 1);
+    if (state.currentSkin === id) state.currentSkin = 'default';
+  }
+  saveState();
+  refreshAdminUI();
+  renderHub();
+}
+function adminAddSpins(n) {
+  state.bonusSpins += n;
+  saveState();
+  refreshAdminUI();
+  updateWheelUI();
+  toast(`+${n} spins`);
+}
+function adminResetCooldown() {
+  try { localStorage.removeItem('neonArcadeLastSpin'); } catch {}
+  updateWheelUI();
+  toast('Cooldown reset');
+}
+function adminToggleSkipSpin() {
+  state.skipSpinAnim = !state.skipSpinAnim;
+  saveState();
+  refreshAdminUI();
+  toast('Skip anim: ' + (state.skipSpinAnim ? 'ON' : 'OFF'));
+}
+function adminCompleteQuests() {
+  // Force every active quest to its goal so they can be claimed
+  const ids = [...quests.activeDaily];
+  if (quests.activeBonus) ids.push(quests.activeBonus);
+  ids.forEach(id => {
+    const q = findQuestDef(id);
+    if (q) quests.stats[q.stat] = q.goal;
+  });
+  saveQuests();
+  renderQuests();
+  toast('All quests completed');
+}
+function adminResetQuests() {
+  quests.stats = freshStats();
+  quests.claimed = {};
+  quests.playedGames = {};
+  quests.lastReset = Date.now();
+  pickActiveQuests();
+  saveQuests();
+  renderQuests();
+  toast('Quests reset & rerolled');
+}
+function adminWipeCheats() {
+  try { localStorage.removeItem('neonArcadeCheats'); } catch {}
+  toast('All cheat codes can be redeemed again');
+}
+function adminDisableMode() {
+  if (!confirm('Disable admin mode? You\'ll need to re-enter the code to use this panel again.')) return;
+  state.adminMode = false;
+  saveState();
+  renderHub();
+  showScreen('hub');
+  toast('Admin mode disabled');
+}
+
 function resetProgress() {
   if (!confirm('Reset all progress? Money, skins, wheel cooldown, and quests will be wiped.')) return;
   state.money = 0;
@@ -2391,6 +3137,11 @@ function resetProgress() {
   state.owned = ['default'];
   state.bonusSpins = 0;
   state.skipSpinAnim = false;
+  state.adminMode = false;
+  state.ownedExtras = [];
+  state.activePotion = null;
+  state.questExtraUsed = { skipquests: false, shufflequests: false };
+  state.discount = null;
   try {
     localStorage.removeItem('neonArcadeLastSpin');
     localStorage.removeItem('neonArcadeQuests');
@@ -2398,9 +3149,10 @@ function resetProgress() {
     localStorage.removeItem('neonArcadeCheats');
   } catch {}
   quests.lastReset = Date.now();
-  quests.stats = { gamesPlayed: 0, moneyEarned: 0, baskets: 0, riskStreak3: 0, uniqueGamesPlayed: 0 };
+  quests.stats = freshStats();
   quests.claimed = {};
   quests.playedGames = {};
+  pickActiveQuests();
   saveState();
   renderHub();
   renderQuests();
@@ -2513,6 +3265,7 @@ games.targets = function() {
     addMoney(reward);
     trackGamePlayed('targets');
     trackQuest('moneyEarned', reward);
+    trackQuest('targetHits', score);
     showOverlay(area, 'TIME UP!', `Hits: ${score} → +$${reward}`);
     activeGame = null;
   }
@@ -2829,6 +3582,7 @@ games.snake = function() {
     addMoney(reward);
     trackGamePlayed('snake');
     trackQuest('moneyEarned', reward);
+    trackQuest('snakePellets', pellets);
     showOverlay(area, 'CRASHED!', `Pellets: ${pellets} → +$${reward}`);
     activeGame = null;
   }
@@ -3951,6 +4705,9 @@ games.reaction = function() {
     addMoney(reward);
     trackGamePlayed('reaction');
     trackQuest('moneyEarned', reward);
+    // Track each sub-250ms round for the REFLEXES quest
+    const fastRounds = valid.filter(t => t < 250).length;
+    if (fastRounds > 0) trackQuest('reactionFast', fastRounds);
     // Verdict: use AVERAGE of valid rounds. <200 = fast, 200-300 = avg, >300 = slow
     let verdict, avgMs = null;
     if (valid.length === 0) {
@@ -4056,6 +4813,7 @@ games.cps = function() {
     addMoney(reward + bonus);
     trackGamePlayed('cps');
     trackQuest('moneyEarned', reward + bonus);
+    trackQuest('cpsClicks', clicks);
     showOverlay(btn.parentElement, verdict,
       `${clicks} clicks (${cps.toFixed(1)} CPS)${bonus ? ' +$' + bonus + ' SPEED BONUS!' : ''} → +$${reward + bonus}`);
     activeGame = null;
@@ -4317,6 +5075,7 @@ games.whatbeats = function() {
     addMoney(pot);
     trackGamePlayed('whatbeats');
     trackQuest('moneyEarned', pot);
+    if (streak > 0) trackQuest('wbWins', streak);
     const area = document.querySelector('#screen-whatbeats .game-area');
     const title = streak === 0 ? 'GAME OVER' : 'CHAIN BROKEN';
     showOverlay(area, title, `${streak} win${streak === 1 ? '' : 's'} → +$${pot}`);
@@ -4389,8 +5148,9 @@ function getWheelStatus() {
   if (state.bonusSpins > 0) return { ready: true, remaining: 0, bonus: true };
   const last = parseInt(safeGet('neonArcadeLastSpin') || '0');
   const elapsed = Date.now() - last;
-  if (elapsed >= WHEEL_COOLDOWN) return { ready: true, remaining: 0 };
-  return { ready: false, remaining: WHEEL_COOLDOWN - elapsed };
+  const cooldown = WHEEL_COOLDOWN;
+  if (elapsed >= cooldown) return { ready: true, remaining: 0 };
+  return { ready: false, remaining: cooldown - elapsed };
 }
 
 function formatTime(ms) {
@@ -4427,11 +5187,21 @@ function updateWheelUI() {
 
 // Pick a prize index using weighted random selection.
 // Entries with weight = 0 can never be selected.
+// When a luck potion is active, high-value prizes get their weights
+// multiplied; low-value prizes ($10/$20) stay flat. Net effect: better odds
+// of $100/$200/skin/Ice King.
 function pickWeightedPrizeIndex() {
-  const total = WHEEL_PRIZES.reduce((s, p) => s + p.weight, 0);
+  const luck = getLuckMult();
+  // Which prize labels count as "good outcomes" that luck boosts?
+  const luckyLabels = new Set(['$100', '$200', 'SKIN', 'ICE KING', 'JACKPOT']);
+  const adjusted = WHEEL_PRIZES.map(p => {
+    if (p.weight === 0) return 0; // jackpot tease stays at 0
+    return luckyLabels.has(p.label) ? p.weight * luck : p.weight;
+  });
+  const total = adjusted.reduce((s, w) => s + w, 0);
   let r = Math.random() * total;
-  for (let i = 0; i < WHEEL_PRIZES.length; i++) {
-    r -= WHEEL_PRIZES[i].weight;
+  for (let i = 0; i < adjusted.length; i++) {
+    r -= adjusted[i];
     if (r <= 0) return i;
   }
   // fallback
@@ -4543,6 +5313,35 @@ setInterval(() => {
       if (remaining > 0) resetEl.textContent = `Resets in ${formatTimeShort(remaining)}`;
     }
   }
+  // Discount countdown — only when shop is visible
+  if (document.getElementById('screen-shop')?.classList.contains('active')) {
+    const dt = document.getElementById('discount-time');
+    if (dt && state.discount && state.discount.expiresAt > Date.now()) {
+      dt.textContent = `(ends in ${formatTimeShort(state.discount.expiresAt - Date.now())})`;
+    }
+    // Potion countdown
+    const pt = document.getElementById('potion-active-time');
+    if (pt && potionActive()) {
+      const remain = state.activePotion.expiresAt - Date.now();
+      const m = Math.floor(remain / 60000);
+      const s = Math.floor((remain % 60000) / 1000);
+      pt.textContent = `${m}:${String(s).padStart(2, '0')} left`;
+    }
+    // If a potion just expired while shop is open, re-render so the buttons unlock
+    if (state.activePotion && state.activePotion.expiresAt <= Date.now()) {
+      state.activePotion = null;
+      saveState();
+      renderShop();
+      toast('Potion wore off');
+    }
+    // Same for discount expiry
+    if (state.discount && state.discount.expiresAt <= Date.now()) {
+      state.discount = null;
+      saveState();
+      ensureDiscount();
+      renderShop();
+    }
+  }
 }, 1000);
 
 /* =========================================================
@@ -4578,6 +5377,7 @@ function retryGame() {
 loadState();
 loadQuests();
 maybeResetQuests();
+ensureDiscount();
 loadTheme();
 buildWheel();
 updateWheelUI();
