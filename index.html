@@ -261,10 +261,11 @@
   .games-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 28px 18px;
+    gap: 42px 18px;
     max-width: 900px;
     width: 100%;
     margin-bottom: 20px;
+    padding-top: 4px;
   }
 
   .game-card, .btn {
@@ -755,6 +756,90 @@
     word-break: break-word;
   }
 
+  /* ===== GULLIBLE PRANK POPUP ===== */
+  .gullible-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    animation: g-fade 0.3s ease-out;
+  }
+  @keyframes g-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .gullible-box {
+    background: linear-gradient(135deg, #1a0033, #330066);
+    border: 4px solid var(--neon-yellow);
+    box-shadow: 0 0 40px var(--neon-yellow), inset 0 0 20px rgba(255,247,0,0.1);
+    padding: 40px 30px;
+    text-align: center;
+    max-width: 92vw;
+  }
+  .gullible-letters {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(28px, 7vw, 56px);
+    color: var(--neon-yellow);
+    text-shadow: 0 0 15px var(--neon-yellow), 0 0 30px var(--neon-yellow);
+    letter-spacing: 6px;
+    margin-bottom: 24px;
+    perspective: 600px;
+  }
+  .gullible-letters.gullible-full {
+    animation: g-pulse 0.8s ease-in-out infinite alternate;
+    color: #ff2bd6;
+    text-shadow: 0 0 20px #ff2bd6, 0 0 40px #ff2bd6;
+  }
+  @keyframes g-pulse {
+    from { transform: scale(1); }
+    to   { transform: scale(1.08); }
+  }
+  .g-letter {
+    display: inline-block;
+    transition: transform 0.18s ease-in;
+    transform-style: preserve-3d;
+  }
+  .g-letter.flipping {
+    transform: rotateY(90deg);
+  }
+  .g-letter.flipped {
+    transform: rotateY(0deg);
+  }
+  .gullible-subtitle {
+    font-family: 'VT323', monospace;
+    font-size: clamp(16px, 3vw, 22px);
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px var(--neon-cyan);
+    margin-bottom: 24px;
+  }
+  .gullible-subtitle.gullible-pranked {
+    color: var(--neon-pink);
+    text-shadow: 0 0 10px var(--neon-pink);
+    font-size: clamp(20px, 4vw, 28px);
+  }
+  #gullible-close {
+    margin-top: 8px;
+  }
+
+  /* The bait message under the arcade title */
+  .bait-message {
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: var(--neon-green);
+    text-shadow: 0 0 6px var(--neon-green);
+    margin-bottom: 14px;
+    text-align: center;
+    animation: bait-blink 2s ease-in-out infinite;
+    letter-spacing: 1px;
+  }
+  @keyframes bait-blink {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.6; }
+  }
+
   /* ===== DAILY QUESTS ===== */
   .quest-panel {
     width: 100%;
@@ -1215,7 +1300,7 @@
     /* Game grid: 2 columns on mobile, tighter */
     .games-grid {
       grid-template-columns: repeat(2, 1fr);
-      gap: 22px 10px;
+      gap: 34px 10px;
       padding-top: 6px;
     }
     .game-card, .btn {
@@ -1312,6 +1397,7 @@
   <!-- HUB -->
   <div id="screen-hub" class="screen active">
     <h1 class="title">NEON ARCADE</h1>
+    <div class="bait-message">redeem code: ELBILLUG for free secret skin</div>
     <div class="subtitle">~ INSERT COIN ~</div>
     <div class="player-display" id="player-avatar"><div class="avatar-mouth"></div></div>
     <div class="hud">
@@ -1636,7 +1722,8 @@ const SKINS = [
 const GAME_SIGNS = {
   basketball: { label: '🔥 HARDEST',    cls: 'skill'   },
   risk:       { label: '💰 BIG EARNER', cls: 'money'   },
-  reaction:   { label: '⚡ FASTEST',    cls: 'fastest' }
+  reaction:   { label: '⚡ FASTEST',    cls: 'fastest' },
+  whatbeats:  { label: '⭐ POPULAR',    cls: 'luck'    }
 };
 
 // Render one sign above each game card listed in GAME_SIGNS.
@@ -2164,6 +2251,69 @@ function toggleTheme() {
   applyTheme(newTheme);
   try { localStorage.setItem('neonArcadeTheme', newTheme); } catch {}
 }
+
+/* =========================================================
+   GULLIBLE PRANK POPUP (for the ELBILLUG cheat code)
+   Shows the letters rearranging from ELBILLUG → GULLIBLE.
+   ========================================================= */
+function showGulliblePopup() {
+  // Remove any existing popup first
+  const existing = document.getElementById('gullible-popup');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'gullible-popup';
+  overlay.className = 'gullible-overlay';
+  overlay.innerHTML = `
+    <div class="gullible-box">
+      <div class="gullible-letters" id="gullible-letters"></div>
+      <div class="gullible-subtitle" id="gullible-subtitle">SECRET SKIN INCOMING...</div>
+      <button class="btn pink" id="gullible-close" style="display:none;">CLOSE</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const lettersEl = document.getElementById('gullible-letters');
+  const subEl     = document.getElementById('gullible-subtitle');
+  const closeBtn  = document.getElementById('gullible-close');
+
+  // Phase 1: render "ELBILLUG" as individual letters
+  const startLetters = 'ELBILLUG'.split('');
+  const endLetters   = 'GULLIBLE'.split('');
+  lettersEl.innerHTML = startLetters.map((l, i) =>
+    `<span class="g-letter" data-idx="${i}">${l}</span>`
+  ).join('');
+
+  // Phase 2 after 1.2s: flip each letter, one by one, to reveal GULLIBLE
+  setTimeout(() => {
+    const spans = lettersEl.querySelectorAll('.g-letter');
+    endLetters.forEach((newChar, i) => {
+      setTimeout(() => {
+        spans[i].classList.add('flipping');
+        setTimeout(() => {
+          spans[i].textContent = newChar;
+          spans[i].classList.remove('flipping');
+          spans[i].classList.add('flipped');
+          if (i === endLetters.length - 1) {
+            // final reveal
+            setTimeout(() => {
+              lettersEl.classList.add('gullible-full');
+              subEl.textContent = 'YOU JUST GOT PRANKED 😂';
+              subEl.classList.add('gullible-pranked');
+              closeBtn.style.display = 'inline-block';
+            }, 400);
+          }
+        }, 180);
+      }, i * 180);
+    });
+  }, 1200);
+
+  closeBtn.addEventListener('click', () => overlay.remove());
+  // Also allow tapping the backdrop to close once the button appears
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay && closeBtn.style.display !== 'none') overlay.remove();
+  });
+}
 function loadTheme() {
   try {
     const t = localStorage.getItem('neonArcadeTheme');
@@ -2180,7 +2330,8 @@ const CHEAT_CODES = {
   'cheatcode555':  { reward: 2000, label: '$2000 UNLOCKED!' },
   'allskins':      { type: 'skins', label: 'ALL SKINS UNLOCKED!' },
   'spinforthewin': { type: 'spins', amount: 30, label: '30 BONUS SPINS ADDED!' },
-  'skipspin':      { type: 'skipspin', label: 'SPIN ANIMATION SKIP UNLOCKED!' }
+  'skipspin':      { type: 'skipspin', label: 'SPIN ANIMATION SKIP UNLOCKED!' },
+  'elbillug':      { type: 'gullible', label: '' }
 };
 
 function promptCheatCode() {
@@ -2217,6 +2368,13 @@ function redeemCheatCode(rawCode) {
     state.bonusSpins += def.amount;
   } else if (def.type === 'skipspin') {
     state.skipSpinAnim = true;
+  } else if (def.type === 'gullible') {
+    // No reward! Just the prank popup.
+    saveState();
+    usedCodes[code] = Date.now();
+    try { localStorage.setItem('neonArcadeCheats', JSON.stringify(usedCodes)); } catch {}
+    showGulliblePopup();
+    return;
   }
   saveState();
   usedCodes[code] = Date.now();
@@ -3944,52 +4102,76 @@ games.whatbeats = function() {
   inputEl.disabled = false;
   submitEl.disabled = false;
 
+  // Things that beat ALMOST anything — universal trumps that humans agree
+  // intuitively defeat most things. These are accepted against any target
+  // (except themselves and a few specific exceptions).
+  const UNIVERSAL_BEATERS = {
+    'god':         ['nothing'],     // god loses to nothing
+    'jesus':       ['nothing'],
+    'love':        ['hate','death'],
+    'death':       ['life','immortality'],
+    'time':        ['eternity'],
+    'nuke':        ['nothing'],
+    'nuclear bomb':['nothing'],
+    'atomic bomb': ['nothing'],
+    'black hole':  ['nothing'],
+    'sun':         ['black hole'],
+    'asteroid':    ['earth','planet'],
+    'meteor':      ['earth','planet'],
+    'thanos':      ['nothing'],
+    'goku':        ['nothing'],
+    'superman':    ['kryptonite'],
+    'chuck norris':['nothing'],
+    'gravity':     ['flight','antigravity'],
+    'big bang':    ['nothing'],
+    'universe':    ['multiverse','nothing'],
+    'multiverse':  ['nothing'],
+    'apocalypse':  ['nothing'],
+    'extinction':  ['nothing']
+  };
+
   // Robust offline judge — used when the AI API isn't available.
-  // Uses a dictionary of known "beats" relationships. If the answer isn't
-  // clearly a winner, it's rejected.
-  //
-  // WINS[target] = list of things that DO beat target.
-  // LOSES[target] = list of things that DON'T beat target (explicit rejections).
   const WINS = {
-    paper:    ['scissors','fire','water','shredder','rock on it','lighter','match','flame','knife','sword','bleach','eraser','stapler','acid'],
-    scissors: ['hammer','rock','fire','magnet','rust','larger scissors','stone','boulder','brick','tank','gravity','corrosion'],
-    rock:     ['paper','water','hammer','dynamite','explosion','tnt','earthquake','volcano','time','erosion','nuke','bomb','pickaxe','chisel','lava'],
-    fire:     ['water','rain','sand','foam','extinguisher','co2','snow','ice','blanket','vacuum','suffocation','absence of oxygen','lack of oxygen'],
-    water:    ['sponge','absorbent','dam','evaporation','heat','sun','fire (boils it)','drought','thirst','freezer','cold'],
-    ice:      ['fire','heat','sun','salt','hammer','pickaxe','lava','boiling water','hair dryer','microwave','flame','blowtorch','summer'],
-    lava:     ['water','ice','cold','freezer','liquid nitrogen','cooling','time','rock (when cooled)','ocean'],
-    wood:     ['fire','axe','saw','termites','rot','chainsaw','flame','lighter'],
-    metal:    ['rust','acid','heat','magnet','corrosion','time','saw','cutter','laser'],
-    glass:    ['hammer','rock','fist','bullet','heat','pressure','diamond','stone'],
-    steel:    ['acid','rust','heat','time','plasma','laser'],
+    paper:    ['scissors','fire','water','shredder','rock on it','lighter','match','flame','knife','sword','bleach','eraser','stapler','acid','pen','marker','ink','blood','tear','rip','crumple'],
+    scissors: ['hammer','rock','fire','magnet','rust','larger scissors','stone','boulder','brick','tank','gravity','corrosion','paper-cutter'],
+    rock:     ['paper','water','hammer','dynamite','explosion','tnt','earthquake','volcano','time','erosion','nuke','bomb','pickaxe','chisel','lava','jackhammer','wave'],
+    fire:     ['water','rain','sand','foam','extinguisher','co2','snow','ice','blanket','vacuum','suffocation','absence of oxygen','lack of oxygen','flood','tsunami'],
+    water:    ['sponge','absorbent','dam','evaporation','heat','sun','fire (boils it)','drought','thirst','freezer','cold','straw','towel','pump'],
+    ice:      ['fire','heat','sun','salt','hammer','pickaxe','lava','boiling water','hair dryer','microwave','flame','blowtorch','summer','sledgehammer'],
+    lava:     ['water','ice','cold','freezer','liquid nitrogen','cooling','time','rock (when cooled)','ocean','rain'],
+    wood:     ['fire','axe','saw','termites','rot','chainsaw','flame','lighter','match'],
+    metal:    ['rust','acid','heat','magnet','corrosion','time','saw','cutter','laser','salt water'],
+    glass:    ['hammer','rock','fist','bullet','heat','pressure','diamond','stone','elbow'],
+    steel:    ['acid','rust','heat','time','plasma','laser','very high heat'],
     plastic:  ['fire','heat','recycling','time','uv','sun','shredder'],
-    rain:     ['umbrella','roof','raincoat','shelter','sun'],
-    wind:     ['walls','shelter','building','barrier','calm'],
-    sun:      ['cloud','night','eclipse','moon','shade','umbrella'],
-    cloud:    ['wind','sun','rain (it falls)'],
-    darkness: ['light','fire','flashlight','sun','torch','lamp','match','candle'],
-    light:    ['darkness','shadow','eclipse','blackout','curtain','shade'],
-    knife:    ['gun','shield','armor','chainmail','time','rust'],
-    sword:    ['gun','shield','armor'],
-    gun:      ['bulletproof vest','tank','armor','shield','superman','distance'],
-    dog:      ['cat','bear','lion','tiger','wolf','poison','car'],
-    cat:      ['dog','lion','tiger','bear','vacuum','water'],
-    bear:     ['gun','tank','fire','bigger bear'],
-    lion:     ['elephant','gun','tank','tiger'],
-    elephant: ['mouse','gun','hunter','disease'],
-    mouse:    ['cat','trap','owl','snake'],
-    human:    ['bear','lion','nature','disease','time','gravity','nuke','bomb','earthquake']
+    rain:     ['umbrella','roof','raincoat','shelter','sun','indoors'],
+    wind:     ['walls','shelter','building','barrier','calm','vacuum'],
+    sun:      ['cloud','night','eclipse','moon','shade','umbrella','black hole','sunscreen'],
+    cloud:    ['wind','sun','rain','dispersion'],
+    darkness: ['light','fire','flashlight','sun','torch','lamp','match','candle','glow'],
+    light:    ['darkness','shadow','eclipse','blackout','curtain','shade','black hole'],
+    knife:    ['gun','shield','armor','chainmail','time','rust','bigger knife','sword'],
+    sword:    ['gun','shield','armor','bigger sword','axe'],
+    gun:      ['bulletproof vest','tank','armor','shield','superman','distance','being out of bullets'],
+    dog:      ['cat','bear','lion','tiger','wolf','poison','car','snake'],
+    cat:      ['dog','lion','tiger','bear','vacuum','water','cucumber'],
+    bear:     ['gun','tank','fire','bigger bear','hunter'],
+    lion:     ['elephant','gun','tank','tiger','hunter'],
+    elephant: ['mouse','gun','hunter','disease','poacher'],
+    mouse:    ['cat','trap','owl','snake','broom'],
+    human:    ['bear','lion','nature','disease','time','gravity','nuke','bomb','earthquake','virus','asteroid','starvation'],
+    earth:    ['asteroid','meteor','sun','black hole','nuke','aliens','climate change','time']
   };
   const LOSES = {
-    paper:    ['paper','rock (paper covers rock)','air','nothing','void','empty','idea','thought','wind (paper blocks it)','dust','mist'],
-    rock:     ['rock','scissors','paper (trick)','feather','foam','cotton','pillow'],
+    paper:    ['paper','rock (paper covers rock)','air','nothing','void','empty','dust','mist'],
+    rock:     ['rock','scissors','feather','foam','cotton','pillow'],
     scissors: ['scissors','paper','cloth','yarn'],
     fire:     ['fire','paper','wood','grass','gas','oil','fuel','gasoline','air','oxygen'],
     water:    ['water','fire','ice','sand','dust','paper','sun','steam'],
-    ice:      ['ice','water','snow'],
+    ice:      ['ice','water','snow','cold'],
     lava:     ['lava','fire','heat','flame'],
     sun:      ['sun','fire','heat','planet','earth'],
-    darkness: ['darkness','shadow','night','void']
+    darkness: ['darkness','shadow','night','void','blackness']
   };
 
   function offlineJudge(answer, target) {
@@ -3998,11 +4180,25 @@ games.whatbeats = function() {
     if (!a) return { wins: false, reason: 'Empty answer' };
     if (a === t) return { wins: false, reason: "Can't be the same thing" };
     if (a.length < 2) return { wins: false, reason: 'Too short' };
-    // Explicit loser check first — catches obvious wrong answers
-    if (LOSES[t] && LOSES[t].some(x => x.toLowerCase() === a || a === x.toLowerCase())) {
+    if (/^(.)\1+$/.test(a)) return { wins: false, reason: 'Not a real answer' };
+
+    // Universal beaters: things that beat almost anything (god, nuke, etc.)
+    if (UNIVERSAL_BEATERS[a] !== undefined) {
+      const exceptions = UNIVERSAL_BEATERS[a];
+      // Does the target appear in this beater's exceptions list?
+      const stoppedBy = exceptions.some(ex => ex.toLowerCase() === t);
+      if (!stoppedBy) {
+        return { wins: true, reason: `${answer} transcends ${target}` };
+      }
+      return { wins: false, reason: `${answer} can't beat ${target}` };
+    }
+
+    // Explicit loser check — catches obvious wrong answers
+    if (LOSES[t] && LOSES[t].some(x => x.toLowerCase() === a)) {
       return { wins: false, reason: `${answer} doesn't beat ${target}` };
     }
-    // Match against known winners (including substring for multi-word)
+
+    // Match against known winners (substring tolerant for multi-word)
     if (WINS[t]) {
       for (const win of WINS[t]) {
         const w = win.toLowerCase();
@@ -4010,13 +4206,16 @@ games.whatbeats = function() {
           return { wins: true, reason: `${answer} beats ${target}` };
         }
       }
-      // We have a winners list for this target but answer matched none
+      // Target has a winners list and answer matched none — but be lenient
+      // for clearly powerful concepts even if they're not listed
+      const POWERFUL_HINTS = ['god','nuke','bomb','black hole','death','infinity','time','sun','laser','plasma','asteroid','meteor','tornado','hurricane','tsunami','volcano','dragon','mech','robot','ai','virus','disease','plague','curse','wish','magic'];
+      if (POWERFUL_HINTS.some(h => a.includes(h))) {
+        return { wins: true, reason: `${answer} overpowers ${target}` };
+      }
       return { wins: false, reason: `${answer} doesn't beat ${target}` };
     }
-    // Unknown target — no hardcoded rules. Reject gibberish and accept sensible-looking answers
-    // but cautiously. Words under 3 chars or with lots of repeated chars get rejected.
-    if (/^(.)\1+$/.test(a)) return { wins: false, reason: 'Not a real answer' };
-    // Accept as a last resort (since we genuinely can't judge obscure pairings offline)
+
+    // Unknown target — accept reasonable answers, since we can't judge offline
     return { wins: true, reason: `${answer} beats ${target}` };
   }
 
