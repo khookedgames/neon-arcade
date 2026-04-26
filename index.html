@@ -365,6 +365,40 @@
     justify-content: center;
   }
 
+  @keyframes hologramSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  @keyframes midnightShift {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+  }
+
+  /* Limited skin card — subtle pulsing gold border + LIMITED badge */
+  .skin-card.limited {
+    border-color: #ffd700;
+    box-shadow: 0 0 18px rgba(255, 215, 0, 0.45);
+    animation: limited-pulse 2.5s ease-in-out infinite;
+    position: relative;
+  }
+  @keyframes limited-pulse {
+    0%, 100% { box-shadow: 0 0 14px rgba(255,215,0,0.35); }
+    50%      { box-shadow: 0 0 22px rgba(255,215,0,0.7); }
+  }
+  .limited-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: #ffd700;
+    color: #000;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    padding: 4px 6px;
+    letter-spacing: 1px;
+    z-index: 3;
+    box-shadow: 0 0 10px rgba(255,215,0,0.7);
+  }
+
   /* ===== DISCOUNT / POTION BANNERS ===== */
   .discount-banner {
     width: 100%;
@@ -685,6 +719,11 @@
     position: relative;
     overflow: hidden;
     margin-bottom: 20px;
+  }
+  /* Light mode: bright play area so games are readable on a light background */
+  body.light-mode .game-area {
+    background: rgba(255,255,255,0.85);
+    box-shadow: 0 0 25px var(--neon-purple), inset 0 0 18px rgba(176,38,255,0.08);
   }
   .game-header {
     display: flex;
@@ -1060,7 +1099,7 @@
     margin-top: 8px;
   }
 
-  /* The bait message under the arcade title */
+  /* The bait/update messages under the arcade title (alternates) */
   .bait-message {
     font-family: 'VT323', monospace;
     font-size: 14px;
@@ -1070,6 +1109,15 @@
     text-align: center;
     animation: bait-blink 2s ease-in-out infinite;
     letter-spacing: 1px;
+    transition: opacity 0.4s ease, color 0.4s ease;
+    min-height: 18px; /* prevents layout jump when text changes */
+  }
+  .bait-message.update-msg {
+    color: var(--neon-cyan);
+    text-shadow: 0 0 6px var(--neon-cyan);
+  }
+  .bait-message.fading {
+    opacity: 0;
   }
   @keyframes bait-blink {
     0%, 100% { opacity: 1; }
@@ -1633,7 +1681,7 @@
   <!-- HUB -->
   <div id="screen-hub" class="screen active">
     <h1 class="title">NEON ARCADE</h1>
-    <div class="bait-message">redeem code: ELBILLUG for free secret skin</div>
+    <div class="bait-message" id="bait-message">redeem code: ELBILLUG for free secret skin</div>
     <div class="subtitle">~ INSERT COIN ~</div>
     <div class="player-display" id="player-avatar"><div class="avatar-mouth"></div></div>
     <div class="hud">
@@ -1695,7 +1743,7 @@
       <div class="game-card" data-game="whatbeats" onclick="startGame('whatbeats')">
         <span class="icon">📄</span>
         <h3>WHAT BEATS PAPER</h3>
-        <p>Name something that beats paper. $5 per chain win!</p>
+        <p>Name something that beats paper. $3 per chain win!</p>
       </div>
       <div class="game-card wheel-card" data-game="wheel" onclick="showScreen('wheel')">
         <span class="icon">🎰</span>
@@ -1949,7 +1997,7 @@
   <!-- GAME: WHAT BEATS PAPER -->
   <div id="screen-whatbeats" class="screen">
     <h2 class="pixel" style="color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); margin-bottom: 15px;">📄 WHAT BEATS PAPER?</h2>
-    <div class="instructions" id="wb-instructions">Name something that beats the current thing. Each win chains — the next thing has to beat yours! $5 per win. No repeats!</div>
+    <div class="instructions" id="wb-instructions">Name something that beats the current thing. Each win chains — the next thing has to beat yours! $3 per win. No repeats!</div>
     <div class="game-header">
       <span class="score">STREAK: <span id="wb-streak">0</span></span>
       <span class="timer">POT: $<span id="wb-pot">0</span></span>
@@ -2013,16 +2061,21 @@ const state = {
 };
 
 const SKINS = [
-  { id: 'default',  name: 'DEFAULT',   color: '#00f0ff', price: 0 },
-  { id: 'pink',     name: 'HOT PINK',  color: '#ff2bd6', price: 50 },
-  { id: 'green',    name: 'TOXIC',     color: '#39ff14', price: 100 },
-  { id: 'yellow',   name: 'SUNBURST',  color: '#fff700', price: 200 },
-  { id: 'purple',   name: 'VOID',      color: '#b026ff', price: 350 },
-  { id: 'rainbow',  name: 'PRISM',     color: 'linear', price: 600 },
-  { id: 'gold',     name: 'GOLDEN',    color: '#ffd700', price: 1000 },
-  { id: 'lava',     name: 'LAVA',      color: 'lava',    price: 1000 },
-  { id: 'midnight', name: 'MIDNIGHT', color: '#3d5af1', price: 1500 },
-  { id: 'iceking',  name: 'ICE KING',  color: 'ice',     price: 0, exclusive: true }
+  { id: 'default',  name: 'DEFAULT',   color: '#ffffff', price: 0 },
+  { id: 'pink',     name: 'PINK',      color: '#ff7ad9', price: 50 },
+  { id: 'purple',   name: 'PURPLE',    color: '#b026ff', price: 50 },
+  { id: 'blue',     name: 'BLUE',      color: '#3d8cff', price: 50 },
+  { id: 'green',    name: 'GREEN',     color: '#39ff14', price: 50 },
+  { id: 'red',      name: 'RED',       color: '#ff2e63', price: 75 },
+  { id: 'orange',   name: 'ORANGE',    color: '#ff7700', price: 75 },
+  { id: 'yellow',   name: 'YELLOW',    color: '#fff700', price: 75 },
+  { id: 'rainbow',  name: 'PRISM',     color: 'linear',   price: 600 },
+  { id: 'lava',     name: 'LAVA',      color: 'lava',     price: 1000 },
+  { id: 'demonic',  name: 'DEMONIC',   color: 'demonic',  price: 1250 },
+  { id: 'heavenly', name: 'HEAVENLY',  color: 'heavenly', price: 1000 },
+  { id: 'midnight', name: 'MIDNIGHT',  color: 'midnight', price: 750 },
+  { id: 'hologram', name: 'HOLOGRAM',  color: 'hologram', price: 1500, limited: true },
+  { id: 'iceking',  name: 'ICE KING',  color: 'ice',      price: 0, exclusive: true }
 ];
 
 /* =========================================================
@@ -2356,6 +2409,11 @@ function loadState() {
       if (data.discount && typeof data.discount === 'object') state.discount = data.discount;
       // Ensure default is always owned
       if (!state.owned.includes('default')) state.owned.unshift('default');
+      // After a skin catalog update, drop any owned IDs that no longer exist
+      // (e.g. GOLD/VOID/HOT PINK/TOXIC/SUNBURST were removed in this update).
+      const validIds = new Set(SKINS.map(s => s.id));
+      state.owned = state.owned.filter(id => validIds.has(id));
+      if (!validIds.has(state.currentSkin)) state.currentSkin = 'default';
     }
   } catch {}
 }
@@ -2403,10 +2461,45 @@ function applySkinColor(skin) {
     const crown = document.createElement('div');
     crown.className = 'iceking-crown';
     avatar.appendChild(crown);
+  } else if (skin.color === 'demonic') {
+    avatar.style.background = 'radial-gradient(circle at 35% 35%, #ff3344, #aa0000 50%, #220000 100%)';
+    avatar.style.boxShadow = '0 0 30px #ff0033, 0 0 60px #aa0000, inset -10px -10px 20px rgba(0,0,0,0.6)';
+    document.documentElement.style.setProperty('--skin-color', '#ff0033');
+  } else if (skin.color === 'heavenly') {
+    avatar.style.background = 'radial-gradient(circle at 35% 35%, #ffffff, #fff8aa 45%, #f5d040 100%)';
+    avatar.style.boxShadow = '0 0 35px #fff8aa, 0 0 70px #ffd700, inset -10px -10px 20px rgba(0,0,0,0.15)';
+    document.documentElement.style.setProperty('--skin-color', '#fff8aa');
+  } else if (skin.color === 'midnight') {
+    // Animated dark blue gradient — slow shifting glow
+    avatar.style.background = 'linear-gradient(135deg, #1e3a8a, #0a1a4a, #1e3a8a, #2c4eb5)';
+    avatar.style.backgroundSize = '300% 300%';
+    avatar.style.animation = 'midnightShift 6s ease-in-out infinite';
+    avatar.style.boxShadow = '0 0 30px #3d5af1, inset -10px -10px 20px rgba(0,0,0,0.5)';
+    document.documentElement.style.setProperty('--skin-color', '#3d5af1');
+  } else if (skin.color === 'hologram') {
+    // Cyan/magenta holographic shimmer with conic-gradient + animation
+    avatar.style.background = 'conic-gradient(from 0deg, #ff2bd6, #00f0ff, #39ff14, #fff700, #ff2bd6)';
+    avatar.style.boxShadow = '0 0 30px #ff2bd6, 0 0 60px #00f0ff, inset -10px -10px 20px rgba(0,0,0,0.3)';
+    avatar.style.animation = 'hologramSpin 3s linear infinite';
+    document.documentElement.style.setProperty('--skin-color', '#00f0ff');
   } else {
+    // Reset hologram animation if any
+    avatar.style.animation = '';
+    avatar.style.backgroundSize = '';
     avatar.style.background = skin.color;
-    avatar.style.boxShadow = `0 0 30px ${skin.color}, inset -10px -10px 20px rgba(0,0,0,0.4)`;
-    document.documentElement.style.setProperty('--skin-color', skin.color);
+    // White skins need a subtle outline so they're visible in light mode
+    if (skin.color === '#ffffff') {
+      avatar.style.boxShadow = `0 0 20px rgba(0,240,255,0.5), 0 0 0 2px rgba(0,0,0,0.15), inset -10px -10px 20px rgba(0,0,0,0.1)`;
+      document.documentElement.style.setProperty('--skin-color', '#cccccc');
+    } else {
+      avatar.style.boxShadow = `0 0 30px ${skin.color}, inset -10px -10px 20px rgba(0,0,0,0.4)`;
+      document.documentElement.style.setProperty('--skin-color', skin.color);
+    }
+  }
+  // Reset animation when leaving hologram/midnight
+  if (skin.color !== 'hologram' && skin.color !== 'midnight') {
+    avatar.style.animation = '';
+    avatar.style.backgroundSize = '';
   }
 }
 
@@ -2440,6 +2533,48 @@ function skinFill(ctx, cx, cy, size) {
     g.addColorStop(1,    '#2266cc');
     return g;
   }
+  if (skin.color === 'demonic') {
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(size, 8));
+    g.addColorStop(0,   '#ff3344');
+    g.addColorStop(0.5, '#aa0000');
+    g.addColorStop(1,   '#220000');
+    return g;
+  }
+  if (skin.color === 'heavenly') {
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(size, 8));
+    g.addColorStop(0,   '#ffffff');
+    g.addColorStop(0.5, '#fff8aa');
+    g.addColorStop(1,   '#f5d040');
+    return g;
+  }
+  if (skin.color === 'midnight') {
+    // Slowly shifting dark blue gradient
+    const t = (Date.now() / 800) % (Math.PI * 2);
+    const g = ctx.createLinearGradient(
+      cx - size * Math.cos(t),
+      cy - size * Math.sin(t),
+      cx + size * Math.cos(t),
+      cy + size * Math.sin(t)
+    );
+    g.addColorStop(0,   '#1e3a8a');
+    g.addColorStop(0.5, '#0a1a4a');
+    g.addColorStop(1,   '#2c4eb5');
+    return g;
+  }
+  if (skin.color === 'hologram') {
+    // Animated radial cycling through the rainbow
+    const t = (Date.now() / 600) % (Math.PI * 2);
+    const g = ctx.createLinearGradient(
+      cx - size * Math.cos(t),
+      cy - size * Math.sin(t),
+      cx + size * Math.cos(t),
+      cy + size * Math.sin(t)
+    );
+    g.addColorStop(0,   '#ff2bd6');
+    g.addColorStop(0.5, '#00f0ff');
+    g.addColorStop(1,   '#fff700');
+    return g;
+  }
   return skin.color;
 }
 // Glow color for shadowColor.
@@ -2455,6 +2590,13 @@ function skinGlow() {
     return t > 0 ? '#ff5500' : '#ffaa00';
   }
   if (skin.color === 'ice') return '#aaddff';
+  if (skin.color === 'demonic') return '#ff0033';
+  if (skin.color === 'heavenly') return '#fff8aa';
+  if (skin.color === 'midnight') return '#3d5af1';
+  if (skin.color === 'hologram') {
+    const h = (Date.now() / 8) % 360;
+    return `hsl(${h}, 100%, 65%)`;
+  }
   return skin.color;
 }
 // Solid color fallback (for CSS use).
@@ -2463,6 +2605,10 @@ function skinSolid() {
   if (skin.color === 'linear') return '#ff2bd6';
   if (skin.color === 'lava')   return '#ff5500';
   if (skin.color === 'ice')    return '#aaddff';
+  if (skin.color === 'demonic') return '#ff0033';
+  if (skin.color === 'heavenly') return '#fff8aa';
+  if (skin.color === 'midnight') return '#3d5af1';
+  if (skin.color === 'hologram') return '#00f0ff';
   return skin.color;
 }
 
@@ -2623,14 +2769,21 @@ function renderShop() {
   if (currentShopTab === 'extras')  { renderExtrasTab(grid); return; }
   if (currentShopTab === 'potions') { renderPotionsTab(grid); return; }
   // Default: skins tab
-  SKINS.forEach(skin => {
+  // Cheapest first; exclusive (wheel-only) skins go to the very end
+  const sortedSkins = [...SKINS].sort((a, b) => {
+    if (a.exclusive && !b.exclusive) return 1;
+    if (!a.exclusive && b.exclusive) return -1;
+    return a.price - b.price;
+  });
+  sortedSkins.forEach(skin => {
     const owned = state.owned.includes(skin.id);
     const equipped = state.currentSkin === skin.id;
     const card = document.createElement('div');
-    card.className = 'skin-card' + (owned ? ' owned' : '') + (equipped ? ' equipped' : '') + (skin.exclusive ? ' exclusive' : '');
+    card.className = 'skin-card' + (owned ? ' owned' : '') + (equipped ? ' equipped' : '') + (skin.exclusive ? ' exclusive' : '') + (skin.limited ? ' limited' : '');
 
     let bgStyle;
     let crownHtml = '';
+    let limitedBadge = skin.limited ? '<div class="limited-badge">⏳ LIMITED</div>' : '';
     if (skin.color === 'linear') {
       bgStyle = 'background: linear-gradient(135deg, #ff2bd6, #00f0ff, #39ff14, #fff700); color: #ff2bd6;';
     } else if (skin.color === 'lava') {
@@ -2638,6 +2791,14 @@ function renderShop() {
     } else if (skin.color === 'ice') {
       bgStyle = 'background: radial-gradient(circle at 35% 35%, #ffffff, #aaddff 45%, #2266cc 90%); color: #aaddff;';
       crownHtml = '<div class="skin-preview-crown"></div>';
+    } else if (skin.color === 'demonic') {
+      bgStyle = 'background: radial-gradient(circle at 35% 35%, #ff3344, #aa0000 50%, #220000 100%); color: #ff3344;';
+    } else if (skin.color === 'heavenly') {
+      bgStyle = 'background: radial-gradient(circle at 35% 35%, #ffffff, #fff8aa 45%, #f5d040 100%); color: #f5d040;';
+    } else if (skin.color === 'midnight') {
+      bgStyle = 'background: linear-gradient(135deg, #1e3a8a, #0a1a4a, #1e3a8a, #2c4eb5); background-size: 300% 300%; color: #3d5af1; animation: midnightShift 6s ease-in-out infinite;';
+    } else if (skin.color === 'hologram') {
+      bgStyle = 'background: conic-gradient(from 0deg, #ff2bd6, #00f0ff, #39ff14, #fff700, #ff2bd6); color: #00f0ff; animation: hologramSpin 3s linear infinite;';
     } else {
       bgStyle = `background: ${skin.color}; color: ${skin.color};`;
     }
@@ -2663,6 +2824,7 @@ function renderShop() {
     else action = `<button onclick="buySkin('${skin.id}')" ${state.money < actualPrice ? 'disabled' : ''}>BUY</button>`;
 
     card.innerHTML = `
+      ${limitedBadge}
       <div class="skin-preview" style="${bgStyle}">${crownHtml}<div class="skin-mouth"></div></div>
       <h4>${skin.name}</h4>
       <div class="price">${priceLabel}</div>
@@ -2681,7 +2843,8 @@ function lookupItemName(kind, id) {
 }
 
 function renderExtrasTab(grid) {
-  EXTRAS.forEach(item => {
+  const sortedExtras = [...EXTRAS].sort((a, b) => a.price - b.price);
+  sortedExtras.forEach(item => {
     const owned = isExtraOwned(item.id);
     const consumable = item.consumable;
     const consumed = consumable && state.questExtraUsed && state.questExtraUsed[item.id];
@@ -2720,7 +2883,8 @@ function renderExtrasTab(grid) {
 }
 
 function renderPotionsTab(grid) {
-  POTIONS.forEach(item => {
+  const sortedPotions = [...POTIONS].sort((a, b) => a.price - b.price);
+  sortedPotions.forEach(item => {
     const card = document.createElement('div');
     card.className = 'extra-card potion-card';
 
@@ -3187,6 +3351,9 @@ let activeGame = null;
 let gameCleanup = null;
 
 function startGame(name) {
+  // Always clean up any previous instance first — otherwise you get
+  // two snakes, two arrows, etc. from leftover loops.
+  if (gameCleanup) { gameCleanup(); gameCleanup = null; }
   activeGame = name;
   showScreen(name);
   games[name]();
@@ -5035,7 +5202,7 @@ games.whatbeats = function() {
 
     if (result.wins) {
       streak++;
-      const gain = 5;
+      const gain = 3;
       pot += gain;
       history.push(answer.toUpperCase());
       current = answer.toUpperCase();
@@ -5371,6 +5538,8 @@ function retryGame() {
   // clean overlay
   const overlay = screenEl.querySelector('.game-over-overlay');
   if (overlay) overlay.remove();
+  // Kill any leftover game loops before respawning
+  if (gameCleanup) { gameCleanup(); gameCleanup = null; }
   activeGame = name;
   games[name]();
 }
@@ -5388,6 +5557,29 @@ updateWheelUI();
 renderHub();
 renderQuests();
 renderGameSigns();
+
+/* Alternate the bait message under the arcade title every 6 seconds
+   between the gullible-code bait and the "game updates every week" notice.
+   A short opacity fade between swaps makes it less jarring. */
+(function setupBaitAlternator() {
+  const messages = [
+    { text: 'redeem code: ELBILLUG for free secret skin', cls: '' },
+    { text: '🆕 Game updates every week!',                cls: 'update-msg' }
+  ];
+  let idx = 0;
+  setInterval(() => {
+    const el = document.getElementById('bait-message');
+    if (!el) return;
+    el.classList.add('fading');
+    setTimeout(() => {
+      idx = (idx + 1) % messages.length;
+      el.textContent = messages[idx].text;
+      // Reset class list and apply the new variant if any
+      el.className = 'bait-message ' + messages[idx].cls + ' fading';
+      requestAnimationFrame(() => el.classList.remove('fading'));
+    }, 400);
+  }, 6000);
+})();
 </script>
 </body>
 </html>
