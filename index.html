@@ -2135,11 +2135,7 @@ const QUESTS_POOL = [
   { id: 'survivor',    name: 'SURVIVOR',     desc: 'Eat 10 pellets in NEON SNAKE',    goal: 10,   stat: 'snakePellets',      reward: { money: 175 } },
   { id: 'wordsmith',   name: 'WORDSMITH',    desc: 'Get 5 wins in WHAT BEATS PAPER',  goal: 5,    stat: 'wbWins',            reward: { money: 200 } }
 ];
-const BONUS_POOL = [
-  { id: 'jackpot_hunter', name: 'JACKPOT HUNTER',  desc: 'Earn $500 in one cycle',           goal: 500,  stat: 'moneyEarned',       reward: { money: 750, spin: 4 },  bonus: true },
-  { id: 'streak_king',    name: 'STREAK KING',     desc: 'Hit a 3x streak in RISK IT once',  goal: 1,    stat: 'riskStreak3',       reward: { money: 1000, spin: 3 }, bonus: true },
-  { id: 'arcade_master',  name: 'ARCADE MASTER',   desc: 'Play 6 different mini-games',      goal: 6,    stat: 'uniqueGamesPlayed', reward: { money: 600, spin: 4 },  bonus: true }
-];
+const BONUS_POOL = [];
 const QUEST_RESET_MS = 12 * 60 * 60 * 1000; // 12 hours
 
 const quests = {
@@ -2171,7 +2167,9 @@ function findQuestDef(id) {
 function pickActiveQuests() {
   // Shuffle daily pool, take 3
   const daily = [...QUESTS_POOL].sort(() => Math.random() - 0.5).slice(0, 3).map(q => q.id);
-  const bonus = BONUS_POOL[Math.floor(Math.random() * BONUS_POOL.length)].id;
+  const bonus = BONUS_POOL.length > 0
+    ? BONUS_POOL[Math.floor(Math.random() * BONUS_POOL.length)].id
+    : null;
   quests.activeDaily = daily;
   quests.activeBonus = bonus;
 }
@@ -2192,6 +2190,12 @@ function loadQuests() {
       if (!quests.playedGames) quests.playedGames = {};
       if (!Array.isArray(quests.activeDaily)) quests.activeDaily = [];
       if (typeof quests.activeBonus !== 'string') quests.activeBonus = null;
+      // If the saved bonus id no longer exists in any pool (e.g. bonus quests
+      // were removed in an update), drop it so renderQuests doesn't try to
+      // resolve a missing definition.
+      if (quests.activeBonus && !findQuestDef(quests.activeBonus)) {
+        quests.activeBonus = null;
+      }
     }
   } catch {}
 }
