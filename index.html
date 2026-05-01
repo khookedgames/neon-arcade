@@ -364,10 +364,66 @@
     flex-wrap: wrap;
     justify-content: center;
   }
+  .top-bar-row {
+    margin-bottom: 18px;
+    margin-top: 4px;
+  }
+
+  /* ===== UPDATE LOG ===== */
+  .updatelog-container {
+    width: 100%;
+    max-width: 720px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 14px 4px;
+    margin-bottom: 18px;
+  }
+  .updatelog-entry {
+    background: rgba(0,0,0,0.55);
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 0 0 10px rgba(0,240,255,0.25);
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    font-family: 'VT323', monospace;
+    text-align: left;
+    color: #ddd;
+    font-size: 18px;
+    line-height: 1.45;
+  }
+  body.light-mode .updatelog-entry {
+    background: rgba(255,255,255,0.7);
+    color: #222;
+  }
+  .updatelog-entry .ver {
+    color: var(--neon-pink);
+    text-shadow: 0 0 6px var(--neon-pink);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 13px;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .updatelog-entry .date {
+    color: var(--neon-yellow);
+    font-size: 14px;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .updatelog-entry ul {
+    margin: 0;
+    padding-left: 22px;
+  }
+  .updatelog-entry li {
+    margin-bottom: 4px;
+  }
 
   @keyframes hologramSpin {
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
+  }
+  @keyframes galaxySwirl {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(-360deg); }
   }
   @keyframes midnightShift {
     0%, 100% { background-position: 0% 50%; }
@@ -476,6 +532,35 @@
   .shop-tab:not(:first-child):not(:last-child) {
     border-left-width: 1px;
     border-right-width: 1px;
+  }
+
+  /* Pause overlay — sits over the game-area while the game is suspended */
+  .pause-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    z-index: 50;
+    backdrop-filter: blur(2px);
+    animation: pause-fade-in 0.18s ease;
+  }
+  body.light-mode .pause-overlay {
+    background: rgba(255,255,255,0.85);
+  }
+  .pause-overlay h2 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 28px;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 12px var(--neon-cyan);
+    margin: 0;
+  }
+  @keyframes pause-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
   }
 
   /* ===== ADMIN PANEL ===== */
@@ -1116,6 +1201,14 @@
     color: var(--neon-cyan);
     text-shadow: 0 0 6px var(--neon-cyan);
   }
+  .bait-message.tip-msg {
+    color: var(--neon-yellow);
+    text-shadow: 0 0 6px var(--neon-yellow);
+  }
+  .bait-message.fact-msg {
+    color: var(--neon-pink);
+    text-shadow: 0 0 6px var(--neon-pink);
+  }
   .bait-message.fading {
     opacity: 0;
   }
@@ -1683,6 +1776,15 @@
     <h1 class="title">NEON ARCADE</h1>
     <div class="bait-message" id="bait-message">redeem code: ELBILLUG for free secret skin</div>
     <div class="subtitle">~ INSERT COIN ~</div>
+
+    <div class="btn-row top-bar-row">
+      <button class="btn yellow" onclick="showScreen('shop')">🛒 SHOP</button>
+      <button class="btn cyan" onclick="showUpdateLog()">📜 UPDATES</button>
+      <button class="btn green" onclick="promptCheatCode()">🔐 CODE</button>
+      <button class="btn" onclick="toggleTheme()" id="theme-btn">🌙 DARK</button>
+      <button class="btn admin-btn" id="admin-btn" onclick="showScreen('admin')" style="display:none;">👑 ADMIN</button>
+    </div>
+
     <div class="player-display" id="player-avatar"><div class="avatar-mouth"></div></div>
     <div class="hud">
       <div class="hud-pill">💰 $<span id="money">0</span></div>
@@ -1761,12 +1863,16 @@
     </div>
 
     <div class="btn-row">
-      <button class="btn yellow" onclick="showScreen('shop')">🛒 SHOP</button>
-      <button class="btn green" onclick="promptCheatCode()">🔐 CODE</button>
-      <button class="btn" onclick="toggleTheme()" id="theme-btn">🌙 DARK</button>
-      <button class="btn admin-btn" id="admin-btn" onclick="showScreen('admin')" style="display:none;">👑 ADMIN</button>
       <button class="btn pink" onclick="resetProgress()">RESET</button>
     </div>
+  </div>
+
+  <!-- UPDATE LOG -->
+  <div id="screen-updatelog" class="screen">
+    <h2 class="pixel" style="color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); margin-bottom: 14px;">📜 UPDATE LOG</h2>
+    <p class="instructions">A history of changes to NEON ARCADE.</p>
+    <div class="updatelog-container" id="updatelog-list"></div>
+    <button class="btn pink" onclick="showScreen('hub')">BACK</button>
   </div>
 
   <!-- SHOP -->
@@ -2074,9 +2180,25 @@ const SKINS = [
   { id: 'demonic',  name: 'DEMONIC',   color: 'demonic',  price: 1250 },
   { id: 'heavenly', name: 'HEAVENLY',  color: 'heavenly', price: 1000 },
   { id: 'midnight', name: 'MIDNIGHT',  color: 'midnight', price: 750 },
-  { id: 'hologram', name: 'HOLOGRAM',  color: 'hologram', price: 1500, limited: true },
+  { id: 'galaxy',   name: 'GALAXY',    color: 'galaxy',   price: 1500, limited: true },
   { id: 'iceking',  name: 'ICE KING',  color: 'ice',      price: 0, exclusive: true }
 ];
+
+// Skins that USED to be limited and are now retired from the shop, but
+// players who already owned them keep them forever. Same shape as SKINS.
+// To retire a limited skin in the future: move it from SKINS into here.
+const RETIRED_LIMITED_SKINS = [
+  // HOLOGRAM was retired in v1.5. Players who already owned it keep it
+  // equippable forever; new players can't buy it.
+  { id: 'hologram', name: 'HOLOGRAM',  color: 'hologram', price: 1500, limited: true }
+];
+
+// Combined catalog used for everything except shop display.
+// Looking up a player's owned/equipped skin always resolves through this.
+function getSkinById(id) {
+  return SKINS.find(s => s.id === id) ||
+         RETIRED_LIMITED_SKINS.find(s => s.id === id);
+}
 
 /* =========================================================
    EXTRAS — non-skin permanent unlocks.
@@ -2410,8 +2532,12 @@ function loadState() {
       // Ensure default is always owned
       if (!state.owned.includes('default')) state.owned.unshift('default');
       // After a skin catalog update, drop any owned IDs that no longer exist
-      // (e.g. GOLD/VOID/HOT PINK/TOXIC/SUNBURST were removed in this update).
-      const validIds = new Set(SKINS.map(s => s.id));
+      // anywhere — but RETIRED limited skins stay valid, so players who
+      // already bought one (e.g. an old HOLOGRAM) keep it forever.
+      const validIds = new Set([
+        ...SKINS.map(s => s.id),
+        ...RETIRED_LIMITED_SKINS.map(s => s.id)
+      ]);
       state.owned = state.owned.filter(id => validIds.has(id));
       if (!validIds.has(state.currentSkin)) state.currentSkin = 'default';
     }
@@ -2427,11 +2553,30 @@ function showScreen(name) {
   if (name === 'shop') { setShopTab('skins'); }
   if (name === 'hub') { renderHub(); renderQuests(); renderGameSigns(); }
   if (name === 'admin') refreshAdminUI();
+  if (name === 'updatelog') renderUpdateLog();
+  // Inject a pause button on game screens (idempotent — only added once per game).
+  // Skips non-gameplay screens.
+  const nonGameScreens = new Set(['hub', 'shop', 'wheel', 'admin', 'updatelog']);
+  if (!nonGameScreens.has(name)) {
+    const screenEl = document.getElementById('screen-' + name);
+    if (screenEl && !screenEl.querySelector('.pause-btn')) {
+      // Find the existing QUIT button so we can sit right next to it
+      const quitBtn = screenEl.querySelector('button.btn.pink');
+      if (quitBtn) {
+        const pauseBtn = document.createElement('button');
+        pauseBtn.className = 'btn cyan pause-btn';
+        pauseBtn.textContent = '⏸ PAUSE';
+        pauseBtn.style.marginRight = '10px';
+        pauseBtn.onclick = togglePause;
+        quitBtn.parentNode.insertBefore(pauseBtn, quitBtn);
+      }
+    }
+  }
 }
 
 function renderHub() {
   document.getElementById('money').textContent = state.money;
-  const skin = SKINS.find(s => s.id === state.currentSkin);
+  const skin = getSkinById(state.currentSkin);
   document.getElementById('current-skin').textContent = skin.name;
   applySkinColor(skin);
   // Toggle admin button visibility
@@ -2482,6 +2627,12 @@ function applySkinColor(skin) {
     avatar.style.boxShadow = '0 0 30px #ff2bd6, 0 0 60px #00f0ff, inset -10px -10px 20px rgba(0,0,0,0.3)';
     avatar.style.animation = 'hologramSpin 3s linear infinite';
     document.documentElement.style.setProperty('--skin-color', '#00f0ff');
+  } else if (skin.color === 'galaxy') {
+    // Deep-space radial: black core ringed by magenta nebula → blue cosmos
+    avatar.style.background = 'radial-gradient(circle at 30% 30%, #ffffff 0%, #ff66cc 12%, #6633ff 35%, #1a0a3a 70%, #000000 100%)';
+    avatar.style.boxShadow = '0 0 35px #ff66cc, 0 0 70px #6633ff, inset -10px -10px 20px rgba(0,0,0,0.6)';
+    avatar.style.animation = 'galaxySwirl 8s linear infinite';
+    document.documentElement.style.setProperty('--skin-color', '#cc66ff');
   } else {
     // Reset hologram animation if any
     avatar.style.animation = '';
@@ -2496,8 +2647,8 @@ function applySkinColor(skin) {
       document.documentElement.style.setProperty('--skin-color', skin.color);
     }
   }
-  // Reset animation when leaving hologram/midnight
-  if (skin.color !== 'hologram' && skin.color !== 'midnight') {
+  // Reset animation when leaving animated skins
+  if (skin.color !== 'hologram' && skin.color !== 'midnight' && skin.color !== 'galaxy') {
     avatar.style.animation = '';
     avatar.style.backgroundSize = '';
   }
@@ -2509,7 +2660,7 @@ function applySkinColor(skin) {
 // Returns a canvas fillStyle that respects the current skin,
 // creating gradients for Prism/Lava/Ice skins.
 function skinFill(ctx, cx, cy, size) {
-  const skin = SKINS.find(s => s.id === state.currentSkin);
+  const skin = getSkinById(state.currentSkin);
   if (skin.color === 'linear') {
     const g = ctx.createLinearGradient(cx - size, cy - size, cx + size, cy + size);
     g.addColorStop(0,    '#ff2bd6');
@@ -2575,11 +2726,21 @@ function skinFill(ctx, cx, cy, size) {
     g.addColorStop(1,   '#fff700');
     return g;
   }
+  if (skin.color === 'galaxy') {
+    // Deep-space radial: white core → pink nebula → purple → black
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(size, 8));
+    g.addColorStop(0,    '#ffffff');
+    g.addColorStop(0.18, '#ff66cc');
+    g.addColorStop(0.45, '#6633ff');
+    g.addColorStop(0.85, '#1a0a3a');
+    g.addColorStop(1,    '#000000');
+    return g;
+  }
   return skin.color;
 }
 // Glow color for shadowColor.
 function skinGlow() {
-  const skin = SKINS.find(s => s.id === state.currentSkin);
+  const skin = getSkinById(state.currentSkin);
   if (skin.color === 'linear') {
     const h = (Date.now() / 10) % 360;
     return `hsl(${h}, 100%, 60%)`;
@@ -2597,11 +2758,12 @@ function skinGlow() {
     const h = (Date.now() / 8) % 360;
     return `hsl(${h}, 100%, 65%)`;
   }
+  if (skin.color === 'galaxy') return '#cc66ff';
   return skin.color;
 }
 // Solid color fallback (for CSS use).
 function skinSolid() {
-  const skin = SKINS.find(s => s.id === state.currentSkin);
+  const skin = getSkinById(state.currentSkin);
   if (skin.color === 'linear') return '#ff2bd6';
   if (skin.color === 'lava')   return '#ff5500';
   if (skin.color === 'ice')    return '#aaddff';
@@ -2609,6 +2771,7 @@ function skinSolid() {
   if (skin.color === 'heavenly') return '#fff8aa';
   if (skin.color === 'midnight') return '#3d5af1';
   if (skin.color === 'hologram') return '#00f0ff';
+  if (skin.color === 'galaxy')  return '#cc66ff';
   return skin.color;
 }
 
@@ -2799,6 +2962,8 @@ function renderShop() {
       bgStyle = 'background: linear-gradient(135deg, #1e3a8a, #0a1a4a, #1e3a8a, #2c4eb5); background-size: 300% 300%; color: #3d5af1; animation: midnightShift 6s ease-in-out infinite;';
     } else if (skin.color === 'hologram') {
       bgStyle = 'background: conic-gradient(from 0deg, #ff2bd6, #00f0ff, #39ff14, #fff700, #ff2bd6); color: #00f0ff; animation: hologramSpin 3s linear infinite;';
+    } else if (skin.color === 'galaxy') {
+      bgStyle = 'background: radial-gradient(circle at 30% 30%, #ffffff 0%, #ff66cc 12%, #6633ff 35%, #1a0a3a 70%, #000000 100%); color: #cc66ff; animation: galaxySwirl 8s linear infinite;';
     } else {
       bgStyle = `background: ${skin.color}; color: ${skin.color};`;
     }
@@ -3000,7 +3165,7 @@ function buyPotion(id) {
 }
 
 function buySkin(id) {
-  const skin = SKINS.find(s => s.id === id);
+  const skin = getSkinById(id);
   if (!skin) return;
   if (state.money < skin.price) { toast('NOT ENOUGH $$$', true); return; }
   state.money -= skin.price;
@@ -3119,6 +3284,85 @@ const CHEAT_CODES = {
   'elbillug':      { type: 'gullible', label: '' },
   'adminmode':     { type: 'admin', label: 'ADMIN MODE UNLOCKED 👑' }
 };
+
+/* =========================================================
+   UPDATE LOG — history of changes to NEON ARCADE.
+   Newest entries at the TOP. Each entry has a version, a date,
+   and a list of changes. To add a new entry, just unshift it onto
+   the array and bump the version number.
+   ========================================================= */
+const UPDATE_LOG = [
+  {
+    version: 'v1.4',
+    date: 'This update',
+    changes: [
+      'Shop button moved to the top of the hub for quick access',
+      'New "📜 UPDATES" button so you can see what changed each version',
+      'WHAT BEATS PAPER bot tightened — admits "I don\'t know" instead of guessing',
+      'Limited skins are now permanent once you own one',
+      'New limited skin: GALAXY 🌌',
+      'INSTANT SPIN extra now also speeds up the RISK IT wheel',
+      'CLICK STORM no longer counts double-clicks at the same instant as 2',
+      'TARGET BLAST: targets now show full faces, not just floating eyes'
+    ]
+  },
+  {
+    version: 'v1.3',
+    date: 'Earlier',
+    changes: [
+      'Universal pause system — press P or ESC during any game',
+      'Wheel animation fixed (no more skipping or going backwards)',
+      'New skins: HEAVENLY, DEMONIC, MIDNIGHT animated gradient',
+      'Light mode now affects the games too',
+      'Shop sorted cheapest → most expensive'
+    ]
+  },
+  {
+    version: 'v1.2',
+    date: 'Earlier',
+    changes: [
+      '12-hour quest cycle (3 random daily quests from a pool of 9)',
+      'Discount system rotates every 12 hours (25–50% off)',
+      'Luck potions added: 2× / 4× / 8× wheel-luck for 15 minutes',
+      'Skin overhaul: tier-based pricing, removed clutter, added HOLOGRAM'
+    ]
+  },
+  {
+    version: 'v1.1',
+    date: 'Earlier',
+    changes: [
+      'WHAT BEATS PAPER mini-game added',
+      'Daily wheel with bonus spins and the rare ICE KING skin',
+      'Cheat code system (try ELBILLUG…)',
+      'Admin panel for testing'
+    ]
+  },
+  {
+    version: 'v1.0',
+    date: 'Launch',
+    changes: [
+      '11 mini-games: TARGETS, MEMORY, COIN CATCHER, SNAKE, BREAKER, PONG, LOCK-ON, RISK IT, REACTION, CLICK STORM, WHAT BEATS PAPER',
+      'Skin shop with default + bought-skin equipping',
+      'Persistent save (money, owned skins, equipped skin)'
+    ]
+  }
+];
+
+function renderUpdateLog() {
+  const container = document.getElementById('updatelog-list');
+  if (!container) return;
+  container.innerHTML = UPDATE_LOG.map(entry => `
+    <div class="updatelog-entry">
+      <span class="ver">${entry.version}</span>
+      <span class="date">${entry.date}</span>
+      <ul>
+        ${entry.changes.map(c => `<li>${c}</li>`).join('')}
+      </ul>
+    </div>
+  `).join('');
+}
+
+function showUpdateLog() { showScreen('updatelog'); }
 
 function promptCheatCode() {
   const input = prompt('Enter cheat code:');
@@ -3350,10 +3594,77 @@ const games = {};
 let activeGame = null;
 let gameCleanup = null;
 
+/* ========== UNIVERSAL PAUSE SYSTEM ==========
+   Each game registers a pause/resume pair; the pause button toggles them.
+   gamePaused mirrors current state for both UI and the games themselves
+   (some loops check it via a closure to skip ticks). */
+let gamePaused = false;
+let gamePauseHooks = { pause: null, resume: null };
+function registerPauseHooks(pause, resume) {
+  gamePauseHooks = { pause, resume };
+}
+function togglePause() {
+  if (!activeGame) return;
+  if (gamePaused) resumeGame();
+  else pauseGame();
+}
+function pauseGame() {
+  if (gamePaused || !activeGame) return;
+  gamePaused = true;
+  if (gamePauseHooks.pause) {
+    try { gamePauseHooks.pause(); } catch (e) { console.error(e); }
+  }
+  showPauseOverlay();
+}
+function resumeGame() {
+  if (!gamePaused) return;
+  gamePaused = false;
+  hidePauseOverlay();
+  if (gamePauseHooks.resume) {
+    try { gamePauseHooks.resume(); } catch (e) { console.error(e); }
+  }
+}
+function showPauseOverlay() {
+  const screenEl = document.querySelector('.screen.active');
+  if (!screenEl) return;
+  // If there's already a game-over overlay, don't show pause too
+  if (screenEl.querySelector('.game-over-overlay')) return;
+  const area = screenEl.querySelector('.game-area');
+  if (!area) return;
+  let ov = area.querySelector('.pause-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.className = 'pause-overlay';
+    ov.innerHTML = `
+      <h2>⏸ PAUSED</h2>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
+        <button class="btn cyan" onclick="resumeGame()">▶ RESUME</button>
+        <button class="btn pink" onclick="resumeGame();endGame(activeGame,true);">QUIT</button>
+      </div>
+    `;
+    area.appendChild(ov);
+  }
+}
+function hidePauseOverlay() {
+  document.querySelectorAll('.pause-overlay').forEach(o => o.remove());
+}
+// Keyboard shortcut: ESC or P to toggle pause during a game
+window.addEventListener('keydown', (e) => {
+  if (!activeGame) return;
+  if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+    e.preventDefault();
+    togglePause();
+  }
+});
+
 function startGame(name) {
   // Always clean up any previous instance first — otherwise you get
   // two snakes, two arrows, etc. from leftover loops.
   if (gameCleanup) { gameCleanup(); gameCleanup = null; }
+  // Reset pause for the new game
+  gamePaused = false;
+  gamePauseHooks = { pause: null, resume: null };
+  hidePauseOverlay();
   activeGame = name;
   showScreen(name);
   games[name]();
@@ -3361,6 +3672,9 @@ function startGame(name) {
 
 function endGame(name, quit = false) {
   if (gameCleanup) { gameCleanup(); gameCleanup = null; }
+  gamePaused = false;
+  gamePauseHooks = { pause: null, resume: null };
+  hidePauseOverlay();
   showScreen('hub');
 }
 
@@ -3376,9 +3690,12 @@ games.targets = function() {
   scoreEl.textContent = '0';
   timerEl.textContent = timeLeft;
 
-  // Apply skin color to a target element
+  // Apply skin color to a target element. Each skin gets its own gradient
+  // so the target has a visible body — without this, fancy skins like
+  // hologram/galaxy/midnight render as invalid CSS colors and the body
+  // disappears, leaving just eyes + mouth floating in midair.
   function styleTarget(el) {
-    const skin = SKINS.find(s => s.id === state.currentSkin);
+    const skin = getSkinById(state.currentSkin);
     let bg, glow;
     if (skin.color === 'linear') {
       bg = 'radial-gradient(circle, #ff2bd6 25%, #00f0ff 45%, #39ff14 58%, transparent 62%)';
@@ -3389,9 +3706,30 @@ games.targets = function() {
     } else if (skin.color === 'ice') {
       bg = 'radial-gradient(circle, #ffffff 20%, #aaddff 45%, #2266cc 58%, transparent 62%)';
       glow = '#aaddff';
-    } else {
+    } else if (skin.color === 'demonic') {
+      bg = 'radial-gradient(circle, #ff3344 25%, #aa0000 50%, #220000 60%, transparent 62%)';
+      glow = '#ff0033';
+    } else if (skin.color === 'heavenly') {
+      bg = 'radial-gradient(circle, #ffffff 25%, #fff8aa 50%, #f5d040 60%, transparent 62%)';
+      glow = '#fff8aa';
+    } else if (skin.color === 'midnight') {
+      bg = 'radial-gradient(circle, #2c4eb5 25%, #1e3a8a 50%, #0a1a4a 60%, transparent 62%)';
+      glow = '#3d5af1';
+    } else if (skin.color === 'hologram') {
+      bg = 'conic-gradient(from 0deg, #ff2bd6, #00f0ff, #39ff14, #fff700, #ff2bd6)';
+      glow = '#00f0ff';
+    } else if (skin.color === 'galaxy') {
+      bg = 'radial-gradient(circle at 30% 30%, #ffffff 0%, #ff66cc 12%, #6633ff 35%, #1a0a3a 70%, #000000 100%)';
+      glow = '#cc66ff';
+    } else if (/^#[0-9a-fA-F]{3,8}$/.test(skin.color)) {
+      // Plain hex color — safe to interpolate into the gradient
       bg = `radial-gradient(circle, ${skin.color} 30%, ${skin.color}aa 50%, ${skin.color}55 60%, transparent 62%)`;
       glow = skin.color;
+    } else {
+      // Unknown skin type — use a safe fallback so the target stays visible
+      const fallback = skinSolid();
+      bg = `radial-gradient(circle, ${fallback} 30%, ${fallback}aa 50%, ${fallback}55 60%, transparent 62%)`;
+      glow = fallback;
     }
     el.style.background = bg;
     el.style.boxShadow = `0 0 25px ${glow}`;
@@ -3422,8 +3760,8 @@ games.targets = function() {
     setTimeout(() => { if (t.parentNode) t.remove(); }, 1500);
   }
 
-  const spawnInt = setInterval(spawn, 650);
-  const timerInt = setInterval(() => {
+  let spawnInt = setInterval(spawn, 650);
+  let timerInt = setInterval(() => {
     timeLeft--;
     timerEl.textContent = timeLeft;
     if (timeLeft <= 0) finish();
@@ -3440,6 +3778,22 @@ games.targets = function() {
     showOverlay(area, 'TIME UP!', `Hits: ${score} → +$${reward}`);
     activeGame = null;
   }
+
+  registerPauseHooks(
+    () => {
+      clearInterval(spawnInt); clearInterval(timerInt);
+      // Freeze on-screen targets so they don't despawn during pause
+      area.querySelectorAll('.target').forEach(t => t.style.animationPlayState = 'paused');
+    },
+    () => {
+      spawnInt = setInterval(spawn, 650);
+      timerInt = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = timeLeft;
+        if (timeLeft <= 0) finish();
+      }, 1000);
+    }
+  );
 
   gameCleanup = () => {
     clearInterval(spawnInt);
@@ -3506,6 +3860,7 @@ games.memory = function() {
     activeGame = null;
   }
 
+  registerPauseHooks(() => {}, () => {});
   gameCleanup = () => { grid.innerHTML = ''; activeGame = null; };
 };
 
@@ -3535,7 +3890,7 @@ games.catcher = function() {
   canvas.addEventListener('mousemove', onMove);
   canvas.addEventListener('touchmove', e => { e.preventDefault(); onMove(e); }, { passive: false });
 
-  const spawnInt = setInterval(() => {
+  let spawnInt = setInterval(() => {
     if (!running) return;
     items.push({
       x: Math.random() * (canvas.width - 30) + 15,
@@ -3545,7 +3900,7 @@ games.catcher = function() {
     });
   }, 550);
 
-  const timerInt = setInterval(() => {
+  let timerInt = setInterval(() => {
     timeLeft--;
     document.getElementById('c-timer').textContent = timeLeft;
     if (timeLeft <= 0) finish(false);
@@ -3553,6 +3908,7 @@ games.catcher = function() {
 
   function loop() {
     if (!running) return;
+    if (gamePaused) { requestAnimationFrame(loop); return; }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // paddle (uses skin with rainbow support)
@@ -3625,6 +3981,30 @@ games.catcher = function() {
     activeGame = null;
   }
 
+  // Pause hooks: stop the timer + spawn intervals; loop self-pauses via gamePaused
+  registerPauseHooks(
+    () => {
+      clearInterval(spawnInt);
+      clearInterval(timerInt);
+    },
+    () => {
+      spawnInt = setInterval(() => {
+        if (!running) return;
+        items.push({
+          x: Math.random() * (canvas.width - 30) + 15,
+          y: -20,
+          type: Math.random() < 0.75 ? 'coin' : 'bomb',
+          vy: 2 + Math.random() * 2.5
+        });
+      }, 550);
+      timerInt = setInterval(() => {
+        timeLeft--;
+        document.getElementById('c-timer').textContent = timeLeft;
+        if (timeLeft <= 0) finish(false);
+      }, 1000);
+    }
+  );
+
   gameCleanup = () => {
     running = false;
     clearInterval(spawnInt);
@@ -3694,7 +4074,7 @@ games.snake = function() {
   canvas.addEventListener('touchend', onTouchEnd);
 
   const tick = setInterval(() => {
-    if (!running) return;
+    if (!running || gamePaused) return;
     dir = pendingDir;
     const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
     if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows ||
@@ -3712,6 +4092,9 @@ games.snake = function() {
     }
     draw();
   }, 110);
+
+  // Snake's tick checks gamePaused itself, so pause/resume just need to be no-ops.
+  registerPauseHooks(() => {}, () => {});
 
   function draw() {
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
@@ -3931,6 +4314,7 @@ games.breaker = function() {
 
   function loop() {
     if (!running) return;
+    if (gamePaused) { requestAnimationFrame(loop); return; }
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -4121,6 +4505,8 @@ games.breaker = function() {
     activeGame = null;
   }
 
+  registerPauseHooks(() => {}, () => {});
+
   gameCleanup = () => {
     running = false;
     canvas.removeEventListener('mousemove', onMove);
@@ -4168,6 +4554,7 @@ games.pong = function() {
 
   function loop() {
     if (!running) return;
+    if (gamePaused) { requestAnimationFrame(loop); return; }
     // fade trail
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -4257,6 +4644,8 @@ games.pong = function() {
     showOverlay(area, won ? 'VICTORY!' : 'DEFEATED', `Score: ${pScore}-${cScore}${won ? ' (+$100 bonus!)' : ''} → +$${reward}`);
     activeGame = null;
   }
+
+  registerPauseHooks(() => {}, () => {});
 
   gameCleanup = () => {
     running = false;
@@ -4355,6 +4744,7 @@ games.basketball = function() {
 
   function loop() {
     if (!running) return;
+    if (gamePaused) { requestAnimationFrame(loop); return; }
 
     // update arrow
     arrowAngle += arrowSpeed * direction;
@@ -4533,6 +4923,8 @@ games.basketball = function() {
     activeGame = null;
   }
 
+  registerPauseHooks(() => {}, () => {});
+
   gameCleanup = () => {
     running = false;
     canvas.removeEventListener('click', onInput);
@@ -4639,7 +5031,9 @@ games.risk = function() {
   // Track the cumulative wheel rotation so every new spin builds on the previous angle cleanly.
   let currentRotation = 0;
   function resetWheelTransition() {
-    wheelEl.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.25, 1)';
+    // Honor INSTANT SPIN extra: a fast 0.4s spin instead of the 4s default
+    const dur = state.skipSpinAnim ? '0.4s' : '4s';
+    wheelEl.style.transition = `transform ${dur} cubic-bezier(0.17, 0.67, 0.25, 1)`;
   }
 
   // ---- expose functions to the global scope so onclick works ----
@@ -4655,12 +5049,15 @@ games.risk = function() {
 
     const idx = pickRiskSlotIndex();
     const seg = 360 / RISK_SLOTS.length;
-    // Add 5 full rotations plus the offset to the chosen segment, relative to current rotation
+    // Add full rotations plus the offset to the chosen segment, relative to current rotation
+    // Use 2 rotations for instant-spin (still feels like motion), 5 for a normal spin
+    const fullSpins = state.skipSpinAnim ? 2 : 5;
     const targetOffset = (360 - (idx * seg + seg / 2) + 360) % 360;
-    // Round current rotation down to a multiple of 360 and add rotations + target offset
-    currentRotation = currentRotation + 360 * 5 + targetOffset;
+    currentRotation = currentRotation + 360 * fullSpins + targetOffset;
     wheelEl.style.transform = `rotate(${currentRotation}deg)`;
 
+    // Wait for the animation to finish (slightly longer than the transition).
+    const settleDelay = state.skipSpinAnim ? 500 : 4100;
     setTimeout(() => {
       pot = RISK_SLOTS[idx].value;
       streak = 0;
@@ -4671,7 +5068,7 @@ games.risk = function() {
       toast(`Landed on $${pot}!`);
       updateStats();
       renderActions();
-    }, 4100);
+    }, settleDelay);
   };
 
   window.riskRisk = function() {
@@ -4681,7 +5078,10 @@ games.risk = function() {
     centerEl.classList.remove('won', 'lost');
     renderActions();
 
-    // Shake animation — rapid small wobbles around the current angle
+    // Shake animation — rapid small wobbles around the current angle.
+    // INSTANT SPIN halves the shake duration so the gamble lands faster.
+    const shakeInterval = state.skipSpinAnim ? 40 : 80;
+    const totalShakes = state.skipSpinAnim ? 6 : 10;
     let shakes = 0;
     const baseAngle = currentRotation;
     const shakeInt = setInterval(() => {
@@ -4689,14 +5089,15 @@ games.risk = function() {
       const wobble = (shakes % 2 === 0 ? 8 : -8) + (Math.random() * 12 - 6);
       wheelEl.style.transform = `rotate(${baseAngle + wobble}deg)`;
       shakes++;
-      if (shakes >= 10) {
+      if (shakes >= totalShakes) {
         clearInterval(shakeInt);
         // Snap back to baseAngle and restore normal spin transition for future spins
         wheelEl.style.transform = `rotate(${baseAngle}deg)`;
         setTimeout(resetWheelTransition, 100);
       }
-    }, 80);
+    }, shakeInterval);
 
+    const settleDelay = state.skipSpinAnim ? 350 : 900;
     setTimeout(() => {
       const won = Math.random() < 0.5;
       if (won) {
@@ -4724,7 +5125,7 @@ games.risk = function() {
       }
       updateStats();
       renderActions();
-    }, 900);
+    }, settleDelay);
   };
 
   window.riskCashOut = function() {
@@ -4754,6 +5155,8 @@ games.risk = function() {
 
   updateStats();
   renderActions();
+
+  registerPauseHooks(() => {}, () => {});
 
   gameCleanup = () => {
     // Count the session as a played game if they cashed out at least once
@@ -4894,6 +5297,8 @@ games.reaction = function() {
     activeGame = null;
   }
 
+  registerPauseHooks(() => {}, () => {});
+
   gameCleanup = () => {
     clearTimeout(waitTimeout);
     area.removeEventListener('pointerdown', onTap);
@@ -4939,6 +5344,7 @@ games.cps = function() {
 
   function tick() {
     if (phase !== 'running') return;
+    if (gamePaused) { rafId = requestAnimationFrame(tick); return; }
     const elapsed = performance.now() - startTime;
     const remaining = Math.max(0, duration - elapsed);
     timeEl.textContent = (remaining / 1000).toFixed(1);
@@ -4948,8 +5354,16 @@ games.cps = function() {
     rafId = requestAnimationFrame(tick);
   }
 
+  // Guard against simultaneous events being counted as 2 clicks. On touch
+  // devices a single tap can fire both pointerdown AND a synthetic mousedown
+  // ~3-10ms apart; without this guard, every tap counts as 2.
+  let lastClickAt = 0;
   function onClick(e) {
     if (e) { e.preventDefault(); e.stopPropagation(); }
+    if (gamePaused) return; // ignore clicks while paused
+    const now = performance.now();
+    if (now - lastClickAt < 30) return; // dedupe rapid duplicates
+    lastClickAt = now;
     if (phase === 'idle') return start();
     if (phase === 'done') return;
     clicks++;
@@ -4964,6 +5378,13 @@ games.cps = function() {
     }
   }
   window.addEventListener('keydown', onKeyDown);
+
+  // Pause/resume: rewind startTime by pause duration so clock isn't gamed
+  let pauseStart = 0;
+  registerPauseHooks(
+    () => { pauseStart = performance.now(); },
+    () => { if (pauseStart) { startTime += performance.now() - pauseStart; pauseStart = 0; } }
+  );
 
   function finish() {
     phase = 'done';
@@ -5032,148 +5453,239 @@ games.whatbeats = function() {
   submitEl.disabled = false;
 
   // Things that beat ALMOST anything — universal trumps that humans agree
-  // intuitively defeat most things. These are accepted against any target
-  // (except themselves and a few specific exceptions).
+  // Things that beat "most" things, with explicit exception lists.
+  // Tightened — used to be a free-pass for "thanos/goku/chuck norris" etc.;
+  // now those are removed unless they have meaningful win logic.
   const UNIVERSAL_BEATERS = {
-    'god':         ['nothing'],     // god loses to nothing
-    'jesus':       ['nothing'],
-    'love':        ['hate','death'],
-    'death':       ['life','immortality'],
-    'time':        ['eternity'],
-    'nuke':        ['nothing'],
-    'nuclear bomb':['nothing'],
-    'atomic bomb': ['nothing'],
-    'black hole':  ['nothing'],
-    'sun':         ['black hole'],
-    'asteroid':    ['earth','planet'],
-    'meteor':      ['earth','planet'],
-    'thanos':      ['nothing'],
-    'goku':        ['nothing'],
-    'superman':    ['kryptonite'],
-    'chuck norris':['nothing'],
-    'gravity':     ['flight','antigravity'],
-    'big bang':    ['nothing'],
-    'universe':    ['multiverse','nothing'],
-    'multiverse':  ['nothing'],
-    'apocalypse':  ['nothing'],
-    'extinction':  ['nothing']
+    'god':            ['nothing','atheism','nonexistence'],
+    'nuke':           ['nothing','bunker','distance','dud','shelter'],
+    'nuclear bomb':   ['nothing','bunker','dud','shelter'],
+    'atomic bomb':    ['nothing','bunker','dud','shelter'],
+    'black hole':     ['nothing','hawking radiation','white hole'],
+    'death':          ['life','immortality','resurrection','nothing'],
+    'big bang':       ['nothing'],
+    'apocalypse':     ['nothing'],
+    'extinction':     ['nothing','survival'],
+    'antimatter':     ['nothing'],
+    'supernova':      ['nothing','black hole','distance'],
+    'singularity':    ['nothing'],
+    'meteor':         ['nothing','atmosphere','distance'],
+    'asteroid':       ['nothing','distance']
   };
 
-  // Robust offline judge — used when the AI API isn't available.
+  // For each known target, the EXACT answers (lowercase) that beat it.
+  // No substring matching. If the answer isn't here, it doesn't win — UNLESS
+  // it's a UNIVERSAL_BEATER (and the target isn't in that beater's exceptions).
   const WINS = {
-    paper:    ['scissors','fire','water','shredder','rock on it','lighter','match','flame','knife','sword','bleach','eraser','stapler','acid','pen','marker','ink','blood','tear','rip','crumple'],
-    scissors: ['hammer','rock','fire','magnet','rust','larger scissors','stone','boulder','brick','tank','gravity','corrosion','paper-cutter'],
-    rock:     ['paper','water','hammer','dynamite','explosion','tnt','earthquake','volcano','time','erosion','nuke','bomb','pickaxe','chisel','lava','jackhammer','wave'],
-    fire:     ['water','rain','sand','foam','extinguisher','co2','snow','ice','blanket','vacuum','suffocation','absence of oxygen','lack of oxygen','flood','tsunami'],
-    water:    ['sponge','absorbent','dam','evaporation','heat','sun','fire (boils it)','drought','thirst','freezer','cold','straw','towel','pump'],
-    ice:      ['fire','heat','sun','salt','hammer','pickaxe','lava','boiling water','hair dryer','microwave','flame','blowtorch','summer','sledgehammer'],
-    lava:     ['water','ice','cold','freezer','liquid nitrogen','cooling','time','rock (when cooled)','ocean','rain'],
+    paper:    ['scissors','fire','water','shredder','lighter','match','flame','knife','sword','bleach','eraser','stapler','acid','pen','marker','ink','rip','crumple','tear','flood','blender','chainsaw'],
+    scissors: ['hammer','rock','fire','magnet','rust','stone','boulder','brick','tank','corrosion','paper cutter','heat','crusher','vise'],
+    rock:     ['paper','water','hammer','dynamite','explosion','tnt','earthquake','volcano','erosion','nuke','bomb','pickaxe','chisel','lava','jackhammer','wave','sledgehammer'],
+    fire:     ['water','rain','sand','foam','extinguisher','co2','snow','ice','blanket','vacuum','flood','tsunami','suffocation'],
+    water:    ['sponge','dam','evaporation','heat','sun','drought','freezer','cold','towel','pump','thirst','straw','absorbent'],
+    ice:      ['fire','heat','sun','salt','hammer','pickaxe','lava','flame','blowtorch','sledgehammer','torch'],
+    lava:     ['water','ice','liquid nitrogen','ocean','rain','flood','cooling'],
     wood:     ['fire','axe','saw','termites','rot','chainsaw','flame','lighter','match'],
-    metal:    ['rust','acid','heat','magnet','corrosion','time','saw','cutter','laser','salt water'],
-    glass:    ['hammer','rock','fist','bullet','heat','pressure','diamond','stone','elbow'],
-    steel:    ['acid','rust','heat','time','plasma','laser','very high heat'],
-    plastic:  ['fire','heat','recycling','time','uv','sun','shredder'],
-    rain:     ['umbrella','roof','raincoat','shelter','sun','indoors'],
-    wind:     ['walls','shelter','building','barrier','calm','vacuum'],
-    sun:      ['cloud','night','eclipse','moon','shade','umbrella','black hole','sunscreen'],
+    metal:    ['rust','acid','heat','magnet','corrosion','saw','cutter','laser','salt water','plasma'],
+    glass:    ['hammer','rock','fist','bullet','heat','pressure','diamond','stone','elbow','sledgehammer','brick'],
+    steel:    ['acid','rust','plasma','laser','very high heat','thermite'],
+    plastic:  ['fire','heat','recycling','uv','sun','shredder','flame'],
+    rain:     ['umbrella','roof','raincoat','shelter','indoors','tarp'],
+    wind:     ['walls','shelter','building','barrier','calm','vacuum','windbreak'],
+    sun:      ['cloud','night','eclipse','moon','shade','umbrella','black hole','sunscreen','curtain'],
     cloud:    ['wind','sun','rain','dispersion'],
-    darkness: ['light','fire','flashlight','sun','torch','lamp','match','candle','glow'],
+    darkness: ['light','fire','flashlight','sun','torch','lamp','match','candle','glow','lightning'],
     light:    ['darkness','shadow','eclipse','blackout','curtain','shade','black hole'],
-    knife:    ['gun','shield','armor','chainmail','time','rust','bigger knife','sword'],
-    sword:    ['gun','shield','armor','bigger sword','axe'],
-    gun:      ['bulletproof vest','tank','armor','shield','superman','distance','being out of bullets'],
-    dog:      ['cat','bear','lion','tiger','wolf','poison','car','snake'],
+    knife:    ['gun','shield','armor','chainmail','rust','bigger knife','sword'],
+    sword:    ['gun','shield','armor','bigger sword','axe','bullet'],
+    gun:      ['bulletproof vest','tank','armor','shield','superman','distance','jam'],
+    dog:      ['bear','lion','tiger','wolf','poison','car','snake','tranquilizer'],
     cat:      ['dog','lion','tiger','bear','vacuum','water','cucumber'],
-    bear:     ['gun','tank','fire','bigger bear','hunter'],
+    bear:     ['gun','tank','fire','hunter','tranquilizer'],
     lion:     ['elephant','gun','tank','tiger','hunter'],
-    elephant: ['mouse','gun','hunter','disease','poacher'],
-    mouse:    ['cat','trap','owl','snake','broom'],
-    human:    ['bear','lion','nature','disease','time','gravity','nuke','bomb','earthquake','virus','asteroid','starvation'],
-    earth:    ['asteroid','meteor','sun','black hole','nuke','aliens','climate change','time']
+    tiger:    ['gun','tank','hunter','poison'],
+    elephant: ['mouse','gun','hunter','disease','poacher','poison'],
+    mouse:    ['cat','trap','owl','snake','broom','poison'],
+    snake:    ['mongoose','eagle','owl','hawk','knife','antivenom','boots'],
+    human:    ['bear','lion','nature','disease','gravity','nuke','bomb','earthquake','virus','asteroid','starvation','poison'],
+    earth:    ['asteroid','meteor','sun','black hole','nuke','aliens','climate change','supernova'],
+    car:      ['truck','train','wall','tree','collision','crash'],
+    truck:    ['train','collision','wall','semi'],
+    train:    ['collision','derailment','wall'],
+    bullet:   ['armor','vest','shield','superman','wall','kevlar'],
+    bomb:     ['water','disposal','bunker','dud','distance'],
+    money:    ['inflation','tax','recession','theft','bankruptcy','fire'],
+    diamond:  ['hammer','laser','impact','another diamond'],
+    sand:     ['water','wind','glass furnace','vacuum'],
+    snow:     ['sun','heat','fire','salt','rain','warmth','plow'],
+    grass:    ['fire','herbicide','lawnmower','drought','frost'],
+    leaf:     ['fire','autumn','wind','herbicide'],
+    air:      ['vacuum','pollution','smoke'],
+    nothing:  ['something','everything','god','existence']
   };
+
+  // Common things people might type that AREN'T legitimate beaters of these
+  // targets. Used for fast rejection. Exact match only, no substrings.
   const LOSES = {
-    paper:    ['paper','rock (paper covers rock)','air','nothing','void','empty','dust','mist'],
-    rock:     ['rock','scissors','feather','foam','cotton','pillow'],
-    scissors: ['scissors','paper','cloth','yarn'],
-    fire:     ['fire','paper','wood','grass','gas','oil','fuel','gasoline','air','oxygen'],
-    water:    ['water','fire','ice','sand','dust','paper','sun','steam'],
-    ice:      ['ice','water','snow','cold'],
-    lava:     ['lava','fire','heat','flame'],
-    sun:      ['sun','fire','heat','planet','earth'],
-    darkness: ['darkness','shadow','night','void','blackness']
+    paper:    ['paper','rock','air','nothing','void','empty','dust','mist'],
+    rock:     ['rock','scissors','feather','foam','cotton','pillow','breeze'],
+    scissors: ['scissors','paper','cloth','yarn','feather'],
+    fire:     ['fire','paper','wood','grass','gas','oil','fuel','gasoline','oxygen','rope'],
+    water:    ['water','fire','ice','sand','dust','paper','steam','rope'],
+    ice:      ['ice','water','snow','cold','frost'],
+    lava:     ['lava','fire','heat','flame','magma'],
+    sun:      ['sun','fire','heat','planet','earth','star'],
+    darkness: ['darkness','shadow','night','void','blackness','black']
   };
+
+  // The bot's known vocabulary. If an answer isn't in this set AND isn't a
+  // UNIVERSAL_BEATER, the offline judge returns "unknown" — it admits it
+  // doesn't know what the word is, instead of guessing.
+  // This list covers ~250 common nouns players might reasonably type.
+  const KNOWN_WORDS = new Set([
+    // Elements & weather
+    'fire','water','ice','snow','rain','wind','air','earth','lava','sand','dust','mud','mist','steam','smoke','fog','cloud','sun','moon','star','sky','rainbow','lightning','thunder','storm','tornado','hurricane','tsunami','flood','drought','frost','heat','cold',
+    // Materials
+    'paper','rock','wood','metal','steel','iron','gold','silver','copper','lead','aluminum','glass','plastic','rubber','cloth','cotton','silk','wool','leather','stone','brick','concrete','clay','marble','granite','diamond','crystal',
+    // Tools & weapons
+    'scissors','knife','sword','axe','hammer','saw','chainsaw','drill','pickaxe','jackhammer','sledgehammer','spear','bow','arrow','crossbow','gun','pistol','rifle','shotgun','machine gun','bullet','grenade','bomb','dynamite','tnt','nuke','nuclear bomb','atomic bomb','missile','rocket','laser','flame','flamethrower','torch','blowtorch','match','lighter','candle','flashlight','lamp','shield','armor','vest','helmet','plate','chainmail','net','rope','chain','wire','trap','cage','vise','crusher','blender','shredder','stapler','eraser','pen','marker','pencil','crayon','ink','acid','poison','bleach','soap','glue','paint','dye',
+    // Vehicles & structures
+    'car','truck','train','plane','airplane','helicopter','boat','ship','submarine','bike','bicycle','motorcycle','tank','bulldozer','crane','wall','door','window','roof','floor','bridge','tunnel','tower','building','house','castle','fortress','bunker','shelter','dam','barrier','fence','umbrella','tarp','tent','curtain','shade','sunscreen',
+    // Life & beings
+    'human','person','man','woman','child','baby','dog','cat','mouse','rat','bird','fish','snake','lizard','frog','turtle','rabbit','squirrel','deer','fox','wolf','bear','lion','tiger','elephant','giraffe','horse','cow','pig','sheep','goat','chicken','duck','eagle','hawk','owl','crow','spider','ant','bee','wasp','fly','mosquito','butterfly','worm','shark','whale','dolphin','octopus','crab','lobster','jellyfish',
+    // Plants & food
+    'tree','grass','leaf','flower','rose','seed','root','branch','fruit','apple','orange','banana','grape','lemon','tomato','potato','onion','garlic','bread','rice','salt','sugar','pepper','meat','milk','cheese','egg','butter','oil','wine','beer','coffee','tea','soda','juice','water bottle',
+    // Body & physical
+    'fist','hand','foot','head','eye','ear','tooth','bone','muscle','blood','skin','hair','heart','brain','lung',
+    // Nature events
+    'earthquake','volcano','eruption','avalanche','blizzard','typhoon','sinkhole','meteor','asteroid','comet','supernova','black hole','wormhole','singularity','big bang','antimatter',
+    // Concepts & abstract (some count as universal beaters)
+    'death','life','time','infinity','eternity','nothing','everything','existence','god','jesus','allah','buddha','dragon','phoenix','unicorn','mech','robot','ai','virus','disease','plague','cancer','curse','wish','magic','spell','prayer','soul','ghost','zombie','vampire','werewolf','alien','demon','angel','apocalypse','extinction','gravity','antigravity','vacuum','radiation','plasma',
+    // Misc useful
+    'sponge','tape','rust','corrosion','erosion','evaporation','suffocation','starvation','dehydration','recession','inflation','tax','theft','bankruptcy','jail','prison','court','law',
+    // Targets / wheel items the player might respond TO
+    'paper','rock','scissors','fire','water','ice','lava','wood','metal','steel','glass','plastic','rain','wind','sun','cloud','darkness','light','knife','sword','gun','dog','cat','bear','lion','elephant','mouse','snake','tiger','human','earth','car','truck','train','bullet','bomb','money','diamond','sand','snow','grass','leaf','air','nothing'
+  ]);
 
   function offlineJudge(answer, target) {
     const a = answer.toLowerCase().trim();
     const t = target.toLowerCase().trim();
+
+    // Reject obvious garbage
     if (!a) return { wins: false, reason: 'Empty answer' };
-    if (a === t) return { wins: false, reason: "Can't be the same thing" };
-    if (a.length < 2) return { wins: false, reason: 'Too short' };
+    if (a.length < 2) return { wins: false, reason: 'Not a real answer' };
+    if (/^[\d\W_]+$/.test(a)) return { wins: false, reason: 'Not a real answer' };
     if (/^(.)\1+$/.test(a)) return { wins: false, reason: 'Not a real answer' };
+    if (a === t) return { wins: false, reason: "Can't be the same thing" };
 
-    // Universal beaters: things that beat almost anything (god, nuke, etc.)
-    if (UNIVERSAL_BEATERS[a] !== undefined) {
-      const exceptions = UNIVERSAL_BEATERS[a];
-      // Does the target appear in this beater's exceptions list?
-      const stoppedBy = exceptions.some(ex => ex.toLowerCase() === t);
-      if (!stoppedBy) {
-        return { wins: true, reason: `${answer} transcends ${target}` };
-      }
-      return { wins: false, reason: `${answer} can't beat ${target}` };
+    // 1) Universal beater? Wins UNLESS the target is in its exception list.
+    if (UNIVERSAL_BEATERS[a]) {
+      const stoppedBy = UNIVERSAL_BEATERS[a].some(ex => ex.toLowerCase() === t);
+      if (stoppedBy) return { wins: false, reason: `${target} stops ${answer}` };
+      return { wins: true, reason: `${answer} overpowers ${target}` };
     }
 
-    // Explicit loser check — catches obvious wrong answers
-    if (LOSES[t] && LOSES[t].some(x => x.toLowerCase() === a)) {
+    // 2) Explicit losing answer for this target? Reject.
+    if (LOSES[t] && LOSES[t].includes(a)) {
       return { wins: false, reason: `${answer} doesn't beat ${target}` };
     }
 
-    // Match against known winners (substring tolerant for multi-word)
-    if (WINS[t]) {
-      for (const win of WINS[t]) {
-        const w = win.toLowerCase();
-        if (a === w || a.includes(w) || w.includes(a)) {
-          return { wins: true, reason: `${answer} beats ${target}` };
-        }
-      }
-      // Target has a winners list and answer matched none — but be lenient
-      // for clearly powerful concepts even if they're not listed
-      const POWERFUL_HINTS = ['god','nuke','bomb','black hole','death','infinity','time','sun','laser','plasma','asteroid','meteor','tornado','hurricane','tsunami','volcano','dragon','mech','robot','ai','virus','disease','plague','curse','wish','magic'];
-      if (POWERFUL_HINTS.some(h => a.includes(h))) {
-        return { wins: true, reason: `${answer} overpowers ${target}` };
-      }
-      return { wins: false, reason: `${answer} doesn't beat ${target}` };
+    // 3) Known winner for this target? Accept on EXACT match only.
+    if (WINS[t] && WINS[t].includes(a)) {
+      return { wins: true, reason: `${answer} beats ${target}` };
     }
 
-    // Unknown target — accept reasonable answers, since we can't judge offline
-    return { wins: true, reason: `${answer} beats ${target}` };
+    // 4) Bot doesn't know what this answer is — admit it.
+    //    The chain doesn't break; the player can try a different word.
+    if (!KNOWN_WORDS.has(a)) {
+      return { unknown: true, reason: `I don't know what "${answer}" is` };
+    }
+
+    // 5) Answer is a known word but doesn't beat this target.
+    return { wins: false, reason: `${answer} doesn't beat ${target}` };
   }
 
-  // Strict AI judge via Claude Haiku
+  // Strict AI judge via Claude Haiku.
+  // Returns one of:
+  //   { wins: true,  reason: '...' }              — answer clearly beats target
+  //   { wins: false, reason: '...' }              — answer clearly doesn't beat target
+  //   { unknown: true, reason: "I don't know..." } — bot doesn't recognize the word
+  // The "unknown" verdict does NOT break the player's chain; it just asks
+  // them to try a different answer.
   async function judgeAnswer(answer, target) {
+    const SYSTEM = `You are a strict, knowledgeable judge for the game "What Beats X". Given a CURRENT ITEM and a player's ANSWER, you must rule one of:
+- "win"     : the answer clearly defeats, destroys, neutralizes, consumes, or overcomes the current item
+- "lose"    : the answer is real but does NOT beat the current item, OR is gibberish/empty/the same word
+- "unknown" : you genuinely don't know what the ANSWER refers to (made-up word, foreign term, niche reference you can't verify)
+
+You are honest about uncertainty. If you don't recognize the answer, you say "unknown" instead of guessing.
+
+Reply with ONLY a JSON object on a single line, exactly:
+{"verdict": "win"|"lose"|"unknown", "reason": "<reason, under 12 words>"}`;
+
+    const USER = `CURRENT ITEM: ${target}
+ANSWER: ${answer}
+
+JUDGING RULES (apply in order):
+1. If the ANSWER is gibberish, empty, single character, punctuation only, or pure digits → "lose" with reason "not a real answer".
+2. If the ANSWER is the SAME WORD as the current item (case-insensitive) → "lose" with reason "can't be the same thing".
+3. If the ANSWER is a made-up word, a niche term you can't verify, a foreign-language word you don't recognize, or just a random string of letters that looks like a word but isn't → "unknown" with reason "I don't know what \\"${answer}\\" is".
+4. If the ANSWER is a real concept but is clearly weaker than the item (paper vs rock, air vs fire, feather vs hammer) → "lose".
+5. If the ANSWER is real but vague/abstract and doesn't physically or functionally beat the item ("happiness" vs "tank", "vibes" vs "wall", "love" vs "concrete") → "lose" with reason "too abstract".
+6. If the ANSWER clearly beats the item by:
+   - Classic chain logic (scissors→paper, water→fire, lava→ice, hammer→glass)
+   - Physical destruction (tank crushes car, fire burns wood)
+   - Functional negation (umbrella stops rain, dam blocks water, shield deflects bullet)
+   - Massive scale advantage (black hole > sun, meteor > city, supernova > planet)
+   → "win"
+7. STRICT on "universal beater" abuse: words like "god", "nuke", "infinity", "black hole" should win against most things, BUT NOT their natural counters: god→nothing/atheism; nuke→bunker/distance/dud; black hole→nothing/hawking radiation; infinity→nothing.
+8. STRICT on substring abuse: "godzilla" is NOT "god". "nuclear family" is NOT a nuke. "magic 8-ball" is NOT "magic". Treat the ANSWER as the whole phrase. Godzilla is a separate concept (a giant monster) — judge it on its own merits.
+9. If the ANSWER is a known proper noun (person, character, brand, movie, etc.) and you DO know it, judge whether that thing realistically beats the item. If you DON'T know the proper noun → "unknown".
+
+EXAMPLES:
+- ITEM: paper, ANSWER: scissors → {"verdict":"win","reason":"scissors cut paper"}
+- ITEM: paper, ANSWER: rock → {"verdict":"lose","reason":"rock doesn't beat paper"}
+- ITEM: fire, ANSWER: water → {"verdict":"win","reason":"water extinguishes fire"}
+- ITEM: nothing, ANSWER: god → {"verdict":"lose","reason":"nothing transcends god"}
+- ITEM: tank, ANSWER: happiness → {"verdict":"lose","reason":"too abstract"}
+- ITEM: rock, ANSWER: godzilla → {"verdict":"win","reason":"Godzilla crushes rock"}
+- ITEM: wood, ANSWER: blarflzap → {"verdict":"unknown","reason":"I don't know what \\"blarflzap\\" is"}
+- ITEM: paper, ANSWER: xyzzy → {"verdict":"unknown","reason":"I don't know what \\"xyzzy\\" is"}
+- ITEM: glass, ANSWER: paper → {"verdict":"lose","reason":"paper doesn't break glass"}
+
+Respond with the JSON object only.`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
+
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 60,
-          messages: [{
-            role: 'user',
-            content: `You are a STRICT judge for the game "What Beats X". The player must name something that REALISTICALLY defeats, destroys, or overcomes the current item.\n\nCurrent item: ${target}\nPlayer's answer: ${answer}\n\nRULES:\n- REJECT if the answer cannot realistically beat the item (e.g. "paper" does NOT beat "rock", "air" does NOT beat "fire")\n- REJECT if the answer is weaker than or unrelated to the item\n- REJECT identical items, empty answers, or gibberish\n- ACCEPT only if there is a clear, logical reason the answer would defeat the item (e.g. scissors beat paper, water beats fire, lava beats ice)\n- Classic game logic (rock-paper-scissors style) applies\n\nRespond in JSON only, no preamble:\n{"wins": true or false, "reason": "short explanation under 10 words"}`
-          }]
+          max_tokens: 100,
+          system: SYSTEM,
+          messages: [{ role: 'user', content: USER }]
         })
       });
-      if (!response.ok) throw new Error('API error');
+      clearTimeout(timeoutId);
+      if (!response.ok) throw new Error('API error: ' + response.status);
       const data = await response.json();
       const text = data.content.map(c => c.text || '').join('').trim();
-      const clean = text.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(clean);
-      return {
-        wins: !!parsed.wins,
-        reason: String(parsed.reason || '').slice(0, 80)
-      };
+      const cleaned = text.replace(/```json|```/g, '').trim();
+      const match = cleaned.match(/\{[\s\S]*?\}/);
+      const jsonText = match ? match[0] : cleaned;
+      const parsed = JSON.parse(jsonText);
+      const verdict = String(parsed.verdict || '').toLowerCase();
+      const reason = String(parsed.reason || '').slice(0, 80);
+      if (verdict === 'win')     return { wins: true,  reason: reason || 'beats it' };
+      if (verdict === 'lose')    return { wins: false, reason: reason || "doesn't beat it" };
+      if (verdict === 'unknown') return { unknown: true, reason: reason || `I don't know what "${answer}" is` };
+      throw new Error('Unknown verdict: ' + verdict);
     } catch (e) {
-      // Fall back to offline
+      clearTimeout(timeoutId);
+      // API unreachable / malformed reply — fall back to offline dictionary.
       return offlineJudge(answer, target);
     }
   }
@@ -5199,6 +5711,19 @@ games.whatbeats = function() {
     statusEl.textContent = '🤖 thinking...';
 
     const result = await judgeAnswer(answer, current);
+
+    if (result.unknown) {
+      // The bot doesn't recognize the answer. Don't break the streak;
+      // just tell the player and let them try a different word.
+      statusEl.className = 'wb-status thinking';
+      statusEl.textContent = `🤔 I don't know what "${answer}" is. Try another!`;
+      pending = false;
+      submitEl.disabled = false;
+      inputEl.disabled = false;
+      inputEl.value = '';
+      inputEl.focus();
+      return;
+    }
 
     if (result.wins) {
       streak++;
@@ -5252,6 +5777,8 @@ games.whatbeats = function() {
     showOverlay(area, title, `${streak} win${streak === 1 ? '' : 's'} → +$${pot}`);
     activeGame = null;
   }
+
+  registerPauseHooks(() => {}, () => {});
 
   gameCleanup = () => {
     ended = true;
@@ -5386,6 +5913,11 @@ function getRandomUnownedSkin() {
 }
 
 let wheelSpinning = false;
+// The wheel uses CSS `transform: rotate(Xdeg)`, which is absolute. If we
+// set a smaller angle than the previous spin, the wheel animates BACKWARDS
+// (or skips animation entirely). Track the cumulative angle so each new
+// spin always rotates forward, building on the last position.
+let wheelTotalAngle = 0;
 function spinWheel() {
   if (wheelSpinning) return;
   const status = getWheelStatus();
@@ -5409,19 +5941,37 @@ function spinWheel() {
   const prize = WHEEL_PRIZES[prizeIndex];
   const seg = 360 / WHEEL_PRIZES.length;
 
-  // Respect the skipspin cheat: near-instant spin, otherwise full 4s animation
+  // The angle that lands the chosen segment under the pointer.
+  // We compute this MOD 360, then add it to the cumulative total so the
+  // wheel always rotates forward by at least one full set of rotations.
+  const landingAngle = (360 - (prizeIndex * seg + seg / 2) + 360) % 360;
+
+  // Respect the skipspin cheat: near-instant spin, otherwise full 5s animation
   const skipping = !!state.skipSpinAnim;
+  // Reset transition to none so the next change isn't carried over from
+  // any previous incomplete state, then force a reflow so the browser
+  // registers it as a fresh animation step (this fixes the "sometimes
+  // doesn't animate" bug — without the reflow the browser may batch
+  // both style changes into one and skip the transition).
+  wheel.style.transition = 'none';
+  // Snap to current cumulative angle without animating (for safety on retry).
+  wheel.style.transform = `rotate(${wheelTotalAngle}deg)`;
+  // Force layout flush so the browser registers the snap before the
+  // animation begins. Reading offsetWidth is the standard trick.
+  void wheel.offsetWidth;
+
   if (skipping) {
-    // Short spin: 1 rotation in 250ms so players still see a flash of motion
     wheel.style.transition = 'transform 0.25s ease-out';
-    const targetAngle = 360 + (360 - (prizeIndex * seg + seg / 2));
-    wheel.style.transform = `rotate(${targetAngle}deg)`;
+    wheelTotalAngle += 360 + landingAngle - (wheelTotalAngle % 360);
   } else {
     wheel.style.transition = 'transform 5s cubic-bezier(0.17, 0.67, 0.25, 1)';
-    // spin 6 full rotations, then land on the chosen segment center
-    const targetAngle = 360 * 6 + (360 - (prizeIndex * seg + seg / 2));
-    wheel.style.transform = `rotate(${targetAngle}deg)`;
+    // Add 6 full rotations on top of whatever angle lands the prize.
+    // The (- wheelTotalAngle % 360) part normalizes so we always end at
+    // exactly the landing angle relative to the current mod-360 position.
+    const fullSpins = 360 * 6;
+    wheelTotalAngle += fullSpins + landingAngle - (wheelTotalAngle % 360);
   }
+  wheel.style.transform = `rotate(${wheelTotalAngle}deg)`;
 
   const delay = skipping ? 300 : 5200;
 
@@ -5540,6 +6090,9 @@ function retryGame() {
   if (overlay) overlay.remove();
   // Kill any leftover game loops before respawning
   if (gameCleanup) { gameCleanup(); gameCleanup = null; }
+  gamePaused = false;
+  gamePauseHooks = { pause: null, resume: null };
+  hidePauseOverlay();
   activeGame = name;
   games[name]();
 }
@@ -5574,7 +6127,6 @@ renderGameSigns();
     setTimeout(() => {
       idx = (idx + 1) % messages.length;
       el.textContent = messages[idx].text;
-      // Reset class list and apply the new variant if any
       el.className = 'bait-message ' + messages[idx].cls + ' fading';
       requestAnimationFrame(() => el.classList.remove('fading'));
     }, 400);
