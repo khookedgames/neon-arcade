@@ -3310,7 +3310,7 @@ const UPDATE_LOG = [
     version: 'v1.3',
     date: 'Earlier',
     changes: [
-      'Universal pause system — press P or ESC during any game',
+      'Universal pause system — press ESC during any game',
       'Wheel animation fixed (no more skipping or going backwards)',
       'New skins: HEAVENLY, DEMONIC, MIDNIGHT animated gradient',
       'Light mode now affects the games too',
@@ -3648,13 +3648,20 @@ function showPauseOverlay() {
 function hidePauseOverlay() {
   document.querySelectorAll('.pause-overlay').forEach(o => o.remove());
 }
-// Keyboard shortcut: ESC or P to toggle pause during a game
+// Keyboard shortcut: ESC to toggle pause during a game.
+// Only triggers when not typing in an input/textarea — otherwise pressing
+// ESC while writing an answer in WHAT BEATS PAPER would pause the game.
+// (P used to pause too, but it blocked typing words containing "p". Removed.)
 window.addEventListener('keydown', (e) => {
   if (!activeGame) return;
-  if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
-    e.preventDefault();
-    togglePause();
+  if (e.key !== 'Escape') return;
+  const t = e.target;
+  // Skip pause if focus is in any text-entry element
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
+    return;
   }
+  e.preventDefault();
+  togglePause();
 });
 
 function startGame(name) {
@@ -5520,7 +5527,19 @@ games.whatbeats = function() {
     grass:    ['fire','herbicide','lawnmower','drought','frost'],
     leaf:     ['fire','autumn','wind','herbicide'],
     air:      ['vacuum','pollution','smoke'],
-    nothing:  ['something','everything','god','existence']
+    nothing:  ['something','everything','god','existence'],
+    tissue:   ['fire','water','flame','wind','rain','crumple','rip','tear','flush'],
+    cardboard:['fire','water','knife','scissors','flame','box cutter','crumple','rain','flood'],
+    cloth:    ['fire','scissors','knife','bleach','flame','acid','rip'],
+    cotton:   ['fire','flame','scissors','rip','torch'],
+    foam:     ['fire','knife','crusher','flame','heat'],
+    feather:  ['fire','wind','water','flame','pluck'],
+    egg:      ['fork','heat','frying pan','floor','rock','hand','crack'],
+    bread:    ['mold','fire','knife','toaster','time','blender'],
+    apple:    ['knife','teeth','blender','rot','time','worm'],
+    candle:   ['water','wind','breath','snuffer','rain'],
+    pillow:   ['fire','knife','scissors','flame','time'],
+    book:     ['fire','water','shredder','flame','rip','blender']
   };
 
   // Common things people might type that AREN'T legitimate beaters of these
@@ -5543,27 +5562,29 @@ games.whatbeats = function() {
   // This list covers ~250 common nouns players might reasonably type.
   const KNOWN_WORDS = new Set([
     // Elements & weather
-    'fire','water','ice','snow','rain','wind','air','earth','lava','sand','dust','mud','mist','steam','smoke','fog','cloud','sun','moon','star','sky','rainbow','lightning','thunder','storm','tornado','hurricane','tsunami','flood','drought','frost','heat','cold',
+    'fire','water','ice','snow','rain','wind','air','earth','lava','sand','dust','mud','mist','steam','smoke','fog','cloud','sun','moon','star','sky','rainbow','lightning','thunder','storm','tornado','hurricane','tsunami','flood','drought','frost','heat','cold','breeze','hail','sleet','dew','humidity','pressure',
     // Materials
-    'paper','rock','wood','metal','steel','iron','gold','silver','copper','lead','aluminum','glass','plastic','rubber','cloth','cotton','silk','wool','leather','stone','brick','concrete','clay','marble','granite','diamond','crystal',
+    'paper','rock','wood','metal','steel','iron','gold','silver','copper','lead','aluminum','glass','plastic','rubber','cloth','cotton','silk','wool','leather','stone','brick','concrete','clay','marble','granite','diamond','crystal','foam','tissue','cardboard','foil','tape','wax','resin','fiber','tile','asphalt','tar',
     // Tools & weapons
-    'scissors','knife','sword','axe','hammer','saw','chainsaw','drill','pickaxe','jackhammer','sledgehammer','spear','bow','arrow','crossbow','gun','pistol','rifle','shotgun','machine gun','bullet','grenade','bomb','dynamite','tnt','nuke','nuclear bomb','atomic bomb','missile','rocket','laser','flame','flamethrower','torch','blowtorch','match','lighter','candle','flashlight','lamp','shield','armor','vest','helmet','plate','chainmail','net','rope','chain','wire','trap','cage','vise','crusher','blender','shredder','stapler','eraser','pen','marker','pencil','crayon','ink','acid','poison','bleach','soap','glue','paint','dye',
+    'scissors','knife','sword','axe','hammer','saw','chainsaw','drill','pickaxe','jackhammer','sledgehammer','spear','bow','arrow','crossbow','gun','pistol','rifle','shotgun','machine gun','bullet','grenade','bomb','dynamite','tnt','nuke','nuclear bomb','atomic bomb','missile','rocket','laser','flame','flamethrower','torch','blowtorch','match','lighter','candle','flashlight','lamp','shield','armor','vest','helmet','plate','chainmail','net','rope','chain','wire','trap','cage','vise','crusher','blender','shredder','stapler','eraser','pen','marker','pencil','crayon','ink','acid','poison','bleach','soap','glue','paint','dye','wrench','screwdriver','nail','screw','bolt','nut','tool',
     // Vehicles & structures
-    'car','truck','train','plane','airplane','helicopter','boat','ship','submarine','bike','bicycle','motorcycle','tank','bulldozer','crane','wall','door','window','roof','floor','bridge','tunnel','tower','building','house','castle','fortress','bunker','shelter','dam','barrier','fence','umbrella','tarp','tent','curtain','shade','sunscreen',
+    'car','truck','train','plane','airplane','helicopter','boat','ship','submarine','bike','bicycle','motorcycle','scooter','skateboard','tank','bulldozer','crane','wall','door','window','roof','floor','ceiling','bridge','tunnel','tower','building','house','castle','fortress','bunker','shelter','dam','barrier','fence','umbrella','tarp','tent','curtain','shade','sunscreen','garage','basement',
     // Life & beings
-    'human','person','man','woman','child','baby','dog','cat','mouse','rat','bird','fish','snake','lizard','frog','turtle','rabbit','squirrel','deer','fox','wolf','bear','lion','tiger','elephant','giraffe','horse','cow','pig','sheep','goat','chicken','duck','eagle','hawk','owl','crow','spider','ant','bee','wasp','fly','mosquito','butterfly','worm','shark','whale','dolphin','octopus','crab','lobster','jellyfish',
+    'human','person','man','woman','child','baby','kid','dog','cat','mouse','rat','bird','fish','snake','lizard','frog','turtle','rabbit','squirrel','deer','fox','wolf','bear','lion','tiger','elephant','giraffe','horse','cow','pig','sheep','goat','chicken','duck','eagle','hawk','owl','crow','spider','ant','bee','wasp','fly','mosquito','butterfly','worm','shark','whale','dolphin','octopus','crab','lobster','jellyfish','penguin','kangaroo','panda','monkey','ape','gorilla','rhino','hippo','crocodile','alligator','dinosaur',
     // Plants & food
-    'tree','grass','leaf','flower','rose','seed','root','branch','fruit','apple','orange','banana','grape','lemon','tomato','potato','onion','garlic','bread','rice','salt','sugar','pepper','meat','milk','cheese','egg','butter','oil','wine','beer','coffee','tea','soda','juice','water bottle',
+    'tree','grass','leaf','flower','rose','seed','root','branch','fruit','apple','orange','banana','grape','lemon','tomato','potato','onion','garlic','bread','rice','salt','sugar','pepper','meat','milk','cheese','egg','butter','oil','wine','beer','coffee','tea','soda','juice','water bottle','pasta','pizza','sandwich','soup','salad','cookie','cake','candy','chocolate','popcorn','cereal','yogurt','steak','chicken','bacon','ham','fish','sushi','taco','burrito','burger','fries','donut','muffin','pie','cucumber','carrot','lettuce','spinach','broccoli','mushroom','strawberry','watermelon','pineapple','peach','cherry','blueberry','corn','bean','noodle',
     // Body & physical
-    'fist','hand','foot','head','eye','ear','tooth','bone','muscle','blood','skin','hair','heart','brain','lung',
+    'fist','hand','foot','head','eye','ear','tooth','bone','muscle','blood','skin','hair','heart','brain','lung','finger','toe','nail','arm','leg','knee','elbow','shoulder','neck','face','nose','mouth','tongue','lips','beard','stomach',
+    // Household
+    'chair','table','desk','bed','sofa','couch','pillow','blanket','sheet','towel','rug','carpet','mirror','clock','book','phone','computer','laptop','tablet','tv','television','camera','radio','headphones','speaker','battery','charger','outlet','plug','switch','remote','keyboard','screen','monitor','fridge','refrigerator','freezer','oven','microwave','stove','dishwasher','sink','toilet','bathtub','shower','plate','bowl','cup','mug','glass cup','fork','spoon','straw','napkin','plate','bottle','can','jar','box','bag','basket','bucket','broom','mop','vacuum cleaner','iron','toaster','kettle','blender','mixer','dryer','washer',
+    // Clothing
+    'shirt','pants','jeans','shorts','skirt','dress','jacket','coat','sweater','hoodie','hat','cap','helmet','glove','sock','shoe','boot','sandal','belt','tie','scarf','glasses','sunglasses','watch','ring','necklace','bracelet','earring','backpack','purse','wallet','suit',
     // Nature events
-    'earthquake','volcano','eruption','avalanche','blizzard','typhoon','sinkhole','meteor','asteroid','comet','supernova','black hole','wormhole','singularity','big bang','antimatter',
-    // Concepts & abstract (some count as universal beaters)
-    'death','life','time','infinity','eternity','nothing','everything','existence','god','jesus','allah','buddha','dragon','phoenix','unicorn','mech','robot','ai','virus','disease','plague','cancer','curse','wish','magic','spell','prayer','soul','ghost','zombie','vampire','werewolf','alien','demon','angel','apocalypse','extinction','gravity','antigravity','vacuum','radiation','plasma',
+    'earthquake','volcano','eruption','avalanche','blizzard','typhoon','sinkhole','meteor','asteroid','comet','supernova','black hole','wormhole','singularity','big bang','antimatter','fault','quake','wildfire',
+    // Concepts & abstract
+    'death','life','time','infinity','eternity','nothing','everything','existence','god','jesus','allah','buddha','dragon','phoenix','unicorn','mech','robot','ai','virus','disease','plague','cancer','curse','wish','magic','spell','prayer','soul','ghost','zombie','vampire','werewolf','alien','demon','angel','apocalypse','extinction','gravity','antigravity','vacuum','radiation','plasma','hate','love','hope','fear','anger','luck',
     // Misc useful
-    'sponge','tape','rust','corrosion','erosion','evaporation','suffocation','starvation','dehydration','recession','inflation','tax','theft','bankruptcy','jail','prison','court','law',
-    // Targets / wheel items the player might respond TO
-    'paper','rock','scissors','fire','water','ice','lava','wood','metal','steel','glass','plastic','rain','wind','sun','cloud','darkness','light','knife','sword','gun','dog','cat','bear','lion','elephant','mouse','snake','tiger','human','earth','car','truck','train','bullet','bomb','money','diamond','sand','snow','grass','leaf','air','nothing'
+    'sponge','rust','corrosion','erosion','evaporation','suffocation','starvation','dehydration','recession','inflation','tax','theft','bankruptcy','jail','prison','court','law','sword','dagger','razor','blade','scalpel','chisel','sandpaper','file','wheel','engine','motor','gear','spring','magnet','battery','wire','cable','cord','string','thread','yarn','feather','fur','scale','shell','horn','tusk','claw','paw','wing','tail','beak'
   ]);
 
   function offlineJudge(answer, target) {
