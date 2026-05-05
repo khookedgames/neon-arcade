@@ -416,11 +416,34 @@
   .updatelog-entry li {
     margin-bottom: 4px;
   }
-
-  @keyframes hologramSpin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
+  /* Codes panel — distinct yellow/pink styling so it stands out from
+     the regular update entries at the end of the log */
+  .updatelog-entry.codes-card {
+    border-color: var(--neon-yellow);
+    box-shadow: 0 0 14px rgba(255,247,0,0.45);
+    margin-top: 22px;
+    animation: codes-pulse 2.8s ease-in-out infinite;
   }
+  .updatelog-entry.codes-card .ver {
+    color: var(--neon-yellow);
+    text-shadow: 0 0 8px var(--neon-yellow);
+  }
+  .updatelog-entry.codes-card .date {
+    color: var(--neon-pink);
+  }
+  .updatelog-entry.codes-card strong {
+    color: var(--neon-pink);
+    text-shadow: 0 0 4px var(--neon-pink);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-right: 6px;
+  }
+  @keyframes codes-pulse {
+    0%, 100% { box-shadow: 0 0 12px rgba(255,247,0,0.35); }
+    50%      { box-shadow: 0 0 20px rgba(255,247,0,0.6); }
+  }
+
   @keyframes galaxySwirl {
     from { transform: rotate(0deg); }
     to   { transform: rotate(-360deg); }
@@ -428,31 +451,6 @@
   @keyframes midnightShift {
     0%, 100% { background-position: 0% 50%; }
     50%      { background-position: 100% 50%; }
-  }
-
-  /* Limited skin card — subtle pulsing gold border + LIMITED badge */
-  .skin-card.limited {
-    border-color: #ffd700;
-    box-shadow: 0 0 18px rgba(255, 215, 0, 0.45);
-    animation: limited-pulse 2.5s ease-in-out infinite;
-    position: relative;
-  }
-  @keyframes limited-pulse {
-    0%, 100% { box-shadow: 0 0 14px rgba(255,215,0,0.35); }
-    50%      { box-shadow: 0 0 22px rgba(255,215,0,0.7); }
-  }
-  .limited-badge {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    background: #ffd700;
-    color: #000;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
-    padding: 4px 6px;
-    letter-spacing: 1px;
-    z-index: 3;
-    box-shadow: 0 0 10px rgba(255,215,0,0.7);
   }
 
   /* ===== DISCOUNT / POTION BANNERS ===== */
@@ -2176,29 +2174,13 @@ const SKINS = [
   { id: 'orange',   name: 'ORANGE',    color: '#ff7700', price: 75 },
   { id: 'yellow',   name: 'YELLOW',    color: '#fff700', price: 75 },
   { id: 'rainbow',  name: 'PRISM',     color: 'linear',   price: 600 },
-  { id: 'lava',     name: 'LAVA',      color: 'lava',     price: 1000 },
-  { id: 'demonic',  name: 'DEMONIC',   color: 'demonic',  price: 1250 },
-  { id: 'heavenly', name: 'HEAVENLY',  color: 'heavenly', price: 1000 },
   { id: 'midnight', name: 'MIDNIGHT',  color: 'midnight', price: 750 },
-  { id: 'galaxy',   name: 'GALAXY',    color: 'galaxy',   price: 1500, limited: true },
+  { id: 'lava',     name: 'LAVA',      color: 'lava',     price: 1000 },
+  { id: 'heavenly', name: 'HEAVENLY',  color: 'heavenly', price: 1000 },
+  { id: 'demonic',  name: 'DEMONIC',   color: 'demonic',  price: 1250 },
+  { id: 'galaxy',   name: 'GALAXY',    color: 'galaxy',   price: 1250 },
   { id: 'iceking',  name: 'ICE KING',  color: 'ice',      price: 0, exclusive: true }
 ];
-
-// Skins that USED to be limited and are now retired from the shop, but
-// players who already owned them keep them forever. Same shape as SKINS.
-// To retire a limited skin in the future: move it from SKINS into here.
-const RETIRED_LIMITED_SKINS = [
-  // HOLOGRAM was retired in v1.5. Players who already owned it keep it
-  // equippable forever; new players can't buy it.
-  { id: 'hologram', name: 'HOLOGRAM',  color: 'hologram', price: 1500, limited: true }
-];
-
-// Combined catalog used for everything except shop display.
-// Looking up a player's owned/equipped skin always resolves through this.
-function getSkinById(id) {
-  return SKINS.find(s => s.id === id) ||
-         RETIRED_LIMITED_SKINS.find(s => s.id === id);
-}
 
 /* =========================================================
    EXTRAS — non-skin permanent unlocks.
@@ -2531,13 +2513,8 @@ function loadState() {
       if (data.discount && typeof data.discount === 'object') state.discount = data.discount;
       // Ensure default is always owned
       if (!state.owned.includes('default')) state.owned.unshift('default');
-      // After a skin catalog update, drop any owned IDs that no longer exist
-      // anywhere — but RETIRED limited skins stay valid, so players who
-      // already bought one (e.g. an old HOLOGRAM) keep it forever.
-      const validIds = new Set([
-        ...SKINS.map(s => s.id),
-        ...RETIRED_LIMITED_SKINS.map(s => s.id)
-      ]);
+      // After a skin catalog update, drop any owned IDs that no longer exist.
+      const validIds = new Set(SKINS.map(s => s.id));
       state.owned = state.owned.filter(id => validIds.has(id));
       if (!validIds.has(state.currentSkin)) state.currentSkin = 'default';
     }
@@ -2576,7 +2553,7 @@ function showScreen(name) {
 
 function renderHub() {
   document.getElementById('money').textContent = state.money;
-  const skin = getSkinById(state.currentSkin);
+  const skin = SKINS.find(s => s.id === state.currentSkin);
   document.getElementById('current-skin').textContent = skin.name;
   applySkinColor(skin);
   // Toggle admin button visibility
@@ -2621,12 +2598,6 @@ function applySkinColor(skin) {
     avatar.style.animation = 'midnightShift 6s ease-in-out infinite';
     avatar.style.boxShadow = '0 0 30px #3d5af1, inset -10px -10px 20px rgba(0,0,0,0.5)';
     document.documentElement.style.setProperty('--skin-color', '#3d5af1');
-  } else if (skin.color === 'hologram') {
-    // Cyan/magenta holographic shimmer with conic-gradient + animation
-    avatar.style.background = 'conic-gradient(from 0deg, #ff2bd6, #00f0ff, #39ff14, #fff700, #ff2bd6)';
-    avatar.style.boxShadow = '0 0 30px #ff2bd6, 0 0 60px #00f0ff, inset -10px -10px 20px rgba(0,0,0,0.3)';
-    avatar.style.animation = 'hologramSpin 3s linear infinite';
-    document.documentElement.style.setProperty('--skin-color', '#00f0ff');
   } else if (skin.color === 'galaxy') {
     // Deep-space radial: black core ringed by magenta nebula → blue cosmos
     avatar.style.background = 'radial-gradient(circle at 30% 30%, #ffffff 0%, #ff66cc 12%, #6633ff 35%, #1a0a3a 70%, #000000 100%)';
@@ -2634,7 +2605,7 @@ function applySkinColor(skin) {
     avatar.style.animation = 'galaxySwirl 8s linear infinite';
     document.documentElement.style.setProperty('--skin-color', '#cc66ff');
   } else {
-    // Reset hologram animation if any
+    // Reset animation from any prior animated skin
     avatar.style.animation = '';
     avatar.style.backgroundSize = '';
     avatar.style.background = skin.color;
@@ -2648,7 +2619,7 @@ function applySkinColor(skin) {
     }
   }
   // Reset animation when leaving animated skins
-  if (skin.color !== 'hologram' && skin.color !== 'midnight' && skin.color !== 'galaxy') {
+  if (skin.color !== 'midnight' && skin.color !== 'galaxy') {
     avatar.style.animation = '';
     avatar.style.backgroundSize = '';
   }
@@ -2660,7 +2631,7 @@ function applySkinColor(skin) {
 // Returns a canvas fillStyle that respects the current skin,
 // creating gradients for Prism/Lava/Ice skins.
 function skinFill(ctx, cx, cy, size) {
-  const skin = getSkinById(state.currentSkin);
+  const skin = SKINS.find(s => s.id === state.currentSkin);
   if (skin.color === 'linear') {
     const g = ctx.createLinearGradient(cx - size, cy - size, cx + size, cy + size);
     g.addColorStop(0,    '#ff2bd6');
@@ -2712,20 +2683,6 @@ function skinFill(ctx, cx, cy, size) {
     g.addColorStop(1,   '#2c4eb5');
     return g;
   }
-  if (skin.color === 'hologram') {
-    // Animated radial cycling through the rainbow
-    const t = (Date.now() / 600) % (Math.PI * 2);
-    const g = ctx.createLinearGradient(
-      cx - size * Math.cos(t),
-      cy - size * Math.sin(t),
-      cx + size * Math.cos(t),
-      cy + size * Math.sin(t)
-    );
-    g.addColorStop(0,   '#ff2bd6');
-    g.addColorStop(0.5, '#00f0ff');
-    g.addColorStop(1,   '#fff700');
-    return g;
-  }
   if (skin.color === 'galaxy') {
     // Deep-space radial: white core → pink nebula → purple → black
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(size, 8));
@@ -2740,7 +2697,7 @@ function skinFill(ctx, cx, cy, size) {
 }
 // Glow color for shadowColor.
 function skinGlow() {
-  const skin = getSkinById(state.currentSkin);
+  const skin = SKINS.find(s => s.id === state.currentSkin);
   if (skin.color === 'linear') {
     const h = (Date.now() / 10) % 360;
     return `hsl(${h}, 100%, 60%)`;
@@ -2754,23 +2711,18 @@ function skinGlow() {
   if (skin.color === 'demonic') return '#ff0033';
   if (skin.color === 'heavenly') return '#fff8aa';
   if (skin.color === 'midnight') return '#3d5af1';
-  if (skin.color === 'hologram') {
-    const h = (Date.now() / 8) % 360;
-    return `hsl(${h}, 100%, 65%)`;
-  }
   if (skin.color === 'galaxy') return '#cc66ff';
   return skin.color;
 }
 // Solid color fallback (for CSS use).
 function skinSolid() {
-  const skin = getSkinById(state.currentSkin);
+  const skin = SKINS.find(s => s.id === state.currentSkin);
   if (skin.color === 'linear') return '#ff2bd6';
   if (skin.color === 'lava')   return '#ff5500';
   if (skin.color === 'ice')    return '#aaddff';
   if (skin.color === 'demonic') return '#ff0033';
   if (skin.color === 'heavenly') return '#fff8aa';
   if (skin.color === 'midnight') return '#3d5af1';
-  if (skin.color === 'hologram') return '#00f0ff';
   if (skin.color === 'galaxy')  return '#cc66ff';
   return skin.color;
 }
@@ -2942,11 +2894,10 @@ function renderShop() {
     const owned = state.owned.includes(skin.id);
     const equipped = state.currentSkin === skin.id;
     const card = document.createElement('div');
-    card.className = 'skin-card' + (owned ? ' owned' : '') + (equipped ? ' equipped' : '') + (skin.exclusive ? ' exclusive' : '') + (skin.limited ? ' limited' : '');
+    card.className = 'skin-card' + (owned ? ' owned' : '') + (equipped ? ' equipped' : '') + (skin.exclusive ? ' exclusive' : '');
 
     let bgStyle;
     let crownHtml = '';
-    let limitedBadge = skin.limited ? '<div class="limited-badge">⏳ LIMITED</div>' : '';
     if (skin.color === 'linear') {
       bgStyle = 'background: linear-gradient(135deg, #ff2bd6, #00f0ff, #39ff14, #fff700); color: #ff2bd6;';
     } else if (skin.color === 'lava') {
@@ -2960,8 +2911,6 @@ function renderShop() {
       bgStyle = 'background: radial-gradient(circle at 35% 35%, #ffffff, #fff8aa 45%, #f5d040 100%); color: #f5d040;';
     } else if (skin.color === 'midnight') {
       bgStyle = 'background: linear-gradient(135deg, #1e3a8a, #0a1a4a, #1e3a8a, #2c4eb5); background-size: 300% 300%; color: #3d5af1; animation: midnightShift 6s ease-in-out infinite;';
-    } else if (skin.color === 'hologram') {
-      bgStyle = 'background: conic-gradient(from 0deg, #ff2bd6, #00f0ff, #39ff14, #fff700, #ff2bd6); color: #00f0ff; animation: hologramSpin 3s linear infinite;';
     } else if (skin.color === 'galaxy') {
       bgStyle = 'background: radial-gradient(circle at 30% 30%, #ffffff 0%, #ff66cc 12%, #6633ff 35%, #1a0a3a 70%, #000000 100%); color: #cc66ff; animation: galaxySwirl 8s linear infinite;';
     } else {
@@ -2989,7 +2938,6 @@ function renderShop() {
     else action = `<button onclick="buySkin('${skin.id}')" ${state.money < actualPrice ? 'disabled' : ''}>BUY</button>`;
 
     card.innerHTML = `
-      ${limitedBadge}
       <div class="skin-preview" style="${bgStyle}">${crownHtml}<div class="skin-mouth"></div></div>
       <h4>${skin.name}</h4>
       <div class="price">${priceLabel}</div>
@@ -3165,7 +3113,7 @@ function buyPotion(id) {
 }
 
 function buySkin(id) {
-  const skin = getSkinById(id);
+  const skin = SKINS.find(s => s.id === id);
   if (!skin) return;
   if (state.money < skin.price) { toast('NOT ENOUGH $$$', true); return; }
   state.money -= skin.price;
@@ -3277,12 +3225,10 @@ function loadTheme() {
    Redemption is tracked in localStorage so it persists.
    ========================================================= */
 const CHEAT_CODES = {
-  'cheatcode555':  { reward: 2000, label: '$2000 UNLOCKED!' },
-  'allskins':      { type: 'skins', label: 'ALL SKINS UNLOCKED!' },
-  'spinforthewin': { type: 'spins', amount: 30, label: '30 BONUS SPINS ADDED!' },
-  'skipspin':      { type: 'skipspin', label: 'SPIN ANIMATION SKIP UNLOCKED!' },
-  'elbillug':      { type: 'gullible', label: '' },
-  'adminmode':     { type: 'admin', label: 'ADMIN MODE UNLOCKED 👑' }
+  'adminmode':     { type: 'admin', label: 'ADMIN MODE UNLOCKED 👑' },
+  'upd4':          { reward: 100, spins: 5, label: '5 SPINS + $100! 🎰' },
+  'galaxy':        { reward: 100, spins: 5, label: '5 SPINS + $100! 🌌' },
+  'elbillug':      { type: 'gullible', label: '' }
 };
 
 /* =========================================================
@@ -3293,7 +3239,7 @@ const CHEAT_CODES = {
    ========================================================= */
 const UPDATE_LOG = [
   {
-    version: 'v1.4',
+    version: 'Update 4',
     date: 'This update',
     changes: [
       'Shop button moved to the top of the hub for quick access',
@@ -3307,7 +3253,7 @@ const UPDATE_LOG = [
     ]
   },
   {
-    version: 'v1.3',
+    version: 'Update 3',
     date: 'Earlier',
     changes: [
       'Universal pause system — press ESC during any game',
@@ -3318,7 +3264,7 @@ const UPDATE_LOG = [
     ]
   },
   {
-    version: 'v1.2',
+    version: 'Update 2',
     date: 'Earlier',
     changes: [
       '12-hour quest cycle (3 random daily quests from a pool of 9)',
@@ -3328,7 +3274,7 @@ const UPDATE_LOG = [
     ]
   },
   {
-    version: 'v1.1',
+    version: 'Update 1',
     date: 'Earlier',
     changes: [
       'WHAT BEATS PAPER mini-game added',
@@ -3338,7 +3284,7 @@ const UPDATE_LOG = [
     ]
   },
   {
-    version: 'v1.0',
+    version: 'Launch',
     date: 'Launch',
     changes: [
       '11 mini-games: TARGETS, MEMORY, COIN CATCHER, SNAKE, BREAKER, PONG, LOCK-ON, RISK IT, REACTION, CLICK STORM, WHAT BEATS PAPER',
@@ -3351,7 +3297,7 @@ const UPDATE_LOG = [
 function renderUpdateLog() {
   const container = document.getElementById('updatelog-list');
   if (!container) return;
-  container.innerHTML = UPDATE_LOG.map(entry => `
+  const entriesHtml = UPDATE_LOG.map(entry => `
     <div class="updatelog-entry">
       <span class="ver">${entry.version}</span>
       <span class="date">${entry.date}</span>
@@ -3360,6 +3306,20 @@ function renderUpdateLog() {
       </ul>
     </div>
   `).join('');
+  // Bonus codes panel pinned to the bottom of the log so players who scroll
+  // all the way through find a little reward — three redeem-able codes.
+  const codesHtml = `
+    <div class="updatelog-entry codes-card">
+      <span class="ver">🎁 CODES</span>
+      <span class="date">Type these in via the 🔐 CODE button</span>
+      <ul>
+        <li><strong>GALAXY</strong> — 5 spins and $100 🌌</li>
+        <li><strong>UPD4</strong> — 5 spins and $100 🎰</li>
+        <li><strong>ELBILLUG</strong> — "secret skin" 👀</li>
+      </ul>
+    </div>
+  `;
+  container.innerHTML = entriesHtml + codesHtml;
 }
 
 function showUpdateLog() { showScreen('updatelog'); }
@@ -3386,15 +3346,17 @@ function redeemCheatCode(rawCode) {
     return;
   }
 
-  // Grant reward based on type
-  if (def.reward) {
-    state.money += def.reward;
-  } else if (def.type === 'skins') {
+  // Grant rewards. Multiple reward types can stack on a single code
+  // (e.g. UPD4 grants both money and bonus spins).
+  if (def.reward) state.money += def.reward;
+  if (def.spins)  state.bonusSpins += def.spins;
+  if (def.type === 'skins') {
     // Unlock every non-exclusive skin
     SKINS.forEach(s => {
       if (!s.exclusive && !state.owned.includes(s.id)) state.owned.push(s.id);
     });
   } else if (def.type === 'spins') {
+    // Legacy support — older codes used { type: 'spins', amount: N }
     state.bonusSpins += def.amount;
   } else if (def.type === 'skipspin') {
     state.skipSpinAnim = true;
@@ -3699,10 +3661,10 @@ games.targets = function() {
 
   // Apply skin color to a target element. Each skin gets its own gradient
   // so the target has a visible body — without this, fancy skins like
-  // hologram/galaxy/midnight render as invalid CSS colors and the body
+  // galaxy/midnight render as invalid CSS colors and the body
   // disappears, leaving just eyes + mouth floating in midair.
   function styleTarget(el) {
-    const skin = getSkinById(state.currentSkin);
+    const skin = SKINS.find(s => s.id === state.currentSkin);
     let bg, glow;
     if (skin.color === 'linear') {
       bg = 'radial-gradient(circle, #ff2bd6 25%, #00f0ff 45%, #39ff14 58%, transparent 62%)';
@@ -3722,9 +3684,6 @@ games.targets = function() {
     } else if (skin.color === 'midnight') {
       bg = 'radial-gradient(circle, #2c4eb5 25%, #1e3a8a 50%, #0a1a4a 60%, transparent 62%)';
       glow = '#3d5af1';
-    } else if (skin.color === 'hologram') {
-      bg = 'conic-gradient(from 0deg, #ff2bd6, #00f0ff, #39ff14, #fff700, #ff2bd6)';
-      glow = '#00f0ff';
     } else if (skin.color === 'galaxy') {
       bg = 'radial-gradient(circle at 30% 30%, #ffffff 0%, #ff66cc 12%, #6633ff 35%, #1a0a3a 70%, #000000 100%)';
       glow = '#cc66ff';
