@@ -1,4 +1,4 @@
-<!DOCTYPE html>                                                        .........(   what beats paper was a total fail so i decided to replace it with a different game in the next upd (9/5/2026)
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -147,6 +147,29 @@
     margin-bottom: 10px;
     text-align: center;
   }
+  /* Holographic celebratory banner above the NEON ARCADE title.
+     Cycles through the same conic-gradient palette as the HOLOGRAM skin. */
+  .hologram-banner {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(10px, 2.4vw, 16px);
+    letter-spacing: 2px;
+    text-align: center;
+    padding: 6px 14px;
+    margin: 4px auto 8px;
+    display: inline-block;
+    background: linear-gradient(90deg, #ff2bd6, #00f0ff, #39ff14, #fff700, #ff2bd6);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    border: 2px solid #00f0ff;
+    box-shadow: 0 0 12px rgba(0,240,255,0.5), 0 0 24px rgba(255,43,214,0.3);
+    animation: hologramBannerSlide 4s linear infinite;
+  }
+  @keyframes hologramBannerSlide {
+    from { background-position: 0% 50%; }
+    to   { background-position: -200% 50%; }
+  }
   @keyframes flicker {
     0%, 95%, 100% { opacity: 1; }
     96% { opacity: 0.6; }
@@ -279,6 +302,29 @@
     color: var(--text);
     position: relative;
     overflow: visible;
+  }
+  /* Decorative emoji in the top-right corner of a game card.
+     Used on TETRIS to flag it as the new addition. Tilted, glowing,
+     pulsing to draw the eye. */
+  .card-corner {
+    position: absolute;
+    top: -16px;
+    right: -16px;
+    font-size: 36px;
+    line-height: 1;
+    text-shadow:
+      0 0 8px var(--neon-yellow),
+      0 0 16px var(--neon-pink),
+      0 0 24px rgba(255,247,0,0.6);
+    animation: cornerBob 1.6s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 5;
+    /* Slight base tilt that the animation oscillates around */
+    transform: rotate(18deg);
+  }
+  @keyframes cornerBob {
+    0%, 100% { transform: rotate(14deg) scale(1); }
+    50%      { transform: rotate(22deg) scale(1.12); }
   }
   .game-sign {
     position: absolute;
@@ -447,6 +493,10 @@
   @keyframes galaxySwirl {
     from { transform: rotate(0deg); }
     to   { transform: rotate(-360deg); }
+  }
+  @keyframes hologramSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
   }
   @keyframes midnightShift {
     0%, 100% { background-position: 0% 50%; }
@@ -733,6 +783,30 @@
     padding: 20px 12px;
     text-align: center;
     transition: all 0.2s;
+    position: relative;
+  }
+  /* Tilted "BACK!" / "NEW!" / etc. badge in the top-right of a skin card.
+     Uses the same hot-pink/yellow vibe as the hub game-card signs so the
+     visual language is consistent across the app. */
+  .skin-tag {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: linear-gradient(135deg, var(--neon-pink), var(--neon-yellow));
+    color: #000;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    padding: 5px 8px 4px;
+    letter-spacing: 1px;
+    transform: rotate(12deg);
+    box-shadow: 0 0 10px var(--neon-yellow), 0 0 20px var(--neon-pink);
+    z-index: 5;
+    animation: skinTagPulse 1.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes skinTagPulse {
+    0%, 100% { transform: rotate(10deg) scale(1); }
+    50%      { transform: rotate(14deg) scale(1.08); }
   }
   .skin-card.owned { border-color: var(--neon-green); box-shadow: 0 0 15px rgba(57,255,20,0.3); }
   .skin-card.equipped { border-color: var(--neon-yellow); box-shadow: 0 0 25px var(--neon-yellow); }
@@ -1033,85 +1107,221 @@
     min-height: 18px;
   }
 
-  /* ===== WHAT BEATS PAPER ===== */
-  .wb-area {
+  /* ===== TETRIS ===== */
+  .tet-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 4px;
+    height: auto;
+    min-height: 0;
+    width: 100%;
+    /* Allow it to shrink on small screens — no fixed minimum that could
+       force horizontal scrolling on phones. */
+  }
+  .tet-canvas {
+    background: rgba(0,0,0,0.6);
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 0 0 14px rgba(0,240,255,0.4);
+    image-rendering: pixelated;
+    /* Constrains canvas to fit on screen regardless of pixel size */
+    max-width: 100%;
+    max-height: calc(100vh - 360px);
+    height: auto;
+  }
+  .tet-side {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding: 20px 16px;
-    gap: 12px;
-    overflow-y: auto;
+    gap: 8px;
+    flex-shrink: 0;
   }
-  .wb-current-label {
+  /* Hide next-preview on extra-narrow screens to give the board more room */
+  @media (max-width: 380px) {
+    .tet-side { display: none; }
+  }
+  .tet-next-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 4px var(--neon-yellow);
+    letter-spacing: 1px;
+  }
+  .tet-next-canvas {
+    background: rgba(0,0,0,0.6);
+    border: 2px solid var(--neon-yellow);
+    box-shadow: 0 0 10px rgba(255,247,0,0.3);
+  }
+  .tet-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    margin-top: 14px;
+    width: 100%;
+  }
+  .tet-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .tet-btn {
+    background: rgba(0,0,0,0.65);
+    border: 3px solid var(--neon-pink);
+    color: var(--neon-pink);
+    font-family: 'Press Start 2P', monospace;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255,43,214,0.45);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.05s, background 0.1s;
+    /* Make tap target large — at least 70px tall */
+    min-width: 90px;
+    min-height: 70px;
+    padding: 8px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .tet-btn .tet-icon {
+    font-size: 22px;
+    line-height: 1;
+    font-family: monospace;
+  }
+  .tet-btn .tet-label {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    line-height: 1;
+  }
+  .tet-btn:active {
+    transform: scale(0.94);
+    background: rgba(255,43,214,0.2);
+  }
+  .tet-btn.tet-btn-rotate {
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+    box-shadow: 0 0 10px rgba(0,240,255,0.45);
+  }
+  .tet-btn.tet-btn-rotate:active { background: rgba(0,240,255,0.18); }
+  .tet-btn.tet-btn-wide {
+    min-width: 130px;
+    border-color: var(--neon-yellow);
+    color: var(--neon-yellow);
+    box-shadow: 0 0 10px rgba(255,247,0,0.4);
+  }
+  .tet-btn.tet-btn-wide:active { background: rgba(255,247,0,0.16); }
+  .tet-btn.tet-btn-slam {
+    border-color: var(--neon-green);
+    color: var(--neon-green);
+    box-shadow: 0 0 10px rgba(57,255,20,0.45);
+  }
+  .tet-btn.tet-btn-slam:active { background: rgba(57,255,20,0.16); }
+  body.light-mode .tet-btn {
+    background: rgba(255,255,255,0.7);
+  }
+  /* Compact buttons on narrow phones so they still fit */
+  @media (max-width: 420px) {
+    .tet-btn {
+      min-width: 70px;
+      min-height: 56px;
+      padding: 6px 10px;
+    }
+    .tet-btn .tet-icon { font-size: 18px; }
+    .tet-btn .tet-label { font-size: 8px; }
+    .tet-btn.tet-btn-wide { min-width: 100px; }
+    .tet-controls { gap: 6px; }
+    .tet-row { gap: 6px; }
+  }
+
+  /* ===== TETRIS TUTORIAL OVERLAY ===== */
+  .tet-tutorial-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 16px;
+  }
+  .tet-tutorial-card {
+    background: rgba(10, 10, 25, 0.96);
+    border: 3px solid var(--neon-cyan);
+    box-shadow: 0 0 30px rgba(0,240,255,0.6), inset 0 0 20px rgba(0,240,255,0.1);
+    max-width: 460px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 20px 22px;
+    text-align: left;
+    font-family: 'VT323', monospace;
+    color: #ddd;
+  }
+  body.light-mode .tet-tutorial-card {
+    background: rgba(245, 245, 255, 0.97);
+    color: #222;
+  }
+  .tet-tutorial-card h3 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px var(--neon-cyan);
+    text-align: center;
+    margin: 0 0 18px 0;
+    letter-spacing: 2px;
+  }
+  .tet-tut-section {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.04);
+    border-left: 3px solid var(--neon-pink);
+  }
+  body.light-mode .tet-tut-section {
+    background: rgba(0,0,0,0.04);
+  }
+  .tet-tut-emoji {
+    font-size: 26px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .tet-tut-text {
+    font-size: 16px;
+    line-height: 1.45;
+    flex: 1;
+  }
+  .tet-tut-text b {
+    color: var(--neon-yellow);
+    text-shadow: 0 0 4px var(--neon-yellow);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+  .tet-tut-key {
+    color: var(--neon-pink);
+    text-shadow: 0 0 4px var(--neon-pink);
     font-family: 'Press Start 2P', monospace;
     font-size: 10px;
-    color: var(--neon-cyan);
-    letter-spacing: 2px;
+    letter-spacing: 1px;
+    background: rgba(255,43,214,0.12);
+    padding: 2px 6px;
+    margin: 0 2px;
+    border: 1px solid var(--neon-pink);
   }
-  .wb-current {
-    font-family: 'Press Start 2P', monospace;
-    font-size: clamp(26px, 6vw, 42px);
-    color: var(--neon-yellow);
-    text-shadow: 0 0 15px var(--neon-yellow), 0 0 30px var(--neon-yellow);
-    padding: 10px 24px;
-    border: 3px solid var(--neon-yellow);
-    background: rgba(0,0,0,0.5);
-    text-align: center;
-    letter-spacing: 2px;
-    word-break: break-word;
-    max-width: 95%;
-    animation: wb-pulse 2s ease-in-out infinite;
-  }
-  @keyframes wb-pulse {
-    0%, 100% { box-shadow: 0 0 15px var(--neon-yellow); }
-    50%      { box-shadow: 0 0 30px var(--neon-yellow); }
-  }
-  .wb-arrow {
-    font-size: 28px;
-    color: var(--neon-pink);
-    text-shadow: 0 0 10px var(--neon-pink);
-  }
-  .wb-input-row {
-    display: flex;
-    gap: 8px;
-    width: 100%;
-    max-width: 420px;
-  }
-  .wb-input {
-    flex: 1;
-    background: rgba(0,0,0,0.6);
-    border: 2px solid var(--neon-cyan);
-    color: #fff;
-    padding: 12px 14px;
-    font-family: 'VT323', monospace;
-    font-size: 22px;
-    outline: none;
-    box-shadow: 0 0 10px rgba(0,240,255,0.2);
-  }
-  .wb-input:focus {
-    border-color: var(--neon-yellow);
-    box-shadow: 0 0 15px rgba(255,247,0,0.4);
-  }
-  .wb-input:disabled { opacity: 0.5; }
-  .wb-status {
-    font-family: 'VT323', monospace;
-    font-size: 18px;
-    min-height: 22px;
-    text-align: center;
-    padding: 0 10px;
-  }
-  .wb-status.win  { color: var(--neon-green); text-shadow: 0 0 8px var(--neon-green); }
-  .wb-status.lose { color: var(--neon-red);   text-shadow: 0 0 8px var(--neon-red); }
-  .wb-status.thinking { color: var(--neon-cyan); }
-  .wb-history {
-    font-family: 'VT323', monospace;
-    font-size: 15px;
-    color: #888;
-    text-align: center;
-    padding: 0 10px;
-    line-height: 1.4;
-    word-break: break-word;
+  .tet-tut-close {
+    display: block;
+    margin: 18px auto 0 auto;
+    min-width: 160px;
   }
 
   /* ===== GULLIBLE PRANK POPUP ===== */
@@ -1771,6 +1981,7 @@
 
   <!-- HUB -->
   <div id="screen-hub" class="screen active">
+    <div class="hologram-banner">✨ HOLOGRAM RETURNS ✨</div>
     <h1 class="title">NEON ARCADE</h1>
     <div class="bait-message" id="bait-message">redeem code: ELBILLUG for free secret skin</div>
     <div class="subtitle">~ INSERT COIN ~</div>
@@ -1840,10 +2051,11 @@
         <h3>CLICK STORM</h3>
         <p>Click as fast as you can for 5 seconds. $1 per click!</p>
       </div>
-      <div class="game-card" data-game="whatbeats" onclick="startGame('whatbeats')">
-        <span class="icon">📄</span>
-        <h3>WHAT BEATS PAPER</h3>
-        <p>Name something that beats paper. $3 per chain win!</p>
+      <div class="game-card" data-game="tetris" onclick="startGame('tetris')">
+        <span class="card-corner">🆕</span>
+        <span class="icon">🧩</span>
+        <h3>TETRIS</h3>
+        <p>Stack & clear. Earn cash per line — combos pay big!</p>
       </div>
       <div class="game-card wheel-card" data-game="wheel" onclick="showScreen('wheel')">
         <span class="icon">🎰</span>
@@ -2098,27 +2310,87 @@
     <button class="btn pink" onclick="endGame('cps', true)">QUIT</button>
   </div>
 
-  <!-- GAME: WHAT BEATS PAPER -->
-  <div id="screen-whatbeats" class="screen">
-    <h2 class="pixel" style="color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); margin-bottom: 15px;">📄 WHAT BEATS PAPER?</h2>
-    <div class="instructions" id="wb-instructions">Name something that beats the current thing. Each win chains — the next thing has to beat yours! $3 per win. No repeats!</div>
+  <!-- GAME: TETRIS -->
+  <div id="screen-tetris" class="screen">
+    <h2 class="pixel" style="color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); margin-bottom: 10px;">🧩 TETRIS</h2>
+    <div class="instructions">Stack the blocks. Clear lines. $5 per line cleared!</div>
     <div class="game-header">
-      <span class="score">STREAK: <span id="wb-streak">0</span></span>
-      <span class="timer">POT: $<span id="wb-pot">0</span></span>
+      <span class="score">SCORE: <span id="tet-score">0</span></span>
+      <span class="timer">LINES: <span id="tet-lines">0</span></span>
+      <span class="score">LVL: <span id="tet-level">1</span></span>
     </div>
-    <div class="game-area wb-area">
-      <div class="wb-current-label">CURRENT</div>
-      <div class="wb-current" id="wb-current">PAPER</div>
-      <div class="wb-arrow">⬇</div>
-      <div class="wb-input-row">
-        <input type="text" id="wb-input" class="wb-input" placeholder="What beats it?" maxlength="50" autocomplete="off" autocapitalize="off">
-        <button class="btn green" id="wb-submit" onclick="wbSubmit()">GO</button>
+    <div class="game-area tet-area">
+      <canvas id="tet-canvas" class="tet-canvas"></canvas>
+      <div class="tet-side">
+        <div class="tet-next-label">NEXT</div>
+        <canvas id="tet-next-canvas" class="tet-next-canvas" width="80" height="80"></canvas>
       </div>
-      <div class="wb-status" id="wb-status"></div>
-      <div class="wb-history" id="wb-history"></div>
+    </div>
+    <div class="tet-controls">
+      <div class="tet-row">
+        <button class="tet-btn" onclick="tetMove(-1)" aria-label="Move left">
+          <span class="tet-icon">◀</span>
+          <span class="tet-label">LEFT</span>
+        </button>
+        <button class="tet-btn tet-btn-rotate" onclick="tetRotate()" aria-label="Rotate">
+          <span class="tet-icon">↻</span>
+          <span class="tet-label">ROTATE</span>
+        </button>
+        <button class="tet-btn" onclick="tetMove(1)" aria-label="Move right">
+          <span class="tet-icon">▶</span>
+          <span class="tet-label">RIGHT</span>
+        </button>
+      </div>
+      <div class="tet-row">
+        <button class="tet-btn tet-btn-wide" onclick="tetSoftDrop()" aria-label="Soft drop">
+          <span class="tet-icon">▼</span>
+          <span class="tet-label">SOFT DROP</span>
+        </button>
+        <button class="tet-btn tet-btn-wide tet-btn-slam" onclick="tetHardDrop()" aria-label="Hard drop">
+          <span class="tet-icon">⬇⬇</span>
+          <span class="tet-label">SLAM</span>
+        </button>
+      </div>
     </div>
     <div class="btn-row" style="margin-top: 10px;">
-      <button class="btn pink" onclick="endGame('whatbeats', true)">QUIT</button>
+      <button class="btn cyan" onclick="showTetrisTutorial()">❓ HOW TO PLAY</button>
+      <button class="btn pink" onclick="endGame('tetris', true)">QUIT</button>
+    </div>
+
+    <!-- Tutorial overlay (shown automatically on first launch) -->
+    <div class="tet-tutorial-overlay" id="tet-tutorial" style="display:none;">
+      <div class="tet-tutorial-card">
+        <h3>HOW TO PLAY</h3>
+        <div class="tet-tut-section">
+          <div class="tet-tut-emoji">🎯</div>
+          <div class="tet-tut-text"><b>GOAL</b><br>Fill rows to clear them. Don't let the blocks reach the top!</div>
+        </div>
+        <div class="tet-tut-section">
+          <div class="tet-tut-emoji">🎮</div>
+          <div class="tet-tut-text"><b>CONTROLS</b><br>
+            <span class="tet-tut-key">◀ ▶</span> move the piece left/right<br>
+            <span class="tet-tut-key">↻</span> rotate the piece<br>
+            <span class="tet-tut-key">▼ SOFT DROP</span> nudge it down faster<br>
+            <span class="tet-tut-key">⬇⬇ SLAM</span> drop straight to the bottom
+          </div>
+        </div>
+        <div class="tet-tut-section">
+          <div class="tet-tut-emoji">💰</div>
+          <div class="tet-tut-text"><b>EARN AS YOU PLAY</b><br>
+            Money drops the moment you clear a line — no waiting for game over!<br>
+            <span class="tet-tut-key">1 line</span> $3 &nbsp;
+            <span class="tet-tut-key">2 lines</span> $8 &nbsp;
+            <span class="tet-tut-key">3 lines</span> $15 &nbsp;
+            <span class="tet-tut-key">4 lines</span> $30 (TETRIS!)<br>
+            All multiplied by your level. Clear lines on consecutive pieces to build a <b style="font-size:11px">COMBO ×</b> bonus up to ×3.0!
+          </div>
+        </div>
+        <div class="tet-tut-section">
+          <div class="tet-tut-emoji">⚡</div>
+          <div class="tet-tut-text"><b>LEVEL UP</b><br>Every 10 lines, the pieces fall faster.</div>
+        </div>
+        <button class="btn green tet-tut-close" onclick="closeTetrisTutorial()">GOT IT!</button>
+      </div>
     </div>
   </div>
 
@@ -2173,10 +2445,11 @@ const SKINS = [
   { id: 'red',      name: 'RED',       color: '#ff2e63', price: 75 },
   { id: 'orange',   name: 'ORANGE',    color: '#ff7700', price: 75 },
   { id: 'yellow',   name: 'YELLOW',    color: '#fff700', price: 75 },
-  { id: 'rainbow',  name: 'PRISM',     color: 'linear',   price: 600 },
+  { id: 'rainbow',  name: 'NEON',      color: 'linear',   price: 600 },
   { id: 'midnight', name: 'MIDNIGHT',  color: 'midnight', price: 750 },
   { id: 'lava',     name: 'LAVA',      color: 'lava',     price: 1000 },
   { id: 'heavenly', name: 'HEAVENLY',  color: 'heavenly', price: 1000 },
+  { id: 'hologram', name: 'HOLOGRAM',  color: 'hologram', price: 1000, tag: '✨ BACK!' },
   { id: 'demonic',  name: 'DEMONIC',   color: 'demonic',  price: 1250 },
   { id: 'galaxy',   name: 'GALAXY',    color: 'galaxy',   price: 1250 },
   { id: 'iceking',  name: 'ICE KING',  color: 'ice',      price: 0, exclusive: true }
@@ -2253,7 +2526,7 @@ const GAME_SIGNS = {
   basketball: { label: '🔥 HARDEST',    cls: 'skill'   },
   risk:       { label: '💰 BIG EARNER', cls: 'money'   },
   reaction:   { label: '⚡ FASTEST',    cls: 'fastest' },
-  whatbeats:  { label: '⭐ POPULAR',    cls: 'luck'    }
+  tetris:     { label: '🔥 HOT',         cls: 'fastest' }
 };
 
 // Render one sign above each game card listed in GAME_SIGNS.
@@ -2281,7 +2554,7 @@ function renderGameSigns() {
    render on the hub and pay rewards.
    ========================================================= */
 const QUESTS_POOL = [
-  // === Daily quests pool (9) ===
+  // === Daily quests pool (8) ===
   { id: 'grinder',     name: 'GRINDER',      desc: 'Play 4 different mini-games',     goal: 4,    stat: 'uniqueGamesPlayed', reward: { money: 100 } },
   { id: 'bigearner',   name: 'BIG EARNER',   desc: 'Earn $200 from mini-games',       goal: 200,  stat: 'moneyEarned',       reward: { spin: 1 } },
   { id: 'shotmaker',   name: 'SHOT MAKER',   desc: 'Score 20 hits in LOCK-ON',        goal: 20,   stat: 'baskets',           reward: { money: 300, spin: 2 } },
@@ -2289,8 +2562,7 @@ const QUESTS_POOL = [
   { id: 'speedster',   name: 'SPEEDSTER',    desc: 'Click 30 targets in TARGET BLAST',goal: 30,   stat: 'targetHits',        reward: { money: 150 } },
   { id: 'spammer',     name: 'SPAMMER',      desc: 'Get 35 clicks in CLICK STORM',    goal: 35,   stat: 'cpsClicks',         reward: { money: 200 } },
   { id: 'reflexes',    name: 'REFLEXES',     desc: 'Get under 250ms in REACTION',     goal: 1,    stat: 'reactionFast',      reward: { money: 200, spin: 1 } },
-  { id: 'survivor',    name: 'SURVIVOR',     desc: 'Eat 10 pellets in NEON SNAKE',    goal: 10,   stat: 'snakePellets',      reward: { money: 175 } },
-  { id: 'wordsmith',   name: 'WORDSMITH',    desc: 'Get 5 wins in WHAT BEATS PAPER',  goal: 5,    stat: 'wbWins',            reward: { money: 200 } }
+  { id: 'survivor',    name: 'SURVIVOR',     desc: 'Eat 10 pellets in NEON SNAKE',    goal: 10,   stat: 'snakePellets',      reward: { money: 175 } }
 ];
 const BONUS_POOL = [];
 const QUEST_RESET_MS = 12 * 60 * 60 * 1000; // 12 hours
@@ -2302,7 +2574,7 @@ const quests = {
   activeBonus: null, // quest id
   stats: {
     gamesPlayed: 0, moneyEarned: 0, baskets: 0, riskStreak3: 0, uniqueGamesPlayed: 0,
-    targetHits: 0, cpsClicks: 0, reactionFast: 0, snakePellets: 0, wbWins: 0
+    targetHits: 0, cpsClicks: 0, reactionFast: 0, snakePellets: 0
   },
   claimed: {},
   playedGames: {}
@@ -2311,7 +2583,7 @@ const quests = {
 function freshStats() {
   return {
     gamesPlayed: 0, moneyEarned: 0, baskets: 0, riskStreak3: 0, uniqueGamesPlayed: 0,
-    targetHits: 0, cpsClicks: 0, reactionFast: 0, snakePellets: 0, wbWins: 0
+    targetHits: 0, cpsClicks: 0, reactionFast: 0, snakePellets: 0
   };
 }
 
@@ -2568,7 +2840,7 @@ function applySkinColor(skin) {
   if (oldCrown) oldCrown.remove();
 
   if (skin.color === 'linear') {
-    avatar.style.background = 'linear-gradient(135deg, #ff2bd6, #00f0ff, #39ff14, #fff700)';
+    avatar.style.background = 'linear-gradient(135deg, #ff2bd6, #b026ff, #00f0ff)';
     avatar.style.boxShadow = '0 0 30px #ff2bd6, inset -10px -10px 20px rgba(0,0,0,0.4)';
     document.documentElement.style.setProperty('--skin-color', '#ff2bd6');
   } else if (skin.color === 'lava') {
@@ -2604,6 +2876,12 @@ function applySkinColor(skin) {
     avatar.style.boxShadow = '0 0 35px #ff66cc, 0 0 70px #6633ff, inset -10px -10px 20px rgba(0,0,0,0.6)';
     avatar.style.animation = 'galaxySwirl 8s linear infinite';
     document.documentElement.style.setProperty('--skin-color', '#cc66ff');
+  } else if (skin.color === 'hologram') {
+    // Cyan/magenta/green/yellow holographic shimmer with conic-gradient
+    avatar.style.background = 'conic-gradient(from 0deg, #ff2bd6, #00f0ff, #39ff14, #fff700, #ff2bd6)';
+    avatar.style.boxShadow = '0 0 30px #ff2bd6, 0 0 60px #00f0ff, inset -10px -10px 20px rgba(0,0,0,0.3)';
+    avatar.style.animation = 'hologramSpin 3s linear infinite';
+    document.documentElement.style.setProperty('--skin-color', '#00f0ff');
   } else {
     // Reset animation from any prior animated skin
     avatar.style.animation = '';
@@ -2619,7 +2897,7 @@ function applySkinColor(skin) {
     }
   }
   // Reset animation when leaving animated skins
-  if (skin.color !== 'midnight' && skin.color !== 'galaxy') {
+  if (skin.color !== 'midnight' && skin.color !== 'galaxy' && skin.color !== 'hologram') {
     avatar.style.animation = '';
     avatar.style.backgroundSize = '';
   }
@@ -2634,10 +2912,9 @@ function skinFill(ctx, cx, cy, size) {
   const skin = SKINS.find(s => s.id === state.currentSkin);
   if (skin.color === 'linear') {
     const g = ctx.createLinearGradient(cx - size, cy - size, cx + size, cy + size);
-    g.addColorStop(0,    '#ff2bd6');
-    g.addColorStop(0.33, '#00f0ff');
-    g.addColorStop(0.66, '#39ff14');
-    g.addColorStop(1,    '#fff700');
+    g.addColorStop(0,   '#ff2bd6');
+    g.addColorStop(0.5, '#b026ff');
+    g.addColorStop(1,   '#00f0ff');
     return g;
   }
   if (skin.color === 'lava') {
@@ -2693,6 +2970,20 @@ function skinFill(ctx, cx, cy, size) {
     g.addColorStop(1,    '#000000');
     return g;
   }
+  if (skin.color === 'hologram') {
+    // Animated linear cycling through pink/cyan/yellow
+    const t = (Date.now() / 600) % (Math.PI * 2);
+    const g = ctx.createLinearGradient(
+      cx - size * Math.cos(t),
+      cy - size * Math.sin(t),
+      cx + size * Math.cos(t),
+      cy + size * Math.sin(t)
+    );
+    g.addColorStop(0,   '#ff2bd6');
+    g.addColorStop(0.5, '#00f0ff');
+    g.addColorStop(1,   '#fff700');
+    return g;
+  }
   return skin.color;
 }
 // Glow color for shadowColor.
@@ -2712,6 +3003,10 @@ function skinGlow() {
   if (skin.color === 'heavenly') return '#fff8aa';
   if (skin.color === 'midnight') return '#3d5af1';
   if (skin.color === 'galaxy') return '#cc66ff';
+  if (skin.color === 'hologram') {
+    const h = (Date.now() / 8) % 360;
+    return `hsl(${h}, 100%, 65%)`;
+  }
   return skin.color;
 }
 // Solid color fallback (for CSS use).
@@ -2724,6 +3019,7 @@ function skinSolid() {
   if (skin.color === 'heavenly') return '#fff8aa';
   if (skin.color === 'midnight') return '#3d5af1';
   if (skin.color === 'galaxy')  return '#cc66ff';
+  if (skin.color === 'hologram') return '#00f0ff';
   return skin.color;
 }
 
@@ -2899,7 +3195,7 @@ function renderShop() {
     let bgStyle;
     let crownHtml = '';
     if (skin.color === 'linear') {
-      bgStyle = 'background: linear-gradient(135deg, #ff2bd6, #00f0ff, #39ff14, #fff700); color: #ff2bd6;';
+      bgStyle = 'background: linear-gradient(135deg, #ff2bd6, #b026ff, #00f0ff); color: #ff2bd6;';
     } else if (skin.color === 'lava') {
       bgStyle = 'background: radial-gradient(circle at 35% 35%, #ffee00, #ff7700 40%, #cc0000 85%); color: #ff5500;';
     } else if (skin.color === 'ice') {
@@ -2913,6 +3209,8 @@ function renderShop() {
       bgStyle = 'background: linear-gradient(135deg, #1e3a8a, #0a1a4a, #1e3a8a, #2c4eb5); background-size: 300% 300%; color: #3d5af1; animation: midnightShift 6s ease-in-out infinite;';
     } else if (skin.color === 'galaxy') {
       bgStyle = 'background: radial-gradient(circle at 30% 30%, #ffffff 0%, #ff66cc 12%, #6633ff 35%, #1a0a3a 70%, #000000 100%); color: #cc66ff; animation: galaxySwirl 8s linear infinite;';
+    } else if (skin.color === 'hologram') {
+      bgStyle = 'background: conic-gradient(from 0deg, #ff2bd6, #00f0ff, #39ff14, #fff700, #ff2bd6); color: #00f0ff; animation: hologramSpin 3s linear infinite;';
     } else {
       bgStyle = `background: ${skin.color}; color: ${skin.color};`;
     }
@@ -2938,6 +3236,7 @@ function renderShop() {
     else action = `<button onclick="buySkin('${skin.id}')" ${state.money < actualPrice ? 'disabled' : ''}>BUY</button>`;
 
     card.innerHTML = `
+      ${skin.tag ? `<div class="skin-tag">${skin.tag}</div>` : ''}
       <div class="skin-preview" style="${bgStyle}">${crownHtml}<div class="skin-mouth"></div></div>
       <h4>${skin.name}</h4>
       <div class="price">${priceLabel}</div>
@@ -3225,10 +3524,12 @@ function loadTheme() {
    Redemption is tracked in localStorage so it persists.
    ========================================================= */
 const CHEAT_CODES = {
-  'adminmode':     { type: 'admin', label: 'ADMIN MODE UNLOCKED 👑' },
-  'upd4':          { reward: 100, spins: 5, label: '5 SPINS + $100! 🎰' },
-  'galaxy':        { reward: 100, spins: 5, label: '5 SPINS + $100! 🌌' },
-  'elbillug':      { type: 'gullible', label: '' }
+  'amdinmode':         { type: 'admin',   label: 'ADMIN MODE UNLOCKED 👑' },
+  'ultraadminmode':    { type: 'unadmin', label: 'ADMIN MODE REVOKED 🚫' },
+  'upd5':              { reward: 100, spins: 5, label: '5 SPINS + $100! 🎰' },
+  'tetris':            { reward: 100, spins: 5, label: '5 SPINS + $100! 🧩' },
+  'holoreturns':       { reward: 100, spins: 5, label: '5 SPINS + $100! ✨' },
+  'elbillug':          { type: 'gullible', label: '' }
 };
 
 /* =========================================================
@@ -3239,8 +3540,19 @@ const CHEAT_CODES = {
    ========================================================= */
 const UPDATE_LOG = [
   {
-    version: 'Update 4',
+    version: 'Update 5',
     date: 'This update',
+    changes: [
+      '✨ HOLOGRAM RETURNS — back in the shop for $1000',
+      'WHAT BEATS PAPER replaced (it sucked, sorry)',
+      'New game: 🧩 TETRIS — earn cash live as you clear lines, with combo bonuses',
+      'BREAKER is harder and now has different levels — beat level 1 to unlock level 2 (with the +BALL block!)',
+      'Codes are at the bottom of this update log 🎁'
+    ]
+  },
+  {
+    version: 'Update 4',
+    date: 'Earlier',
     changes: [
       'Shop button moved to the top of the hub for quick access',
       'New "📜 UPDATES" button so you can see what changed each version',
@@ -3313,8 +3625,9 @@ function renderUpdateLog() {
       <span class="ver">🎁 CODES</span>
       <span class="date">Type these in via the 🔐 CODE button</span>
       <ul>
-        <li><strong>GALAXY</strong> — 5 spins and $100 🌌</li>
-        <li><strong>UPD4</strong> — 5 spins and $100 🎰</li>
+        <li><strong>HOLORETURNS</strong> — 5 spins and $100 ✨</li>
+        <li><strong>TETRIS</strong> — 5 spins and $100 🧩</li>
+        <li><strong>UPD5</strong> — 5 spins and $100 🎰</li>
         <li><strong>ELBILLUG</strong> — "secret skin" 👀</li>
       </ul>
     </div>
@@ -3336,12 +3649,15 @@ function redeemCheatCode(rawCode) {
   if (!def) { toast('INVALID CODE', true); return; }
 
   // Has this code already been used?
+  // Admin and unadmin codes are exempt — they can be redeemed multiple times
+  // since they're just toggles, not rewards.
   let usedCodes = {};
   try {
     const raw = localStorage.getItem('neonArcadeCheats');
     if (raw) usedCodes = JSON.parse(raw) || {};
   } catch {}
-  if (usedCodes[code]) {
+  const isToggle = def.type === 'admin' || def.type === 'unadmin';
+  if (usedCodes[code] && !isToggle) {
     toast('CODE ALREADY USED', true);
     return;
   }
@@ -3362,6 +3678,13 @@ function redeemCheatCode(rawCode) {
     state.skipSpinAnim = true;
   } else if (def.type === 'admin') {
     state.adminMode = true;
+  } else if (def.type === 'unadmin') {
+    // Revokes admin status. Designed to be one-time per account, but redeem
+    // tracking already prevents re-use either way.
+    state.adminMode = false;
+    // Hide the admin button immediately if it was visible
+    const btn = document.getElementById('admin-btn');
+    if (btn) btn.style.display = 'none';
   } else if (def.type === 'gullible') {
     // No reward! Just the prank popup.
     saveState();
@@ -3667,7 +3990,7 @@ games.targets = function() {
     const skin = SKINS.find(s => s.id === state.currentSkin);
     let bg, glow;
     if (skin.color === 'linear') {
-      bg = 'radial-gradient(circle, #ff2bd6 25%, #00f0ff 45%, #39ff14 58%, transparent 62%)';
+      bg = 'radial-gradient(circle, #ff2bd6 25%, #b026ff 45%, #00f0ff 58%, transparent 62%)';
       glow = '#ff2bd6';
     } else if (skin.color === 'lava') {
       bg = 'radial-gradient(circle, #ffee00 20%, #ff7700 45%, #cc0000 58%, transparent 62%)';
@@ -3687,6 +4010,9 @@ games.targets = function() {
     } else if (skin.color === 'galaxy') {
       bg = 'radial-gradient(circle at 30% 30%, #ffffff 0%, #ff66cc 12%, #6633ff 35%, #1a0a3a 70%, #000000 100%)';
       glow = '#cc66ff';
+    } else if (skin.color === 'hologram') {
+      bg = 'conic-gradient(from 0deg, #ff2bd6, #00f0ff, #39ff14, #fff700, #ff2bd6)';
+      glow = '#00f0ff';
     } else if (/^#[0-9a-fA-F]{3,8}$/.test(skin.color)) {
       // Plain hex color — safe to interpolate into the gradient
       bg = `radial-gradient(circle, ${skin.color} 30%, ${skin.color}aa 50%, ${skin.color}55 60%, transparent 62%)`;
@@ -4130,67 +4456,93 @@ games.breaker = function() {
 
   const paddleW_base = 100, paddleH = 18;
   let paddleX = canvas.width / 2;
-  let ball = { x: canvas.width / 2, y: canvas.height - 60, vx: 4, vy: -4, r: 13 };
+  // Multi-ball support: keep an array of active balls instead of a single ball.
+  // A ball lives until it falls off the bottom; if all balls fall, you lose
+  // a life. Slower baseline for a more readable game (3.5).
+  const BASE_VX = 3.5, BASE_VY = -3.5;
+  let balls = [];
   let bricks = [];
-  let drops = [];         // falling powerups/downgrades from destroyed special bricks
+  let drops = [];           // falling powerups/downgrades from destroyed special bricks
   let lives = 3, score = 0;
+  let level = 1;
   let running = true, launched = false;
-  let activeEffects = []; // timed paddle/ball effects
-  let floatingTexts = []; // "+LIFE!" pop-ups
+  let activeEffects = [];   // timed paddle/ball effects (all 30s)
+  let floatingTexts = [];   // "+LIFE!" pop-ups
+  // Life-challenge balls — spawned when you catch a +LIFE drop. Each one
+  // bounces around like a regular ball and needs to hit your paddle 3 times
+  // before it awards the life. Falling off the bottom = challenge lost.
+  let lifeChallenges = [];
+  const EFFECT_MS = 30000;  // every up/downgrade lasts 30 seconds
 
-  const rows = 5, cols = 8;
-  const brickW = (canvas.width - 40) / cols - 6;
-  const brickH = 22;
+  // Brick types: normal + special upgrades/downgrades.
+  // BALL is a level-2-only type that spawns an extra active ball.
+  const SPECIAL_BRICKS = [
+    { type: 'big',    color: '#39ff14', symbol: '↔', label: 'WIDE!',   good: true,  level: 1 },
+    { type: 'small',  color: '#ff2e63', symbol: '><', label: 'SHRINK', good: false, level: 1 },
+    { type: 'slow',   color: '#00f0ff', symbol: '◓', label: 'SLOW',    good: true,  level: 1 },
+    { type: 'fast',   color: '#ff7700', symbol: '▶▶', label: 'FAST',   good: false, level: 1 },
+    { type: 'life',   color: '#ffd700', symbol: '♥', label: '+LIFE',   good: true,  level: 1 },
+    { type: 'minus',  color: '#aa0000', symbol: '☠', label: '-LIFE',   good: false, level: 1 },
+    { type: 'ball',   color: '#ff66ff', symbol: '●●', label: '+BALL',   good: true,  level: 2 }
+  ];
   const colors = ['#ff2bd6','#00f0ff','#fff700','#39ff14','#b026ff'];
 
-  // Brick types: normal + special upgrades/downgrades
-  // Each special brick has ~1-in-8 chance; ratios tuned so there are several per game
-  const SPECIAL_BRICKS = [
-    { type: 'big',    color: '#39ff14', symbol: '↔', label: 'WIDE!',   good: true  },
-    { type: 'small',  color: '#ff2e63', symbol: '><', label: 'SHRINK', good: false },
-    { type: 'slow',   color: '#00f0ff', symbol: '◓', label: 'SLOW',    good: true  },
-    { type: 'fast',   color: '#ff7700', symbol: '▶▶', label: 'FAST',   good: false },
-    { type: 'life',   color: '#ffd700', symbol: '♥', label: '+LIFE',   good: true  },
-    { type: 'minus',  color: '#aa0000', symbol: '☠', label: '-LIFE',   good: false }
-  ];
-
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      // ~20% chance of a special brick
-      let type = 'normal', symbol = '', specialColor = null, good = null;
-      if (Math.random() < 0.2) {
-        const sp = SPECIAL_BRICKS[Math.floor(Math.random() * SPECIAL_BRICKS.length)];
-        type = sp.type;
-        symbol = sp.symbol;
-        specialColor = sp.color;
-        good = sp.good;
+  function buildBricks() {
+    bricks = [];
+    const rows = 5, cols = 8;
+    const brickW = (canvas.width - 40) / cols - 6;
+    const brickH = 22;
+    // Pool of specials available at this level
+    const specialPool = SPECIAL_BRICKS.filter(s => s.level <= level);
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        // ~22% chance of a special brick. Slightly higher in level 2 because
+        // BALL bricks are part of the fun and shouldn't be too rare.
+        let type = 'normal', symbol = '', specialColor = null, good = null;
+        if (Math.random() < (level === 2 ? 0.26 : 0.20)) {
+          const sp = specialPool[Math.floor(Math.random() * specialPool.length)];
+          type = sp.type;
+          symbol = sp.symbol;
+          specialColor = sp.color;
+          good = sp.good;
+        }
+        bricks.push({
+          x: 20 + c * (brickW + 6),
+          y: 40 + r * (brickH + 6),
+          w: brickW, h: brickH,
+          color: specialColor || colors[r],
+          alive: true,
+          type, symbol, good
+        });
       }
-      bricks.push({
-        x: 20 + c * (brickW + 6),
-        y: 40 + r * (brickH + 6),
-        w: brickW, h: brickH,
-        color: specialColor || colors[r],
-        alive: true,
-        type, symbol, good
-      });
     }
   }
+  buildBricks();
+
+  // Ball factory. The first ball is the "main" ball and uses the player's
+  // skin coloring. Extra balls spawned from +BALL pickups are flagged as
+  // `isExtra: true` and render in a neutral white-magenta scheme so they
+  // stand out without clashing with whatever skin you're wearing.
+  function makeBall(x, y, vx, vy, isExtra = false) {
+    return { x, y, vx, vy, r: 13, isExtra };
+  }
+
+  // Start with one ball stuck to the paddle; gets launched on first click/tap.
+  balls = [makeBall(canvas.width / 2, canvas.height - 60, BASE_VX, BASE_VY)];
 
   document.getElementById('b-score').textContent = '0';
   document.getElementById('b-lives').textContent = lives;
 
   // Apply a timed effect (duration in ms). Clears conflicting effect first.
-  function applyEffect(kind, endTime, data) {
-    // remove any existing effect of the same kind
+  function applyEffect(kind, durationMs, data) {
     activeEffects = activeEffects.filter(e => e.kind !== kind);
-    activeEffects.push({ kind, endTime, data });
+    activeEffects.push({ kind, endTime: Date.now() + durationMs, data });
   }
 
   function addFloatingText(text, x, y, color) {
     floatingTexts.push({ text, x, y, color, frames: 50, vy: -1.3 });
   }
 
-  // Spawn a falling drop when a special brick breaks
   function spawnDrop(b) {
     const sp = SPECIAL_BRICKS.find(s => s.type === b.type);
     if (!sp) return;
@@ -4205,47 +4557,67 @@ games.breaker = function() {
     });
   }
 
-  // Apply a drop's effect when the paddle catches (or bomb touches) it
+  // Apply a drop's effect when the paddle catches it.
+  // Every up/downgrade lasts 30 seconds (EFFECT_MS).
   function catchDrop(d) {
     switch (d.type) {
       case 'big': {
         const newW = Math.min(180, paddleW_base * 1.5);
-        applyEffect('paddle', Date.now() + 10000, { width: newW });
+        applyEffect('paddle', EFFECT_MS, { width: newW });
         addFloatingText('WIDER!', d.x, d.y, '#39ff14');
         break;
       }
       case 'small': {
         const newW = Math.max(50, paddleW_base * 0.55);
-        applyEffect('paddle', Date.now() + 8000, { width: newW });
+        applyEffect('paddle', EFFECT_MS, { width: newW });
         addFloatingText('SHRINK!', d.x, d.y, '#ff2e63');
         break;
       }
       case 'slow': {
-        ball.vx *= 0.6; ball.vy *= 0.6;
+        applyEffect('ballSpeed', EFFECT_MS, { mult: 0.6 });
         addFloatingText('SLOW!', d.x, d.y, '#00f0ff');
         break;
       }
       case 'fast': {
-        ball.vx *= 1.5; ball.vy *= 1.5;
-        const v = Math.hypot(ball.vx, ball.vy);
-        const max = 14;
-        if (v > max) { ball.vx *= max / v; ball.vy *= max / v; }
+        applyEffect('ballSpeed', EFFECT_MS, { mult: 1.5 });
         addFloatingText('FAST!', d.x, d.y, '#ff7700');
         break;
       }
       case 'life': {
-        lives++;
-        document.getElementById('b-lives').textContent = lives;
-        addFloatingText('+LIFE!', d.x, d.y, '#ffd700');
+        // Don't grant the life immediately — spawn a golden challenge ball
+        // that the player must paddle-bounce 3 times to actually earn it.
+        const angle = (Math.random() - 0.5) * 0.6 - Math.PI / 2;
+        const speed = Math.hypot(BASE_VX, BASE_VY) * 0.85;
+        lifeChallenges.push({
+          x: d.x, y: d.y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          r: 14,
+          bouncesLeft: 3
+        });
+        addFloatingText('BOUNCE 3X!', d.x, d.y, '#ffd700');
         break;
       }
       case 'minus': {
         lives = Math.max(0, lives - 1);
         document.getElementById('b-lives').textContent = lives;
         addFloatingText('-LIFE!', d.x, d.y, '#aa0000');
-        if (lives <= 0) {
-          setTimeout(() => { if (running && lives <= 0) finish(false); }, 100);
-        }
+        if (lives <= 0) finish(false);
+        break;
+      }
+      case 'ball': {
+        // Spawn a new ball at the paddle, going up at a random angle.
+        // If still in pre-launch, the new ball comes pre-launched.
+        const angle = (Math.random() - 0.5) * 0.8 - Math.PI / 2;
+        const speed = Math.hypot(BASE_VX, BASE_VY);
+        const nb = makeBall(paddleX, canvas.height - 60,
+                            Math.cos(angle) * speed,
+                            Math.sin(angle) * speed,
+                            true);   // isExtra → neutral coloring
+        balls.push(nb);
+        // Force-launch since the user "earned" the ball
+        launched = true;
+        addFloatingText('+BALL!', d.x, d.y, '#ff66ff');
         break;
       }
     }
@@ -4254,9 +4626,9 @@ games.breaker = function() {
   function onMove(e) {
     const rect = canvas.getBoundingClientRect();
     const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-    const effW = getEffectiveWidth();
-    paddleX = Math.max(effW / 2, Math.min(canvas.width - effW / 2, x));
-    if (!launched) ball.x = paddleX;
+    const padW = getEffectiveWidth();
+    paddleX = Math.max(padW / 2, Math.min(canvas.width - padW / 2, x));
+    if (!launched && balls.length > 0) balls[0].x = paddleX;
   }
 
   function getEffectiveWidth() {
@@ -4264,18 +4636,33 @@ games.breaker = function() {
     const e = activeEffects.find(e => e.kind === 'paddle' && e.endTime > now);
     return e ? e.data.width : paddleW_base;
   }
+  // Returns 0.6 / 1.0 / 1.5 depending on whether a slow/fast effect is active.
+  function getBallSpeedMult() {
+    const now = Date.now();
+    const e = activeEffects.find(e => e.kind === 'ballSpeed' && e.endTime > now);
+    return e ? e.data.mult : 1.0;
+  }
   function onClick() { launched = true; }
   canvas.addEventListener('mousemove', onMove);
   canvas.addEventListener('click', onClick);
   canvas.addEventListener('touchmove', e => { e.preventDefault(); onMove(e); launched = true; }, { passive: false });
   canvas.addEventListener('touchstart', onClick);
 
+  // Reset ALL balls back to a single one stuck on the paddle.
+  // Called when all balls fall off, life lost.
   function resetBall() {
-    ball.x = paddleX;
-    ball.y = canvas.height - 60;
-    ball.vx = 4 * (Math.random() < 0.5 ? 1 : -1);
-    ball.vy = -4;
+    balls = [makeBall(paddleX, canvas.height - 60, BASE_VX * (Math.random() < 0.5 ? 1 : -1), BASE_VY)];
     launched = false;
+  }
+
+  // Advance to level 2 — fresh bricks, single ball, paddle reset, banner toast.
+  function nextLevel() {
+    level++;
+    activeEffects = [];
+    buildBricks();
+    resetBall();
+    toast('LEVEL ' + level + '!');
+    addFloatingText('LEVEL ' + level, canvas.width / 2, canvas.height / 2, '#fff700');
   }
 
   function loop() {
@@ -4284,7 +4671,7 @@ games.breaker = function() {
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // bricks
+    // Bricks
     bricks.forEach(b => {
       if (!b.alive) return;
       ctx.fillStyle = b.color;
@@ -4292,9 +4679,7 @@ games.breaker = function() {
       ctx.shadowBlur = b.type === 'normal' ? 12 : 18;
       ctx.fillRect(b.x, b.y, b.w, b.h);
       ctx.shadowBlur = 0;
-      // symbol for special bricks
       if (b.symbol) {
-        // backing circle to make symbol readable
         ctx.fillStyle = b.good ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.2)';
         ctx.fillRect(b.x + 2, b.y + 2, b.w - 4, b.h - 4);
         ctx.fillStyle = '#fff';
@@ -4307,11 +4692,11 @@ games.breaker = function() {
     });
     ctx.shadowBlur = 0;
 
-    // expire effects
+    // Expire effects
     const now = Date.now();
     activeEffects = activeEffects.filter(e => e.endTime > now);
 
-    // paddle (uses skin with rainbow support)
+    // Paddle (uses skin)
     const effW = getEffectiveWidth();
     const bPadCX = paddleX, bPadCY = canvas.height - 25 + paddleH / 2;
     ctx.fillStyle = skinFill(ctx, bPadCX, bPadCY, effW / 2);
@@ -4321,54 +4706,110 @@ games.breaker = function() {
     ctx.shadowBlur = 0;
     drawPaddleFace(ctx, bPadCX, bPadCY, paddleH / 2);
 
-    // ball
-    if (launched) {
-      ball.x += ball.vx;
-      ball.y += ball.vy;
-    } else {
-      ball.x = paddleX;
-    }
+    // Apply ball-speed multiplier (slow/fast) — capped to avoid extremes.
+    // We rescale each ball's velocity to match the desired speed each frame
+    // so the multiplier doesn't compound when applyEffect re-fires.
+    const desiredMult = getBallSpeedMult();
+    const baseSpeed = Math.hypot(BASE_VX, BASE_VY);
+    const targetSpeed = baseSpeed * desiredMult;
 
-    // wall collisions
-    if (ball.x - ball.r < 0 || ball.x + ball.r > canvas.width) ball.vx *= -1;
-    if (ball.y - ball.r < 0) ball.vy *= -1;
+    // Move + bounce each ball
+    for (const ball of balls) {
+      // Rescale velocity to current target speed
+      const vmag = Math.hypot(ball.vx, ball.vy) || 1;
+      ball.vx = ball.vx / vmag * targetSpeed;
+      ball.vy = ball.vy / vmag * targetSpeed;
 
-    // paddle collision
-    const padW = getEffectiveWidth();
-    if (ball.y + ball.r >= canvas.height - 25 && ball.y + ball.r <= canvas.height - 25 + paddleH + 5 &&
-        ball.x >= paddleX - padW / 2 && ball.x <= paddleX + padW / 2 && ball.vy > 0) {
-      ball.vy = -Math.abs(ball.vy);
-      // add angle based on where it hit
-      const hit = (ball.x - paddleX) / (padW / 2);
-      ball.vx = hit * 5;
-    }
-
-    // brick collisions
-    bricks.forEach(b => {
-      if (!b.alive) return;
-      if (ball.x + ball.r > b.x && ball.x - ball.r < b.x + b.w &&
-          ball.y + ball.r > b.y && ball.y - ball.r < b.y + b.h) {
-        b.alive = false;
-        score++;
-        document.getElementById('b-score').textContent = score;
-        // spawn a falling drop for special bricks
-        if (b.type !== 'normal') spawnDrop(b);
-        // choose bounce direction
-        const overlapX = Math.min(ball.x + ball.r - b.x, b.x + b.w - (ball.x - ball.r));
-        const overlapY = Math.min(ball.y + ball.r - b.y, b.y + b.h - (ball.y - ball.r));
-        if (overlapX < overlapY) ball.vx *= -1;
-        else ball.vy *= -1;
+      if (launched) {
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+      } else {
+        ball.x = paddleX;
       }
-    });
+
+      // Wall collisions
+      if (ball.x - ball.r < 0 || ball.x + ball.r > canvas.width) ball.vx *= -1;
+      if (ball.y - ball.r < 0) ball.vy *= -1;
+
+      // Paddle collision
+      const padW = getEffectiveWidth();
+      if (ball.y + ball.r >= canvas.height - 25 && ball.y + ball.r <= canvas.height - 25 + paddleH + 5 &&
+          ball.x >= paddleX - padW / 2 && ball.x <= paddleX + padW / 2 && ball.vy > 0) {
+        ball.vy = -Math.abs(ball.vy);
+        const hit = (ball.x - paddleX) / (padW / 2);
+        ball.vx = hit * 5;
+      }
+
+      // Brick collisions
+      for (const b of bricks) {
+        if (!b.alive) continue;
+        if (ball.x + ball.r > b.x && ball.x - ball.r < b.x + b.w &&
+            ball.y + ball.r > b.y && ball.y - ball.r < b.y + b.h) {
+          b.alive = false;
+          score++;
+          document.getElementById('b-score').textContent = score;
+          if (b.type !== 'normal') spawnDrop(b);
+          const overlapX = Math.min(ball.x + ball.r - b.x, b.x + b.w - (ball.x - ball.r));
+          const overlapY = Math.min(ball.y + ball.r - b.y, b.y + b.h - (ball.y - ball.r));
+          if (overlapX < overlapY) ball.vx *= -1;
+          else ball.vy *= -1;
+          break;  // one brick per frame per ball
+        }
+      }
+
+      // Draw the ball. Main ball uses the player's skin; extras use a
+      // neutral white-with-magenta-glow look so they read as "different
+      // ball, ignore me as 'mine'" without being ugly or eye-jarring.
+      if (ball.isExtra) {
+        // Soft white core + magenta ring, matching +BALL pickup palette
+        const grad = ctx.createRadialGradient(ball.x, ball.y, 1, ball.x, ball.y, ball.r);
+        grad.addColorStop(0,    '#ffffff');
+        grad.addColorStop(0.55, '#ffd0f0');
+        grad.addColorStop(1,    '#ff66ff');
+        ctx.fillStyle = grad;
+        ctx.shadowColor = '#ff66ff';
+        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        // Subtle inner ring to underline the "extra" status without
+        // adding the player's face/crown — extras are featureless orbs.
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.r - 3, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = skinFill(ctx, ball.x, ball.y, ball.r);
+        ctx.shadowColor = skinGlow();
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        drawFace(ctx, ball.x, ball.y, ball.r);
+        drawCrown(ctx, ball.x, ball.y, ball.r);
+      }
+    }
+
+    // Cull balls that fell off the bottom
+    balls = balls.filter(ball => ball.y - ball.r <= canvas.height);
+
+    // If ALL balls are gone, lose a life and reset to one ball
+    if (balls.length === 0) {
+      lives--;
+      document.getElementById('b-lives').textContent = lives;
+      if (lives <= 0) return finish(false);
+      resetBall();
+    }
 
     // drops physics + paddle catching
-    const paddleTopY = canvas.height - 25;
-    const paddleBotY = canvas.height - 25 + paddleH;
+    const padW = getEffectiveWidth();
     drops.forEach(d => {
       if (d.caught || d.missed) return;
       d.y += d.vy;
-      // check paddle catch
-      if (d.y >= paddleTopY - 12 && d.y <= paddleBotY + 4 &&
+      if (d.y >= canvas.height - 25 - 12 && d.y <= canvas.height - 25 + paddleH + 4 &&
           d.x >= paddleX - padW / 2 - 8 && d.x <= paddleX + padW / 2 + 8) {
         d.caught = true;
         catchDrop(d);
@@ -4378,81 +4819,113 @@ games.breaker = function() {
     });
     drops = drops.filter(d => !d.caught && !d.missed);
 
-    // draw drops (diamond shape with symbol + glow)
+    // Draw drops
     drops.forEach(d => {
       ctx.save();
       ctx.translate(d.x, d.y);
-      // subtle rotation bobble
       const bob = Math.sin(Date.now() / 200 + d.x) * 0.08;
       ctx.rotate(bob);
-      // diamond body
       ctx.fillStyle = d.color;
       ctx.shadowColor = d.color;
-      ctx.shadowBlur = 18;
-      ctx.beginPath();
-      ctx.moveTo(0, -14);
-      ctx.lineTo(14, 0);
-      ctx.lineTo(0, 14);
-      ctx.lineTo(-14, 0);
-      ctx.closePath();
-      ctx.fill();
-      // inner fill for contrast behind symbol
+      ctx.shadowBlur = 14;
+      ctx.fillRect(-12, -12, 24, 24);
       ctx.shadowBlur = 0;
-      ctx.fillStyle = d.good ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.25)';
-      ctx.beginPath();
-      ctx.moveTo(0, -9);
-      ctx.lineTo(9, 0);
-      ctx.lineTo(0, 9);
-      ctx.lineTo(-9, 0);
-      ctx.closePath();
-      ctx.fill();
-      // symbol
       ctx.fillStyle = '#fff';
       ctx.font = 'bold 11px "Press Start 2P", monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(d.symbol, 0, 1);
+      ctx.fillText(d.symbol, 0, 0);
       ctx.textBaseline = 'alphabetic';
       ctx.restore();
     });
 
-    // floating effect texts
-    floatingTexts = floatingTexts.filter(f => f.frames > 0);
-    floatingTexts.forEach(f => {
-      ctx.globalAlpha = Math.min(1, f.frames / 30);
-      ctx.fillStyle = f.color;
-      ctx.shadowColor = f.color;
+    // === Life-challenge balls ===
+    // Physics: bounces off walls + paddle, falls off bottom = lost.
+    // Each paddle hit decrements bouncesLeft. Reaching 0 = grant the life.
+    {
+      const padW = getEffectiveWidth();
+      lifeChallenges.forEach(c => {
+        c.x += c.vx;
+        c.y += c.vy;
+        // Walls
+        if (c.x - c.r < 0 || c.x + c.r > canvas.width) c.vx *= -1;
+        if (c.y - c.r < 0) c.vy *= -1;
+        // Paddle
+        if (c.y + c.r >= canvas.height - 25 &&
+            c.y + c.r <= canvas.height - 25 + paddleH + 5 &&
+            c.x >= paddleX - padW / 2 &&
+            c.x <= paddleX + padW / 2 &&
+            c.vy > 0) {
+          c.vy = -Math.abs(c.vy);
+          const hit = (c.x - paddleX) / (padW / 2);
+          c.vx = hit * 4.5;
+          c.bouncesLeft--;
+          if (c.bouncesLeft <= 0) {
+            c.completed = true;
+            lives++;
+            document.getElementById('b-lives').textContent = lives;
+            addFloatingText('+LIFE!', c.x, c.y, '#ffd700');
+          } else {
+            // Bounce feedback so the player knows it counted
+            addFloatingText(`${c.bouncesLeft} MORE!`, c.x, c.y - 20, '#ffd700');
+          }
+        }
+        // Mark as lost if it falls off
+        if (c.y - c.r > canvas.height) c.lost = true;
+      });
+      // Clean up completed/lost challenges
+      lifeChallenges.forEach(c => { if (c.lost) addFloatingText('MISSED', c.x, canvas.height - 30, '#888'); });
+      lifeChallenges = lifeChallenges.filter(c => !c.completed && !c.lost);
+
+      // Draw remaining challenge balls — gold with a number showing bounces left
+      lifeChallenges.forEach(c => {
+        // Gold gradient core
+        const grad = ctx.createRadialGradient(c.x, c.y, 1, c.x, c.y, c.r);
+        grad.addColorStop(0,    '#ffffff');
+        grad.addColorStop(0.4,  '#ffee00');
+        grad.addColorStop(1,    '#ff9900');
+        ctx.fillStyle = grad;
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        // Bounce-count number
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 14px "Press Start 2P", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(c.bouncesLeft), c.x, c.y);
+        ctx.textBaseline = 'alphabetic';
+      });
+    }
+
+    // Floating texts
+    floatingTexts.forEach(ft => {
+      ft.y += ft.vy;
+      ft.frames--;
+      const a = Math.max(0, ft.frames / 50);
+      ctx.fillStyle = ft.color;
+      ctx.globalAlpha = a;
+      ctx.shadowColor = ft.color;
       ctx.shadowBlur = 10;
       ctx.font = 'bold 14px "Press Start 2P", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(f.text, f.x, f.y);
+      ctx.fillText(ft.text, ft.x, ft.y);
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
-      f.y += f.vy;
-      f.frames--;
     });
+    floatingTexts = floatingTexts.filter(ft => ft.frames > 0);
 
-    // draw ball
-    ctx.fillStyle = skinFill(ctx, ball.x, ball.y, ball.r);
-    ctx.shadowColor = skinGlow();
-    ctx.shadowBlur = 18;
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    drawFace(ctx, ball.x, ball.y, ball.r);
-    drawCrown(ctx, ball.x, ball.y, ball.r);
-
-    // fell off bottom
-    if (ball.y - ball.r > canvas.height) {
-      lives--;
-      document.getElementById('b-lives').textContent = lives;
-      if (lives <= 0) return finish(false);
-      resetBall();
+    // All bricks cleared → advance to next level (or win at level 2)
+    if (bricks.every(b => !b.alive)) {
+      if (level === 1) {
+        nextLevel();
+      } else {
+        return finish(true);
+      }
     }
-
-    // all cleared
-    if (bricks.every(b => !b.alive)) return finish(true);
 
     requestAnimationFrame(loop);
   }
@@ -4463,11 +4936,12 @@ games.breaker = function() {
     running = false;
     canvas.removeEventListener('mousemove', onMove);
     canvas.removeEventListener('click', onClick);
-    let reward = score * 2 + (cleared ? 50 : 0);
+    let reward = score * 2 + (cleared ? 100 : 0);
     addMoney(reward);
     trackGamePlayed('breaker');
     trackQuest('moneyEarned', reward);
-    showOverlay(area, cleared ? 'CLEARED!' : 'GAME OVER', `Bricks: ${score}${cleared ? ' (+$50 bonus!)' : ''} → +$${reward}`);
+    const title = cleared ? 'CLEARED L2!' : 'GAME OVER';
+    showOverlay(area, title, `Bricks: ${score}${cleared ? ' (+$100 bonus!)' : ''} → +$${reward}`);
     activeGame = null;
   }
 
@@ -5387,383 +5861,472 @@ games.cps = function() {
 };
 
 /* =========================================================
-   GAME 12: WHAT BEATS PAPER (AI-judged chain game)
-   Works best when opened locally — the Anthropic API is used to
-   judge answers. In sandboxed previews, a simple fallback says
-   "valid" for most creative answers after checking length.
+   GAME 11: TETRIS
+   Standard 10×20 grid with the 7 classic pieces. Pieces fall
+   on a timer that speeds up with level. Scoring is the classic
+   100/300/500/800 × level for 1/2/3/4 lines cleared at once.
+   On-screen buttons + keyboard input both work.
    ========================================================= */
-games.whatbeats = function() {
-  const currentEl = document.getElementById('wb-current');
-  const streakEl = document.getElementById('wb-streak');
-  const potEl = document.getElementById('wb-pot');
-  const inputEl = document.getElementById('wb-input');
-  const submitEl = document.getElementById('wb-submit');
-  const statusEl = document.getElementById('wb-status');
-  const historyEl = document.getElementById('wb-history');
 
-  let current = 'PAPER';
-  let streak = 0;
-  let pot = 0;
-  let history = ['PAPER'];
-  let pending = false;
-  let ended = false;
+// Tutorial overlay — open/close are global so the buttons (and the
+// auto-launch on first play) can call them. Pauses the game so the
+// pieces don't keep falling while the player is reading.
+function showTetrisTutorial() {
+  const o = document.getElementById('tet-tutorial');
+  if (!o) return;
+  o.style.display = 'flex';
+  // If a game is in progress, pause it
+  if (typeof gamePaused !== 'undefined' && !gamePaused && activeGame === 'tetris') {
+    gamePaused = true;
+  }
+}
+function closeTetrisTutorial() {
+  const o = document.getElementById('tet-tutorial');
+  if (!o) return;
+  o.style.display = 'none';
+  try { localStorage.setItem('tetrisTutorialSeen', '1'); } catch {}
+  // Resume the game if it was running
+  if (typeof gamePaused !== 'undefined' && gamePaused && activeGame === 'tetris') {
+    gamePaused = false;
+    // Reset frame timer so the piece doesn't snap-fall after pause
+    if (typeof window.tetResetTimer === 'function') window.tetResetTimer();
+  }
+}
 
-  currentEl.textContent = current;
-  streakEl.textContent = '0';
-  potEl.textContent = '0';
-  statusEl.textContent = '';
-  statusEl.className = 'wb-status';
-  historyEl.textContent = '';
-  inputEl.value = '';
-  inputEl.disabled = false;
-  submitEl.disabled = false;
+games.tetris = function() {
+  const canvas = document.getElementById('tet-canvas');
+  const ctx = canvas.getContext('2d');
+  const nextCanvas = document.getElementById('tet-next-canvas');
+  const nextCtx = nextCanvas.getContext('2d');
 
-  // Things that beat ALMOST anything — universal trumps that humans agree
-  // Things that beat "most" things, with explicit exception lists.
-  // Tightened — used to be a free-pass for "thanos/goku/chuck norris" etc.;
-  // now those are removed unless they have meaningful win logic.
-  const UNIVERSAL_BEATERS = {
-    'god':            ['nothing','atheism','nonexistence'],
-    'nuke':           ['nothing','bunker','distance','dud','shelter'],
-    'nuclear bomb':   ['nothing','bunker','dud','shelter'],
-    'atomic bomb':    ['nothing','bunker','dud','shelter'],
-    'black hole':     ['nothing','hawking radiation','white hole'],
-    'death':          ['life','immortality','resurrection','nothing'],
-    'big bang':       ['nothing'],
-    'apocalypse':     ['nothing'],
-    'extinction':     ['nothing','survival'],
-    'antimatter':     ['nothing'],
-    'supernova':      ['nothing','black hole','distance'],
-    'singularity':    ['nothing'],
-    'meteor':         ['nothing','atmosphere','distance'],
-    'asteroid':       ['nothing','distance']
+  const COLS = 10, ROWS = 20;
+  // Cell size needs to fit BOTH the available width and height of the
+  // viewport. Reserves space for: header (~80px), control buttons (~180px),
+  // quit row (~60px), padding (~40px) — about 360px of vertical chrome.
+  // Horizontally we leave ~110px for the next-piece preview + side gaps.
+  // Math.min picks whichever dimension is more constrained, so the board
+  // is always fully visible on phones (portrait & landscape) and tablets,
+  // while still hitting a clean 28px cell on desktop.
+  function calcCellSize() {
+    const availW = window.innerWidth  - 110;
+    const availH = window.innerHeight - 360;
+    const cellW = Math.floor(availW / COLS);
+    const cellH = Math.floor(availH / ROWS);
+    // Hard-clamp: 14px floor (still readable), 32px ceiling (looks good on big screens)
+    return Math.max(14, Math.min(32, cellW, cellH));
+  }
+  let CELL = calcCellSize();
+  canvas.width  = COLS * CELL;
+  canvas.height = ROWS * CELL;
+
+  // Re-layout when the device rotates or the window resizes. Keeps locked
+  // blocks where they are — only the rendering scale changes.
+  function onResize() {
+    const newCell = calcCellSize();
+    if (newCell === CELL) return;
+    CELL = newCell;
+    canvas.width  = COLS * CELL;
+    canvas.height = ROWS * CELL;
+    draw();
+  }
+  window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', onResize);
+
+  // Each piece: rotations expressed as 4×4 grids of 0/1, plus a neon color.
+  const PIECES = {
+    I: { color: '#00f0ff', shapes: [
+      [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
+      [[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0]],
+      [[0,0,0,0],[0,0,0,0],[1,1,1,1],[0,0,0,0]],
+      [[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]]
+    ]},
+    O: { color: '#fff700', shapes: [
+      [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]]
+    ]},
+    T: { color: '#b026ff', shapes: [
+      [[0,1,0],[1,1,1],[0,0,0]],
+      [[0,1,0],[0,1,1],[0,1,0]],
+      [[0,0,0],[1,1,1],[0,1,0]],
+      [[0,1,0],[1,1,0],[0,1,0]]
+    ]},
+    S: { color: '#39ff14', shapes: [
+      [[0,1,1],[1,1,0],[0,0,0]],
+      [[0,1,0],[0,1,1],[0,0,1]],
+      [[0,0,0],[0,1,1],[1,1,0]],
+      [[1,0,0],[1,1,0],[0,1,0]]
+    ]},
+    Z: { color: '#ff2e63', shapes: [
+      [[1,1,0],[0,1,1],[0,0,0]],
+      [[0,0,1],[0,1,1],[0,1,0]],
+      [[0,0,0],[1,1,0],[0,1,1]],
+      [[0,1,0],[1,1,0],[1,0,0]]
+    ]},
+    J: { color: '#3d8cff', shapes: [
+      [[1,0,0],[1,1,1],[0,0,0]],
+      [[0,1,1],[0,1,0],[0,1,0]],
+      [[0,0,0],[1,1,1],[0,0,1]],
+      [[0,1,0],[0,1,0],[1,1,0]]
+    ]},
+    L: { color: '#ff7700', shapes: [
+      [[0,0,1],[1,1,1],[0,0,0]],
+      [[0,1,0],[0,1,0],[0,1,1]],
+      [[0,0,0],[1,1,1],[1,0,0]],
+      [[1,1,0],[0,1,0],[0,1,0]]
+    ]}
   };
+  const PIECE_KEYS = Object.keys(PIECES);
 
-  // For each known target, the EXACT answers (lowercase) that beat it.
-  // No substring matching. If the answer isn't here, it doesn't win — UNLESS
-  // it's a UNIVERSAL_BEATER (and the target isn't in that beater's exceptions).
-  const WINS = {
-    paper:    ['scissors','fire','water','shredder','lighter','match','flame','knife','sword','bleach','eraser','stapler','acid','pen','marker','ink','rip','crumple','tear','flood','blender','chainsaw'],
-    scissors: ['hammer','rock','fire','magnet','rust','stone','boulder','brick','tank','corrosion','paper cutter','heat','crusher','vise'],
-    rock:     ['paper','water','hammer','dynamite','explosion','tnt','earthquake','volcano','erosion','nuke','bomb','pickaxe','chisel','lava','jackhammer','wave','sledgehammer'],
-    fire:     ['water','rain','sand','foam','extinguisher','co2','snow','ice','blanket','vacuum','flood','tsunami','suffocation'],
-    water:    ['sponge','dam','evaporation','heat','sun','drought','freezer','cold','towel','pump','thirst','straw','absorbent'],
-    ice:      ['fire','heat','sun','salt','hammer','pickaxe','lava','flame','blowtorch','sledgehammer','torch'],
-    lava:     ['water','ice','liquid nitrogen','ocean','rain','flood','cooling'],
-    wood:     ['fire','axe','saw','termites','rot','chainsaw','flame','lighter','match'],
-    metal:    ['rust','acid','heat','magnet','corrosion','saw','cutter','laser','salt water','plasma'],
-    glass:    ['hammer','rock','fist','bullet','heat','pressure','diamond','stone','elbow','sledgehammer','brick'],
-    steel:    ['acid','rust','plasma','laser','very high heat','thermite'],
-    plastic:  ['fire','heat','recycling','uv','sun','shredder','flame'],
-    rain:     ['umbrella','roof','raincoat','shelter','indoors','tarp'],
-    wind:     ['walls','shelter','building','barrier','calm','vacuum','windbreak'],
-    sun:      ['cloud','night','eclipse','moon','shade','umbrella','black hole','sunscreen','curtain'],
-    cloud:    ['wind','sun','rain','dispersion'],
-    darkness: ['light','fire','flashlight','sun','torch','lamp','match','candle','glow','lightning'],
-    light:    ['darkness','shadow','eclipse','blackout','curtain','shade','black hole'],
-    knife:    ['gun','shield','armor','chainmail','rust','bigger knife','sword'],
-    sword:    ['gun','shield','armor','bigger sword','axe','bullet'],
-    gun:      ['bulletproof vest','tank','armor','shield','superman','distance','jam'],
-    dog:      ['bear','lion','tiger','wolf','poison','car','snake','tranquilizer'],
-    cat:      ['dog','lion','tiger','bear','vacuum','water','cucumber'],
-    bear:     ['gun','tank','fire','hunter','tranquilizer'],
-    lion:     ['elephant','gun','tank','tiger','hunter'],
-    tiger:    ['gun','tank','hunter','poison'],
-    elephant: ['mouse','gun','hunter','disease','poacher','poison'],
-    mouse:    ['cat','trap','owl','snake','broom','poison'],
-    snake:    ['mongoose','eagle','owl','hawk','knife','antivenom','boots'],
-    human:    ['bear','lion','nature','disease','gravity','nuke','bomb','earthquake','virus','asteroid','starvation','poison'],
-    earth:    ['asteroid','meteor','sun','black hole','nuke','aliens','climate change','supernova'],
-    car:      ['truck','train','wall','tree','collision','crash'],
-    truck:    ['train','collision','wall','semi'],
-    train:    ['collision','derailment','wall'],
-    bullet:   ['armor','vest','shield','superman','wall','kevlar'],
-    bomb:     ['water','disposal','bunker','dud','distance'],
-    money:    ['inflation','tax','recession','theft','bankruptcy','fire'],
-    diamond:  ['hammer','laser','impact','another diamond'],
-    sand:     ['water','wind','glass furnace','vacuum'],
-    snow:     ['sun','heat','fire','salt','rain','warmth','plow'],
-    grass:    ['fire','herbicide','lawnmower','drought','frost'],
-    leaf:     ['fire','autumn','wind','herbicide'],
-    air:      ['vacuum','pollution','smoke'],
-    nothing:  ['something','everything','god','existence'],
-    tissue:   ['fire','water','flame','wind','rain','crumple','rip','tear','flush'],
-    cardboard:['fire','water','knife','scissors','flame','box cutter','crumple','rain','flood'],
-    cloth:    ['fire','scissors','knife','bleach','flame','acid','rip'],
-    cotton:   ['fire','flame','scissors','rip','torch'],
-    foam:     ['fire','knife','crusher','flame','heat'],
-    feather:  ['fire','wind','water','flame','pluck'],
-    egg:      ['fork','heat','frying pan','floor','rock','hand','crack'],
-    bread:    ['mold','fire','knife','toaster','time','blender'],
-    apple:    ['knife','teeth','blender','rot','time','worm'],
-    candle:   ['water','wind','breath','snuffer','rain'],
-    pillow:   ['fire','knife','scissors','flame','time'],
-    book:     ['fire','water','shredder','flame','rip','blender']
-  };
+  // grid[y][x] = '' (empty) or hex color string of the locked block
+  let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(''));
+  let score = 0, lines = 0, level = 1;
+  let current = null, next = null;
+  let lastTime = 0, fallAcc = 0;
+  let gameOver = false, running = true;
 
-  // Common things people might type that AREN'T legitimate beaters of these
-  // targets. Used for fast rejection. Exact match only, no substrings.
-  const LOSES = {
-    paper:    ['paper','rock','air','nothing','void','empty','dust','mist'],
-    rock:     ['rock','scissors','feather','foam','cotton','pillow','breeze'],
-    scissors: ['scissors','paper','cloth','yarn','feather'],
-    fire:     ['fire','paper','wood','grass','gas','oil','fuel','gasoline','oxygen','rope'],
-    water:    ['water','fire','ice','sand','dust','paper','steam','rope'],
-    ice:      ['ice','water','snow','cold','frost'],
-    lava:     ['lava','fire','heat','flame','magma'],
-    sun:      ['sun','fire','heat','planet','earth','star'],
-    darkness: ['darkness','shadow','night','void','blackness','black']
-  };
+  // === Live-payout system ===
+  // Money is earned IN REAL TIME as lines clear, not in a single end-of-game
+  // dump. Each clear pays out based on the line count (1=$3, 2=$8, 3=$15,
+  // 4=$30 = "TETRIS!"), times your current level, times a combo multiplier.
+  // Combo builds up when consecutive piece-locks each clear at least 1 line,
+  // and resets the moment a piece locks without clearing anything.
+  const PAYOUTS = [0, 3, 8, 15, 30];   // base $ per clear count
+  let combo = 0;                        // consecutive clearing pieces
+  let totalEarned = 0;                  // for the game-over recap
+  let floatingTexts = [];               // animated "+$X" / "TETRIS!" pop-ups
 
-  // The bot's known vocabulary. If an answer isn't in this set AND isn't a
-  // UNIVERSAL_BEATER, the offline judge returns "unknown" — it admits it
-  // doesn't know what the word is, instead of guessing.
-  // This list covers ~250 common nouns players might reasonably type.
-  const KNOWN_WORDS = new Set([
-    // Elements & weather
-    'fire','water','ice','snow','rain','wind','air','earth','lava','sand','dust','mud','mist','steam','smoke','fog','cloud','sun','moon','star','sky','rainbow','lightning','thunder','storm','tornado','hurricane','tsunami','flood','drought','frost','heat','cold','breeze','hail','sleet','dew','humidity','pressure',
-    // Materials
-    'paper','rock','wood','metal','steel','iron','gold','silver','copper','lead','aluminum','glass','plastic','rubber','cloth','cotton','silk','wool','leather','stone','brick','concrete','clay','marble','granite','diamond','crystal','foam','tissue','cardboard','foil','tape','wax','resin','fiber','tile','asphalt','tar',
-    // Tools & weapons
-    'scissors','knife','sword','axe','hammer','saw','chainsaw','drill','pickaxe','jackhammer','sledgehammer','spear','bow','arrow','crossbow','gun','pistol','rifle','shotgun','machine gun','bullet','grenade','bomb','dynamite','tnt','nuke','nuclear bomb','atomic bomb','missile','rocket','laser','flame','flamethrower','torch','blowtorch','match','lighter','candle','flashlight','lamp','shield','armor','vest','helmet','plate','chainmail','net','rope','chain','wire','trap','cage','vise','crusher','blender','shredder','stapler','eraser','pen','marker','pencil','crayon','ink','acid','poison','bleach','soap','glue','paint','dye','wrench','screwdriver','nail','screw','bolt','nut','tool',
-    // Vehicles & structures
-    'car','truck','train','plane','airplane','helicopter','boat','ship','submarine','bike','bicycle','motorcycle','scooter','skateboard','tank','bulldozer','crane','wall','door','window','roof','floor','ceiling','bridge','tunnel','tower','building','house','castle','fortress','bunker','shelter','dam','barrier','fence','umbrella','tarp','tent','curtain','shade','sunscreen','garage','basement',
-    // Life & beings
-    'human','person','man','woman','child','baby','kid','dog','cat','mouse','rat','bird','fish','snake','lizard','frog','turtle','rabbit','squirrel','deer','fox','wolf','bear','lion','tiger','elephant','giraffe','horse','cow','pig','sheep','goat','chicken','duck','eagle','hawk','owl','crow','spider','ant','bee','wasp','fly','mosquito','butterfly','worm','shark','whale','dolphin','octopus','crab','lobster','jellyfish','penguin','kangaroo','panda','monkey','ape','gorilla','rhino','hippo','crocodile','alligator','dinosaur',
-    // Plants & food
-    'tree','grass','leaf','flower','rose','seed','root','branch','fruit','apple','orange','banana','grape','lemon','tomato','potato','onion','garlic','bread','rice','salt','sugar','pepper','meat','milk','cheese','egg','butter','oil','wine','beer','coffee','tea','soda','juice','water bottle','pasta','pizza','sandwich','soup','salad','cookie','cake','candy','chocolate','popcorn','cereal','yogurt','steak','chicken','bacon','ham','fish','sushi','taco','burrito','burger','fries','donut','muffin','pie','cucumber','carrot','lettuce','spinach','broccoli','mushroom','strawberry','watermelon','pineapple','peach','cherry','blueberry','corn','bean','noodle',
-    // Body & physical
-    'fist','hand','foot','head','eye','ear','tooth','bone','muscle','blood','skin','hair','heart','brain','lung','finger','toe','nail','arm','leg','knee','elbow','shoulder','neck','face','nose','mouth','tongue','lips','beard','stomach',
-    // Household
-    'chair','table','desk','bed','sofa','couch','pillow','blanket','sheet','towel','rug','carpet','mirror','clock','book','phone','computer','laptop','tablet','tv','television','camera','radio','headphones','speaker','battery','charger','outlet','plug','switch','remote','keyboard','screen','monitor','fridge','refrigerator','freezer','oven','microwave','stove','dishwasher','sink','toilet','bathtub','shower','plate','bowl','cup','mug','glass cup','fork','spoon','straw','napkin','plate','bottle','can','jar','box','bag','basket','bucket','broom','mop','vacuum cleaner','iron','toaster','kettle','blender','mixer','dryer','washer',
-    // Clothing
-    'shirt','pants','jeans','shorts','skirt','dress','jacket','coat','sweater','hoodie','hat','cap','helmet','glove','sock','shoe','boot','sandal','belt','tie','scarf','glasses','sunglasses','watch','ring','necklace','bracelet','earring','backpack','purse','wallet','suit',
-    // Nature events
-    'earthquake','volcano','eruption','avalanche','blizzard','typhoon','sinkhole','meteor','asteroid','comet','supernova','black hole','wormhole','singularity','big bang','antimatter','fault','quake','wildfire',
-    // Concepts & abstract
-    'death','life','time','infinity','eternity','nothing','everything','existence','god','jesus','allah','buddha','dragon','phoenix','unicorn','mech','robot','ai','virus','disease','plague','cancer','curse','wish','magic','spell','prayer','soul','ghost','zombie','vampire','werewolf','alien','demon','angel','apocalypse','extinction','gravity','antigravity','vacuum','radiation','plasma','hate','love','hope','fear','anger','luck',
-    // Misc useful
-    'sponge','rust','corrosion','erosion','evaporation','suffocation','starvation','dehydration','recession','inflation','tax','theft','bankruptcy','jail','prison','court','law','sword','dagger','razor','blade','scalpel','chisel','sandpaper','file','wheel','engine','motor','gear','spring','magnet','battery','wire','cable','cord','string','thread','yarn','feather','fur','scale','shell','horn','tusk','claw','paw','wing','tail','beak'
-  ]);
-
-  function offlineJudge(answer, target) {
-    const a = answer.toLowerCase().trim();
-    const t = target.toLowerCase().trim();
-
-    // Reject obvious garbage
-    if (!a) return { wins: false, reason: 'Empty answer' };
-    if (a.length < 2) return { wins: false, reason: 'Not a real answer' };
-    if (/^[\d\W_]+$/.test(a)) return { wins: false, reason: 'Not a real answer' };
-    if (/^(.)\1+$/.test(a)) return { wins: false, reason: 'Not a real answer' };
-    if (a === t) return { wins: false, reason: "Can't be the same thing" };
-
-    // 1) Universal beater? Wins UNLESS the target is in its exception list.
-    if (UNIVERSAL_BEATERS[a]) {
-      const stoppedBy = UNIVERSAL_BEATERS[a].some(ex => ex.toLowerCase() === t);
-      if (stoppedBy) return { wins: false, reason: `${target} stops ${answer}` };
-      return { wins: true, reason: `${answer} overpowers ${target}` };
-    }
-
-    // 2) Explicit losing answer for this target? Reject.
-    if (LOSES[t] && LOSES[t].includes(a)) {
-      return { wins: false, reason: `${answer} doesn't beat ${target}` };
-    }
-
-    // 3) Known winner for this target? Accept on EXACT match only.
-    if (WINS[t] && WINS[t].includes(a)) {
-      return { wins: true, reason: `${answer} beats ${target}` };
-    }
-
-    // 4) Bot doesn't know what this answer is — admit it.
-    //    The chain doesn't break; the player can try a different word.
-    if (!KNOWN_WORDS.has(a)) {
-      return { unknown: true, reason: `I don't know what "${answer}" is` };
-    }
-
-    // 5) Answer is a known word but doesn't beat this target.
-    return { wins: false, reason: `${answer} doesn't beat ${target}` };
+  // Falling speed: shorter intervals at higher levels
+  function fallInterval() {
+    return Math.max(100, 800 - (level - 1) * 80);
   }
 
-  // Strict AI judge via Claude Haiku.
-  // Returns one of:
-  //   { wins: true,  reason: '...' }              — answer clearly beats target
-  //   { wins: false, reason: '...' }              — answer clearly doesn't beat target
-  //   { unknown: true, reason: "I don't know..." } — bot doesn't recognize the word
-  // The "unknown" verdict does NOT break the player's chain; it just asks
-  // them to try a different answer.
-  async function judgeAnswer(answer, target) {
-    const SYSTEM = `You are a strict, knowledgeable judge for the game "What Beats X". Given a CURRENT ITEM and a player's ANSWER, you must rule one of:
-- "win"     : the answer clearly defeats, destroys, neutralizes, consumes, or overcomes the current item
-- "lose"    : the answer is real but does NOT beat the current item, OR is gibberish/empty/the same word
-- "unknown" : you genuinely don't know what the ANSWER refers to (made-up word, foreign term, niche reference you can't verify)
-
-You are honest about uncertainty. If you don't recognize the answer, you say "unknown" instead of guessing.
-
-Reply with ONLY a JSON object on a single line, exactly:
-{"verdict": "win"|"lose"|"unknown", "reason": "<reason, under 12 words>"}`;
-
-    const USER = `CURRENT ITEM: ${target}
-ANSWER: ${answer}
-
-JUDGING RULES (apply in order):
-1. If the ANSWER is gibberish, empty, single character, punctuation only, or pure digits → "lose" with reason "not a real answer".
-2. If the ANSWER is the SAME WORD as the current item (case-insensitive) → "lose" with reason "can't be the same thing".
-3. If the ANSWER is a made-up word, a niche term you can't verify, a foreign-language word you don't recognize, or just a random string of letters that looks like a word but isn't → "unknown" with reason "I don't know what \\"${answer}\\" is".
-4. If the ANSWER is a real concept but is clearly weaker than the item (paper vs rock, air vs fire, feather vs hammer) → "lose".
-5. If the ANSWER is real but vague/abstract and doesn't physically or functionally beat the item ("happiness" vs "tank", "vibes" vs "wall", "love" vs "concrete") → "lose" with reason "too abstract".
-6. If the ANSWER clearly beats the item by:
-   - Classic chain logic (scissors→paper, water→fire, lava→ice, hammer→glass)
-   - Physical destruction (tank crushes car, fire burns wood)
-   - Functional negation (umbrella stops rain, dam blocks water, shield deflects bullet)
-   - Massive scale advantage (black hole > sun, meteor > city, supernova > planet)
-   → "win"
-7. STRICT on "universal beater" abuse: words like "god", "nuke", "infinity", "black hole" should win against most things, BUT NOT their natural counters: god→nothing/atheism; nuke→bunker/distance/dud; black hole→nothing/hawking radiation; infinity→nothing.
-8. STRICT on substring abuse: "godzilla" is NOT "god". "nuclear family" is NOT a nuke. "magic 8-ball" is NOT "magic". Treat the ANSWER as the whole phrase. Godzilla is a separate concept (a giant monster) — judge it on its own merits.
-9. If the ANSWER is a known proper noun (person, character, brand, movie, etc.) and you DO know it, judge whether that thing realistically beats the item. If you DON'T know the proper noun → "unknown".
-
-EXAMPLES:
-- ITEM: paper, ANSWER: scissors → {"verdict":"win","reason":"scissors cut paper"}
-- ITEM: paper, ANSWER: rock → {"verdict":"lose","reason":"rock doesn't beat paper"}
-- ITEM: fire, ANSWER: water → {"verdict":"win","reason":"water extinguishes fire"}
-- ITEM: nothing, ANSWER: god → {"verdict":"lose","reason":"nothing transcends god"}
-- ITEM: tank, ANSWER: happiness → {"verdict":"lose","reason":"too abstract"}
-- ITEM: rock, ANSWER: godzilla → {"verdict":"win","reason":"Godzilla crushes rock"}
-- ITEM: wood, ANSWER: blarflzap → {"verdict":"unknown","reason":"I don't know what \\"blarflzap\\" is"}
-- ITEM: paper, ANSWER: xyzzy → {"verdict":"unknown","reason":"I don't know what \\"xyzzy\\" is"}
-- ITEM: glass, ANSWER: paper → {"verdict":"lose","reason":"paper doesn't break glass"}
-
-Respond with the JSON object only.`;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 7000);
-
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 100,
-          system: SYSTEM,
-          messages: [{ role: 'user', content: USER }]
-        })
-      });
-      clearTimeout(timeoutId);
-      if (!response.ok) throw new Error('API error: ' + response.status);
-      const data = await response.json();
-      const text = data.content.map(c => c.text || '').join('').trim();
-      const cleaned = text.replace(/```json|```/g, '').trim();
-      const match = cleaned.match(/\{[\s\S]*?\}/);
-      const jsonText = match ? match[0] : cleaned;
-      const parsed = JSON.parse(jsonText);
-      const verdict = String(parsed.verdict || '').toLowerCase();
-      const reason = String(parsed.reason || '').slice(0, 80);
-      if (verdict === 'win')     return { wins: true,  reason: reason || 'beats it' };
-      if (verdict === 'lose')    return { wins: false, reason: reason || "doesn't beat it" };
-      if (verdict === 'unknown') return { unknown: true, reason: reason || `I don't know what "${answer}" is` };
-      throw new Error('Unknown verdict: ' + verdict);
-    } catch (e) {
-      clearTimeout(timeoutId);
-      // API unreachable / malformed reply — fall back to offline dictionary.
-      return offlineJudge(answer, target);
-    }
+  function newPiece() {
+    const key = PIECE_KEYS[Math.floor(Math.random() * PIECE_KEYS.length)];
+    const piece = PIECES[key];
+    return {
+      key,
+      shapes: piece.shapes,
+      color: piece.color,
+      rotation: 0,
+      // Spawn near the top-middle. The 4x4 bounding box's left edge is at x.
+      x: Math.floor(COLS / 2) - 2,
+      y: 0
+    };
   }
 
-  async function submit() {
-    if (pending || ended) return;
-    const answer = inputEl.value.trim();
-    if (!answer) return;
+  function shape(piece) { return piece.shapes[piece.rotation % piece.shapes.length]; }
 
-    // Reject repeats before hitting the AI
-    const answerLower = answer.toLowerCase();
-    const usedBefore = history.some(h => h.toLowerCase() === answerLower);
-    if (usedBefore) {
-      statusEl.className = 'wb-status lose';
-      statusEl.textContent = `✗ Already used "${answer}"`;
+  // Returns true if `piece` (with optional offset) collides with walls or locked blocks.
+  function collides(piece, dx = 0, dy = 0, dr = 0) {
+    const sh = piece.shapes[((piece.rotation + dr) % piece.shapes.length + piece.shapes.length) % piece.shapes.length];
+    for (let y = 0; y < sh.length; y++) {
+      for (let x = 0; x < sh[y].length; x++) {
+        if (!sh[y][x]) continue;
+        const nx = piece.x + x + dx;
+        const ny = piece.y + y + dy;
+        if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
+        if (ny >= 0 && grid[ny][nx]) return true;
+      }
+    }
+    return false;
+  }
+
+  // Lock the current piece into the grid, then check for line clears
+  function lockPiece() {
+    const sh = shape(current);
+    for (let y = 0; y < sh.length; y++) {
+      for (let x = 0; x < sh[y].length; x++) {
+        if (sh[y][x]) {
+          const ny = current.y + y;
+          if (ny < 0) { gameOver = true; return; }
+          grid[ny][current.x + x] = current.color;
+        }
+      }
+    }
+    const cleared = clearLines();
+    // Combo tracking: a non-clearing piece breaks the chain.
+    if (cleared === 0) combo = 0;
+    current = next;
+    next = newPiece();
+    drawNext();
+    if (collides(current)) gameOver = true;
+  }
+
+  function addFloatingText(text, x, y, color, big) {
+    floatingTexts.push({ text, x, y, color, big: !!big, frames: 60, vy: -1.4 });
+  }
+
+  // Returns the number of lines cleared (so lockPiece can check for combo break).
+  function clearLines() {
+    let cleared = 0;
+    let firstClearedY = -1;
+    for (let y = ROWS - 1; y >= 0; y--) {
+      if (grid[y].every(c => c)) {
+        if (firstClearedY === -1) firstClearedY = y;
+        grid.splice(y, 1);
+        grid.unshift(Array(COLS).fill(''));
+        cleared++;
+        y++; // re-check this row
+      }
+    }
+    if (cleared === 0) return 0;
+
+    lines += cleared;
+    const points = [0, 100, 300, 500, 800][cleared] * level;
+    score += points;
+    // Level up every 10 lines
+    level = 1 + Math.floor(lines / 10);
+    document.getElementById('tet-score').textContent = score;
+    document.getElementById('tet-lines').textContent = lines;
+    document.getElementById('tet-level').textContent = level;
+
+    // Combo: each consecutive clearing-piece adds 0.5× to the multiplier.
+    // 1st clear in a chain  = ×1.0
+    // 2nd in a row          = ×1.5
+    // 3rd                   = ×2.0
+    // …capped at ×3.0 so it doesn't run away.
+    combo++;
+    const comboMult = Math.min(3.0, 1.0 + (combo - 1) * 0.5);
+
+    // Money payout — added immediately to the wallet.
+    const base = PAYOUTS[cleared];
+    const payout = Math.round(base * level * comboMult);
+    state.money += payout;
+    totalEarned += payout;
+    saveState();
+    renderHub(); // update hub money display
+    trackQuest('moneyEarned', payout);
+
+    // Floating "+$N" text near the cleared row(s).
+    const cy = firstClearedY * CELL + CELL / 2;
+    const cx = canvas.width / 2;
+    addFloatingText(`+$${payout}`, cx, cy, '#39ff14', cleared >= 3);
+    if (cleared === 4) {
+      addFloatingText('🧩 TETRIS!', cx, cy - 30, '#ff2bd6', true);
+    } else if (combo >= 2) {
+      addFloatingText(`COMBO ×${comboMult.toFixed(1)}`, cx, cy + 26, '#fff700', false);
+    }
+    return cleared;
+  }
+
+  // ----- input handlers (exposed to global so on-screen buttons work) -----
+  window.tetMove = function(dir) {
+    if (gameOver || !current || gamePaused) return;
+    if (!collides(current, dir, 0)) current.x += dir;
+  };
+  window.tetRotate = function() {
+    if (gameOver || !current || gamePaused) return;
+    // Try simple wall-kick: ±0, ±1, ±2 horizontal offsets
+    for (const dx of [0, -1, 1, -2, 2]) {
+      if (!collides(current, dx, 0, 1)) {
+        current.x += dx;
+        current.rotation = (current.rotation + 1) % current.shapes.length;
+        return;
+      }
+    }
+  };
+  window.tetSoftDrop = function() {
+    if (gameOver || !current || gamePaused) return;
+    if (!collides(current, 0, 1)) {
+      current.y++;
+      score++;
+      document.getElementById('tet-score').textContent = score;
+    }
+  };
+  window.tetHardDrop = function() {
+    if (gameOver || !current || gamePaused) return;
+    let dist = 0;
+    while (!collides(current, 0, 1)) { current.y++; dist++; }
+    score += dist * 2;
+    document.getElementById('tet-score').textContent = score;
+    lockPiece();
+    fallAcc = 0;
+  };
+
+  // Keyboard
+  function onKey(e) {
+    if (gameOver || gamePaused) return;
+    if (e.key === 'ArrowLeft')      { e.preventDefault(); tetMove(-1); }
+    else if (e.key === 'ArrowRight'){ e.preventDefault(); tetMove(1); }
+    else if (e.key === 'ArrowUp')   { e.preventDefault(); tetRotate(); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); tetSoftDrop(); }
+    else if (e.key === ' ')         { e.preventDefault(); tetHardDrop(); }
+  }
+  window.addEventListener('keydown', onKey);
+
+  // ----- drawing -----
+  function drawCell(c, x, y, color) {
+    const px = x * CELL, py = y * CELL;
+    c.fillStyle = color;
+    c.shadowColor = color;
+    c.shadowBlur = 8;
+    c.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
+    c.shadowBlur = 0;
+    // Inner highlight for a glassy block look
+    c.fillStyle = 'rgba(255,255,255,0.18)';
+    c.fillRect(px + 2, py + 2, CELL - 6, 3);
+  }
+
+  function drawGhost(piece) {
+    // Project piece downward to find drop position
+    let g = 0;
+    while (!collides(piece, 0, g + 1)) g++;
+    const sh = shape(piece);
+    ctx.globalAlpha = 0.28;
+    for (let y = 0; y < sh.length; y++) {
+      for (let x = 0; x < sh[y].length; x++) {
+        if (sh[y][x]) {
+          const ny = piece.y + y + g;
+          if (ny >= 0) drawCell(ctx, piece.x + x, ny, piece.color);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function draw() {
+    ctx.fillStyle = 'rgba(0,0,0,0.85)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Visible grid (was barely visible at 0.04 — bumped to 0.18 so you can
+    // actually read which row/column a piece will land in)
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.18)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= COLS; x++) {
+      ctx.beginPath(); ctx.moveTo(x * CELL, 0); ctx.lineTo(x * CELL, ROWS * CELL); ctx.stroke();
+    }
+    for (let y = 0; y <= ROWS; y++) {
+      ctx.beginPath(); ctx.moveTo(0, y * CELL); ctx.lineTo(COLS * CELL, y * CELL); ctx.stroke();
+    }
+    // Locked blocks
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        if (grid[y][x]) drawCell(ctx, x, y, grid[y][x]);
+      }
+    }
+    // Ghost + current piece
+    if (current) {
+      drawGhost(current);
+      const sh = shape(current);
+      for (let y = 0; y < sh.length; y++) {
+        for (let x = 0; x < sh[y].length; x++) {
+          if (sh[y][x]) {
+            const ny = current.y + y;
+            if (ny >= 0) drawCell(ctx, current.x + x, ny, current.color);
+          }
+        }
+      }
+    }
+    // Floating payout / TETRIS / combo texts — fly upward, fade out
+    floatingTexts.forEach(ft => {
+      ft.y += ft.vy;
+      ft.frames--;
+      const a = Math.max(0, ft.frames / 60);
+      ctx.globalAlpha = a;
+      ctx.fillStyle = ft.color;
+      ctx.shadowColor = ft.color;
+      ctx.shadowBlur = ft.big ? 16 : 8;
+      ctx.font = ft.big
+        ? 'bold 18px "Press Start 2P", monospace'
+        : 'bold 13px "Press Start 2P", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+    });
+    floatingTexts = floatingTexts.filter(ft => ft.frames > 0);
+  }
+
+  function drawNext() {
+    nextCtx.fillStyle = 'rgba(0,0,0,0.85)';
+    nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+    if (!next) return;
+    const sh = next.shapes[0];
+    const sz = Math.floor(nextCanvas.width / 5);
+    // Center the piece in the preview canvas
+    const offsetX = (nextCanvas.width - sh[0].length * sz) / 2;
+    const offsetY = (nextCanvas.height - sh.length * sz) / 2;
+    nextCtx.fillStyle = next.color;
+    nextCtx.shadowColor = next.color;
+    nextCtx.shadowBlur = 6;
+    for (let y = 0; y < sh.length; y++) {
+      for (let x = 0; x < sh[y].length; x++) {
+        if (sh[y][x]) {
+          nextCtx.fillRect(offsetX + x * sz + 1, offsetY + y * sz + 1, sz - 2, sz - 2);
+        }
+      }
+    }
+    nextCtx.shadowBlur = 0;
+  }
+
+  // ----- main loop -----
+  current = newPiece();
+  next = newPiece();
+  drawNext();
+
+  // Show the tutorial overlay on first launch. We track this in localStorage
+  // so it doesn't pop up every time. Players can re-open it from the
+  // "❓ HOW TO PLAY" button at any time.
+  try {
+    if (!localStorage.getItem('tetrisTutorialSeen')) {
+      showTetrisTutorial();
+    }
+  } catch {}
+
+  function loop(t) {
+    if (!running) return;
+    if (gameOver) return finish();
+    if (gamePaused) {
+      lastTime = t || performance.now();
+      requestAnimationFrame(loop);
       return;
     }
-
-    pending = true;
-    submitEl.disabled = true;
-    inputEl.disabled = true;
-    statusEl.className = 'wb-status thinking';
-    statusEl.textContent = '🤖 thinking...';
-
-    const result = await judgeAnswer(answer, current);
-
-    if (result.unknown) {
-      // The bot doesn't recognize the answer. Don't break the streak;
-      // just tell the player and let them try a different word.
-      statusEl.className = 'wb-status thinking';
-      statusEl.textContent = `🤔 I don't know what "${answer}" is. Try another!`;
-      pending = false;
-      submitEl.disabled = false;
-      inputEl.disabled = false;
-      inputEl.value = '';
-      inputEl.focus();
-      return;
+    if (!lastTime) lastTime = t;
+    const dt = t - lastTime;
+    lastTime = t;
+    fallAcc += dt;
+    if (fallAcc >= fallInterval()) {
+      fallAcc = 0;
+      if (!collides(current, 0, 1)) {
+        current.y++;
+      } else {
+        lockPiece();
+      }
     }
-
-    if (result.wins) {
-      streak++;
-      const gain = 3;
-      pot += gain;
-      history.push(answer.toUpperCase());
-      current = answer.toUpperCase();
-      currentEl.textContent = current;
-      streakEl.textContent = streak;
-      potEl.textContent = pot;
-      statusEl.className = 'wb-status win';
-      statusEl.textContent = `✓ ${result.reason} (+$${gain})`;
-      historyEl.textContent = history.slice(0, -1).join(' → ') + ' → ' + current;
-      inputEl.value = '';
-      pending = false;
-      submitEl.disabled = false;
-      inputEl.disabled = false;
-      inputEl.focus();
-    } else {
-      // Player loses — show the reason briefly, then end the game with their earned money
-      statusEl.className = 'wb-status lose';
-      statusEl.textContent = `✗ ${result.reason}`;
-      setTimeout(() => finish(), 1500);
-    }
+    draw();
+    requestAnimationFrame(loop);
   }
-
-  // Expose for button handlers
-  window.wbSubmit = submit;
-
-  function onKeyDown(e) {
-    if (e.key === 'Enter' && !pending && !ended) {
-      e.preventDefault();
-      submit();
-    }
-  }
-  inputEl.addEventListener('keydown', onKeyDown);
-  inputEl.focus();
+  requestAnimationFrame(loop);
 
   function finish() {
-    if (ended) return;
-    ended = true;
-    inputEl.disabled = true;
-    submitEl.disabled = true;
-    // Player keeps everything they earned — no penalty
-    addMoney(pot);
-    trackGamePlayed('whatbeats');
-    trackQuest('moneyEarned', pot);
-    if (streak > 0) trackQuest('wbWins', streak);
-    const area = document.querySelector('#screen-whatbeats .game-area');
-    const title = streak === 0 ? 'GAME OVER' : 'CHAIN BROKEN';
-    showOverlay(area, title, `${streak} win${streak === 1 ? '' : 's'} → +$${pot}`);
+    if (!running) return;
+    running = false;
+    // Money was already earned per-line during play. No lump sum at the end.
+    trackGamePlayed('tetris');
+    showOverlay(canvas.parentElement, 'GAME OVER',
+      `Lines: ${lines} \u00b7 Score: ${score} \u00b7 Earned: $${totalEarned}`);
     activeGame = null;
   }
 
-  registerPauseHooks(() => {}, () => {});
+  registerPauseHooks(
+    () => {},
+    () => { lastTime = 0; }   // reset frame timer on resume
+  );
+
+  // Expose so the tutorial close-handler can reset the frame clock
+  // (prevents a giant time-delta from making pieces snap-drop).
+  window.tetResetTimer = function() { lastTime = 0; };
 
   gameCleanup = () => {
-    ended = true;
-    inputEl.removeEventListener('keydown', onKeyDown);
-    delete window.wbSubmit;
+    running = false;
+    window.removeEventListener('keydown', onKey);
+    window.removeEventListener('resize', onResize);
+    window.removeEventListener('orientationchange', onResize);
+    delete window.tetMove;
+    delete window.tetRotate;
+    delete window.tetSoftDrop;
+    delete window.tetHardDrop;
+    delete window.tetResetTimer;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
     activeGame = null;
   };
 };
