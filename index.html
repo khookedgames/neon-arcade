@@ -2526,7 +2526,7 @@ const GAME_SIGNS = {
   basketball: { label: '🔥 HARDEST',    cls: 'skill'   },
   risk:       { label: '💰 BIG EARNER', cls: 'money'   },
   reaction:   { label: '⚡ FASTEST',    cls: 'fastest' },
-  tetris:     { label: '⭐️ CLASSIC',         cls: 'fastest' }
+  tetris:     { label: '🔥 HOT',         cls: 'fastest' }
 };
 
 // Render one sign above each game card listed in GAME_SIGNS.
@@ -2557,7 +2557,7 @@ const QUESTS_POOL = [
   // === Daily quests pool (8) ===
   { id: 'grinder',     name: 'GRINDER',      desc: 'Play 4 different mini-games',     goal: 4,    stat: 'uniqueGamesPlayed', reward: { money: 100 } },
   { id: 'bigearner',   name: 'BIG EARNER',   desc: 'Earn $200 from mini-games',       goal: 200,  stat: 'moneyEarned',       reward: { spin: 1 } },
-  { id: 'shotmaker',   name: 'LOCK MASTER',   desc: 'Score 20 hits in LOCK-ON',        goal: 20,   stat: 'baskets',           reward: { money: 300, spin: 2 } },
+  { id: 'shotmaker',   name: 'SHOT MAKER',   desc: 'Score 20 hits in LOCK-ON',        goal: 20,   stat: 'baskets',           reward: { money: 300, spin: 2 } },
   { id: 'gambler',     name: 'GAMBLER',      desc: 'Hit a 3x streak in RISK IT',      goal: 1,    stat: 'riskStreak3',       reward: { money: 250, spin: 1 } },
   { id: 'speedster',   name: 'SPEEDSTER',    desc: 'Click 30 targets in TARGET BLAST',goal: 30,   stat: 'targetHits',        reward: { money: 150 } },
   { id: 'spammer',     name: 'SPAMMER',      desc: 'Get 35 clicks in CLICK STORM',    goal: 35,   stat: 'cpsClicks',         reward: { money: 200 } },
@@ -3495,7 +3495,7 @@ function showGulliblePopup() {
             // final reveal
             setTimeout(() => {
               lettersEl.classList.add('gullible-full');
-              subEl.textContent = 'YOU ARE TOO GULLIBLE 🤣!';
+              subEl.textContent = 'YOU JUST GOT PRANKED 😂';
               subEl.classList.add('gullible-pranked');
               closeBtn.style.display = 'inline-block';
             }, 400);
@@ -3525,7 +3525,7 @@ function loadTheme() {
    ========================================================= */
 const CHEAT_CODES = {
   'amdinmode':         { type: 'admin',   label: 'ADMIN MODE UNLOCKED 👑' },
-  'ultraadminmode':    { type: 'unadmin', label: 'BYE BYE ADMIN MODE 😁' },
+  'ultraadminmode':    { type: 'unadmin', label: 'ADMIN MODE REVOKED 🚫' },
   'upd5':              { reward: 100, spins: 5, label: '5 SPINS + $100! 🎰' },
   'tetris':            { reward: 100, spins: 5, label: '5 SPINS + $100! 🧩' },
   'holoreturns':       { reward: 100, spins: 5, label: '5 SPINS + $100! ✨' },
@@ -3544,11 +3544,10 @@ const UPDATE_LOG = [
     date: 'This update',
     changes: [
       '✨ HOLOGRAM RETURNS — back in the shop for $1000',
-      'WHAT BEATS PAPER replaced (the ai just sucked, sorry!)',
+      'WHAT BEATS PAPER replaced (it sucked, sorry)',
       'New game: 🧩 TETRIS — earn cash live as you clear lines, with combo bonuses',
-      'BRICK BLASTER is harder and now has different levels — beat level 1 to unlock level 2 (with the +BALL block!)',
-      'LIMITED SYSTEM gone'
-      'Codes are at the bottom of the update log 👀'
+      'BREAKER is harder and now has different levels — beat level 1 to unlock level 2 (with the +BALL block!)',
+      'Codes are at the bottom of this update log 🎁'
     ]
   },
   {
@@ -3624,7 +3623,7 @@ function renderUpdateLog() {
   const codesHtml = `
     <div class="updatelog-entry codes-card">
       <span class="ver">🎁 CODES</span>
-      <span class="date"> thank you to those who actually read the update log here are some rewards🎁! ⬇️</span>
+      <span class="date">Type these in via the 🔐 CODE button</span>
       <ul>
         <li><strong>HOLORETURNS</strong> — 5 spins and $100 ✨</li>
         <li><strong>TETRIS</strong> — 5 spins and $100 🧩</li>
@@ -3659,7 +3658,7 @@ function redeemCheatCode(rawCode) {
   } catch {}
   const isToggle = def.type === 'admin' || def.type === 'unadmin';
   if (usedCodes[code] && !isToggle) {
-    toast('CODE ALREADY REDEEMED', true);
+    toast('CODE ALREADY USED', true);
     return;
   }
 
