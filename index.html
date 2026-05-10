@@ -2378,10 +2378,10 @@
           <div class="tet-tut-emoji">💰</div>
           <div class="tet-tut-text"><b>EARN AS YOU PLAY</b><br>
             Money drops the moment you clear a line — no waiting for game over!<br>
-            <span class="tet-tut-key">1 line</span> $3 &nbsp;
-            <span class="tet-tut-key">2 lines</span> $8 &nbsp;
-            <span class="tet-tut-key">3 lines</span> $15 &nbsp;
-            <span class="tet-tut-key">4 lines</span> $30 (TETRIS!)<br>
+            <span class="tet-tut-key">1 line</span> $20 &nbsp;
+            <span class="tet-tut-key">2 lines</span> $50 &nbsp;
+            <span class="tet-tut-key">3 lines</span> $90 &nbsp;
+            <span class="tet-tut-key">4 lines</span> $160 (TETRIS!)<br>
             All multiplied by your level. Clear lines on consecutive pieces to build a <b style="font-size:11px">COMBO ×</b> bonus up to ×3.0!
           </div>
         </div>
@@ -5985,11 +5985,16 @@ games.tetris = function() {
 
   // === Live-payout system ===
   // Money is earned IN REAL TIME as lines clear, not in a single end-of-game
-  // dump. Each clear pays out based on the line count (1=$3, 2=$8, 3=$15,
-  // 4=$30 = "TETRIS!"), times your current level, times a combo multiplier.
+  // dump. $20/line is the base rate; clearing multiple lines at once pays
+  // a per-line bonus (so a TETRIS is worth more than 4 separate singles).
+  // Final payout = base × current level × combo multiplier.
+  //   1 line  = $20    ($20/line)
+  //   2 lines = $50    ($25/line — small bonus)
+  //   3 lines = $90    ($30/line — bigger bonus)
+  //   4 lines = $160   ($40/line — TETRIS!)
   // Combo builds up when consecutive piece-locks each clear at least 1 line,
   // and resets the moment a piece locks without clearing anything.
-  const PAYOUTS = [0, 3, 8, 15, 30];   // base $ per clear count
+  const PAYOUTS = [0, 20, 50, 90, 160];
   let combo = 0;                        // consecutive clearing pieces
   let totalEarned = 0;                  // for the game-over recap
   let floatingTexts = [];               // animated "+$X" / "TETRIS!" pop-ups
