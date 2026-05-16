@@ -13,7 +13,7 @@
     --bg-2: #13002a;
     --neon-pink: #ff2bd6;
     --neon-cyan: #00f0ff;
-    --neon-yellow: #fff700;
+    --neon-yellow: #ffcc33;
     --neon-green: #39ff14;
     --neon-purple: #b026ff;
     --neon-red: #ff2e63;
@@ -198,7 +198,7 @@
     font-family: 'Press Start 2P', monospace;
     font-size: 14px;
     color: var(--neon-yellow);
-    box-shadow: 0 0 15px rgba(255,247,0,0.4), inset 0 0 10px rgba(255,247,0,0.1);
+    box-shadow: 0 0 15px rgba(255,204,51,0.4), inset 0 0 10px rgba(255,204,51,0.1);
   }
   .hud-pill.skin {
     border-color: var(--skin-color);
@@ -236,6 +236,54 @@
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0,0,0,0.15);
+  }
+  /* Pirate skin extras — hat, hair, jacket. SVG-based for sharper detail
+     than what CSS gradients can manage. Hidden by default; shown only when
+     the avatar has [data-skin="pirate"]. */
+  .player-display .avatar-hat,
+  .player-display .avatar-hair,
+  .player-display .avatar-jacket {
+    display: none;
+  }
+  /* Spiky black hair — sits at the top of the head, partially under the hat */
+  .player-display[data-skin="pirate"] .avatar-hair {
+    display: block;
+    position: absolute;
+    width: 130%;
+    height: 22px;
+    top: 2px;
+    left: -15%;
+    z-index: 1;
+    pointer-events: none;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'><path d='M0,0 L100,0 L100,10 L96,32 L92,16 L86,36 L80,18 L74,38 L66,18 L58,36 L50,40 L42,36 L34,18 L26,38 L20,18 L14,36 L8,16 L4,32 L0,10 Z' fill='%23121212' stroke='%23000' stroke-width='1' stroke-linejoin='miter'/></svg>") no-repeat center/100% 100%;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+  }
+  /* Straw hat with a rounded crown and wide brim — sits ON TOP of the hair */
+  .player-display[data-skin="pirate"] .avatar-hat {
+    display: block;
+    position: absolute;
+    width: 130%;
+    height: 36px;
+    top: -18px;
+    left: -15%;
+    z-index: 3;
+    pointer-events: none;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 40' preserveAspectRatio='none'><ellipse cx='65' cy='28' rx='62' ry='8' fill='%23d6a464' stroke='%238b5a2b' stroke-width='1.5'/><ellipse cx='65' cy='28' rx='62' ry='8' fill='none' stroke='%23a07840' stroke-width='0.5' stroke-dasharray='2 2'/><path d='M30,28 Q32,8 65,7 Q98,8 100,28 Z' fill='%23e6b87a' stroke='%238b5a2b' stroke-width='1.5'/><rect x='30' y='22' width='70' height='6' fill='%23c0392b' stroke='%23801f15' stroke-width='0.8'/><path d='M30,22 Q32,8 65,7 Q98,8 100,22' fill='none' stroke='%23a07840' stroke-width='0.5'/></svg>") no-repeat center/100% 100%;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
+  }
+  /* Open red jacket with a yellow knot/tie — frames the chest */
+  .player-display[data-skin="pirate"] .avatar-jacket {
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 40px;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    pointer-events: none;
+    border-radius: 0 0 50% 50% / 0 0 100% 100%;
+    overflow: hidden;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 40' preserveAspectRatio='none'><path d='M0,0 L8,0 L40,38 L72,0 L80,0 L80,40 L0,40 Z' fill='%23c0392b' stroke='%23801f15' stroke-width='1.5' stroke-linejoin='round'/><path d='M8,0 L40,38 L72,0' fill='none' stroke='%23801f15' stroke-width='1.2'/><circle cx='40' cy='37' r='2.3' fill='%23ffd700' stroke='%238b5a2b' stroke-width='0.8'/></svg>") no-repeat center bottom/100% 100%;
   }
   @keyframes bob {
     0%, 100% { transform: translateY(0); }
@@ -280,6 +328,43 @@
     inset: 0;
     background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 24'><path d='M4 22 L6 8 L14 16 L20 4 L26 14 L32 4 L38 16 L46 8 L48 22 Z' fill='%23ffd700' stroke='%23995500' stroke-width='1.5' stroke-linejoin='round'/><circle cx='20' cy='6' r='2' fill='%23ff3366'/><circle cx='32' cy='6' r='2' fill='%2333aaff'/><circle cx='26' cy='16' r='2' fill='%2339ff14'/></svg>") no-repeat center/contain;
   }
+  /* Pirate hat for the skin preview card — straw with red band. */
+  .skin-preview-hat {
+    position: absolute;
+    width: 130%;
+    height: 26px;
+    top: -13px;
+    left: -15%;
+    z-index: 3;
+    pointer-events: none;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 40' preserveAspectRatio='none'><ellipse cx='65' cy='28' rx='62' ry='8' fill='%23d6a464' stroke='%238b5a2b' stroke-width='1.5'/><path d='M30,28 Q32,8 65,7 Q98,8 100,28 Z' fill='%23e6b87a' stroke='%238b5a2b' stroke-width='1.5'/><rect x='30' y='22' width='70' height='6' fill='%23c0392b' stroke='%23801f15' stroke-width='0.8'/></svg>") no-repeat center/100% 100%;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
+  }
+  /* Spiky black hair for the preview — stops above eyes */
+  .skin-preview-hair {
+    position: absolute;
+    width: 130%;
+    height: 16px;
+    top: 2px;
+    left: -15%;
+    z-index: 2;
+    pointer-events: none;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'><path d='M0,0 L100,0 L100,10 L96,32 L92,16 L86,36 L80,18 L74,38 L66,18 L58,36 L50,40 L42,36 L34,18 L26,38 L20,18 L14,36 L8,16 L4,32 L0,10 Z' fill='%23121212' stroke='%23000' stroke-width='1' stroke-linejoin='miter'/></svg>") no-repeat center/100% 100%;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+  }
+  /* Open red jacket — fits inside the ball, wide V keeps the mouth clear */
+  .skin-preview-jacket {
+    position: absolute;
+    width: 100%;
+    height: 30px;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    pointer-events: none;
+    border-radius: 0 0 50% 50% / 0 0 100% 100%;
+    overflow: hidden;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 40' preserveAspectRatio='none'><path d='M0,0 L8,0 L40,38 L72,0 L80,0 L80,40 L0,40 Z' fill='%23c0392b' stroke='%23801f15' stroke-width='1.5' stroke-linejoin='round'/><path d='M8,0 L40,38 L72,0' fill='none' stroke='%23801f15' stroke-width='1.2'/><circle cx='40' cy='37' r='2.3' fill='%23ffd700' stroke='%238b5a2b' stroke-width='0.8'/></svg>") no-repeat center bottom/100% 100%;
+  }
 
   .games-grid {
     display: grid;
@@ -315,7 +400,7 @@
     text-shadow:
       0 0 8px var(--neon-yellow),
       0 0 16px var(--neon-pink),
-      0 0 24px rgba(255,247,0,0.6);
+      0 0 24px rgba(255,204,51,0.6);
     animation: cornerBob 1.6s ease-in-out infinite;
     pointer-events: none;
     z-index: 5;
@@ -466,7 +551,7 @@
      the regular update entries at the end of the log */
   .updatelog-entry.codes-card {
     border-color: var(--neon-yellow);
-    box-shadow: 0 0 14px rgba(255,247,0,0.45);
+    box-shadow: 0 0 14px rgba(255,204,51,0.45);
     margin-top: 22px;
     animation: codes-pulse 2.8s ease-in-out infinite;
   }
@@ -486,8 +571,8 @@
     margin-right: 6px;
   }
   @keyframes codes-pulse {
-    0%, 100% { box-shadow: 0 0 12px rgba(255,247,0,0.35); }
-    50%      { box-shadow: 0 0 20px rgba(255,247,0,0.6); }
+    0%, 100% { box-shadow: 0 0 12px rgba(255,204,51,0.35); }
+    50%      { box-shadow: 0 0 20px rgba(255,204,51,0.6); }
   }
 
   @keyframes galaxySwirl {
@@ -507,7 +592,7 @@
   .discount-banner {
     width: 100%;
     max-width: 900px;
-    background: linear-gradient(90deg, rgba(255,43,214,0.15), rgba(255,247,0,0.15));
+    background: linear-gradient(90deg, rgba(255,43,214,0.15), rgba(255,204,51,0.15));
     border: 2px solid var(--neon-pink);
     color: var(--neon-yellow);
     padding: 10px 14px;
@@ -529,7 +614,7 @@
   }
   @keyframes discount-pulse {
     0%, 100% { box-shadow: 0 0 12px rgba(255,43,214,0.4); }
-    50%      { box-shadow: 0 0 22px rgba(255,247,0,0.5); }
+    50%      { box-shadow: 0 0 22px rgba(255,204,51,0.5); }
   }
   .potion-active-banner {
     width: 100%;
@@ -677,7 +762,7 @@
   .admin-skin-pill:hover {
     border-color: var(--neon-yellow);
     color: var(--neon-yellow);
-    box-shadow: 0 0 10px rgba(255,247,0,0.4);
+    box-shadow: 0 0 10px rgba(255,204,51,0.4);
   }
 
   /* ===== SHOP ===== */
@@ -1107,6 +1192,26 @@
     min-height: 18px;
   }
 
+  /* ===== FLAPPY ===== */
+  .fl-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    min-height: 0;
+    width: 100%;
+  }
+  .fl-canvas {
+    background: linear-gradient(180deg, #0a0030 0%, #1a0060 40%, #2a0080 100%);
+    border: 2px solid var(--neon-yellow);
+    box-shadow: 0 0 14px rgba(255,204,51,0.4);
+    image-rendering: pixelated;
+    max-width: 100%;
+    max-height: calc(100vh - 320px);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
   /* ===== TETRIS ===== */
   .tet-area {
     display: flex;
@@ -1127,7 +1232,7 @@
     image-rendering: pixelated;
     /* Constrains canvas to fit on screen regardless of pixel size */
     max-width: 100%;
-    max-height: calc(100vh - 360px);
+    max-height: calc(100vh - 440px);
     height: auto;
   }
   .tet-side {
@@ -1151,7 +1256,7 @@
   .tet-next-canvas {
     background: rgba(0,0,0,0.6);
     border: 2px solid var(--neon-yellow);
-    box-shadow: 0 0 10px rgba(255,247,0,0.3);
+    box-shadow: 0 0 10px rgba(255,204,51,0.3);
   }
   .tet-controls {
     display: flex;
@@ -1213,9 +1318,9 @@
     min-width: 130px;
     border-color: var(--neon-yellow);
     color: var(--neon-yellow);
-    box-shadow: 0 0 10px rgba(255,247,0,0.4);
+    box-shadow: 0 0 10px rgba(255,204,51,0.4);
   }
-  .tet-btn.tet-btn-wide:active { background: rgba(255,247,0,0.16); }
+  .tet-btn.tet-btn-wide:active { background: rgba(255,204,51,0.16); }
   .tet-btn.tet-btn-slam {
     border-color: var(--neon-green);
     color: var(--neon-green);
@@ -1342,7 +1447,7 @@
   .gullible-box {
     background: linear-gradient(135deg, #1a0033, #330066);
     border: 4px solid var(--neon-yellow);
-    box-shadow: 0 0 40px var(--neon-yellow), inset 0 0 20px rgba(255,247,0,0.1);
+    box-shadow: 0 0 40px var(--neon-yellow), inset 0 0 20px rgba(255,204,51,0.1);
     padding: 40px 30px;
     text-align: center;
     max-width: 92vw;
@@ -1675,8 +1780,8 @@
     filter: grayscale(0.6);
   }
   @keyframes wheel-glow {
-    0%, 100% { box-shadow: 0 0 10px rgba(255,247,0,0.3); }
-    50% { box-shadow: 0 0 30px rgba(255,247,0,0.8), inset 0 0 15px rgba(255,247,0,0.2); }
+    0%, 100% { box-shadow: 0 0 10px rgba(255,204,51,0.3); }
+    50% { box-shadow: 0 0 30px rgba(255,204,51,0.8), inset 0 0 15px rgba(255,204,51,0.2); }
   }
 
   .wheel-wrap {
@@ -1703,7 +1808,7 @@
     border: 6px solid var(--neon-yellow);
     box-shadow:
       0 0 40px var(--neon-yellow),
-      inset 0 0 30px rgba(255,247,0,0.2);
+      inset 0 0 30px rgba(255,204,51,0.2);
     position: relative;
     overflow: hidden;
     transition: transform 5s cubic-bezier(0.17, 0.67, 0.25, 1);
@@ -1787,7 +1892,7 @@
     width: min(420px, 92vw);
     margin-top: 22px;
     background: rgba(0,0,0,0.5);
-    border: 2px solid rgba(255,247,0,0.35);
+    border: 2px solid rgba(255,204,51,0.35);
     padding: 14px 18px;
   }
   .wheel-legend-title {
@@ -1981,7 +2086,7 @@
 
   <!-- HUB -->
   <div id="screen-hub" class="screen active">
-    <div class="hologram-banner">✨ HOLOGRAM RETURNS ✨</div>
+    <div class="hologram-banner">🐦 NEW: FLAPPYBIRD 🐦</div>
     <h1 class="title">NEON ARCADE</h1>
     <div class="bait-message" id="bait-message">redeem code: ELBILLUG for free secret skin</div>
     <div class="subtitle">~ INSERT COIN ~</div>
@@ -1994,7 +2099,7 @@
       <button class="btn admin-btn" id="admin-btn" onclick="showScreen('admin')" style="display:none;">👑 ADMIN</button>
     </div>
 
-    <div class="player-display" id="player-avatar"><div class="avatar-mouth"></div></div>
+    <div class="player-display" id="player-avatar"><div class="avatar-mouth"></div><div class="avatar-hair"></div><div class="avatar-hat"></div><div class="avatar-jacket"></div></div>
     <div class="hud">
       <div class="hud-pill">💰 $<span id="money">0</span></div>
       <div class="hud-pill skin">◆ <span id="current-skin">Default</span></div>
@@ -2052,10 +2157,15 @@
         <p>Click as fast as you can for 5 seconds. $1 per click!</p>
       </div>
       <div class="game-card" data-game="tetris" onclick="startGame('tetris')">
-        <span class="card-corner">🆕</span>
         <span class="icon">🧩</span>
         <h3>TETRIS</h3>
         <p>Stack & clear. Earn cash per line — combos pay big!</p>
+      </div>
+      <div class="game-card" data-game="flappy" onclick="startGame('flappy')">
+        <span class="card-corner">🆕</span>
+        <span class="icon">🐦</span>
+        <h3>FLAPPYBIRD</h3>
+        <p>Tap to flap. Avoid pipes. $10 per pipe cleared!</p>
       </div>
       <div class="game-card wheel-card" data-game="wheel" onclick="showScreen('wheel')">
         <span class="icon">🎰</span>
@@ -2095,6 +2205,7 @@
       <button class="shop-tab active" id="tab-skins" onclick="setShopTab('skins')">🎨 SKINS</button>
       <button class="shop-tab" id="tab-extras" onclick="setShopTab('extras')">⚙ EXTRAS</button>
       <button class="shop-tab" id="tab-potions" onclick="setShopTab('potions')">🧪 POTIONS</button>
+      <button class="shop-tab" id="tab-spins" onclick="setShopTab('spins')">🎰 SPINS</button>
     </div>
     <div class="shop-grid" id="shop-grid"></div>
     <button class="btn" onclick="showScreen('hub')">← BACK TO ARCADE</button>
@@ -2394,6 +2505,22 @@
     </div>
   </div>
 
+  <!-- GAME: FLAPPY -->
+  <div id="screen-flappy" class="screen">
+    <h2 class="pixel" style="color: var(--neon-yellow); text-shadow: 0 0 10px var(--neon-yellow); margin-bottom: 10px;">🐦 FLAPPYBIRD</h2>
+    <div class="instructions">Tap, click, or press SPACE to flap. Squeeze through gaps. $10 per pipe cleared!</div>
+    <div class="game-header">
+      <span class="score">SCORE: <span id="fl-score">0</span></span>
+      <span class="timer">BEST: <span id="fl-best">0</span></span>
+    </div>
+    <div class="game-area fl-area">
+      <canvas id="fl-canvas" class="fl-canvas"></canvas>
+    </div>
+    <div class="btn-row" style="margin-top: 10px;">
+      <button class="btn pink" onclick="endGame('flappy', true)">QUIT</button>
+    </div>
+  </div>
+
   <!-- WHEEL -->
   <div id="screen-wheel" class="screen">
     <h2 class="pixel" style="color: var(--neon-yellow); text-shadow: 0 0 10px var(--neon-yellow); margin-bottom: 10px;">🎰 WHEEL</h2>
@@ -2452,6 +2579,7 @@ const SKINS = [
   { id: 'hologram', name: 'HOLOGRAM',  color: 'hologram', price: 1000, tag: '✨ BACK!' },
   { id: 'demonic',  name: 'DEMONIC',   color: 'demonic',  price: 1250 },
   { id: 'galaxy',   name: 'GALAXY',    color: 'galaxy',   price: 1250 },
+  { id: 'pirate',   name: 'PIRATE',    color: 'pirate',   price: 800 },
   { id: 'iceking',  name: 'ICE KING',  color: 'ice',      price: 0, exclusive: true }
 ];
 
@@ -2474,6 +2602,18 @@ const POTIONS = [
   { id: 'luck8x', name: '8× LUCK',  icon: '🧪', mult: 8, price: 999, fakePrice: 1999,  desc: '8× wheel luck for 15 min. Insane odds. ON SALE!' }
 ];
 const POTION_DURATION_MS = 15 * 60 * 1000;
+
+/* =========================================================
+   SPIN PACKS — buy bonus wheel spins directly with money.
+   Pricier-per-spin than earning them via quests on purpose so it's a
+   convenience option, not the primary way to get spins.
+   ========================================================= */
+const SPIN_PACKS = [
+  { id: 'spins1',  name: '1 SPIN',     icon: '🎰', count: 1,  price: 75,   desc: 'A single bonus wheel spin.' },
+  { id: 'spins5',  name: '5 SPINS',    icon: '🎰', count: 5,  price: 325,  desc: 'Five bonus spins — $25 saved vs buying singles.' },
+  { id: 'spins10', name: '10 SPINS',   icon: '🎰', count: 10, price: 600,  desc: 'Ten bonus spins — $150 saved.' },
+  { id: 'spins25', name: '25 SPINS',   icon: '🎰', count: 25, price: 1250, desc: 'Twenty-five spins — best value.' }
+];
 
 const DISCOUNT_DURATION_MS = 12 * 60 * 60 * 1000; // 12 hours
 
@@ -2526,7 +2666,7 @@ const GAME_SIGNS = {
   basketball: { label: '🔥 HARDEST',    cls: 'skill'   },
   risk:       { label: '💰 BIG EARNER', cls: 'money'   },
   reaction:   { label: '⚡ FASTEST',    cls: 'fastest' },
-  tetris:     { label: '🔥 TETRIS!',         cls: 'fastest' }
+  flappy:     { label: '⭐ JUST IN',    cls: 'fastest' }
 };
 
 // Render one sign above each game card listed in GAME_SIGNS.
@@ -2557,7 +2697,7 @@ const QUESTS_POOL = [
   // === Daily quests pool (8) ===
   { id: 'grinder',     name: 'GRINDER',      desc: 'Play 4 different mini-games',     goal: 4,    stat: 'uniqueGamesPlayed', reward: { money: 100 } },
   { id: 'bigearner',   name: 'BIG EARNER',   desc: 'Earn $200 from mini-games',       goal: 200,  stat: 'moneyEarned',       reward: { spin: 1 } },
-  { id: 'shotmaker',   name: 'LOCKED IN!',   desc: 'Score 20 hits in LOCK-ON',        goal: 20,   stat: 'baskets',           reward: { money: 300, spin: 2 } },
+  { id: 'shotmaker',   name: 'SHOT MAKER',   desc: 'Score 20 hits in LOCK-ON',        goal: 20,   stat: 'baskets',           reward: { money: 300, spin: 2 } },
   { id: 'gambler',     name: 'GAMBLER',      desc: 'Hit a 3x streak in RISK IT',      goal: 1,    stat: 'riskStreak3',       reward: { money: 250, spin: 1 } },
   { id: 'speedster',   name: 'SPEEDSTER',    desc: 'Click 30 targets in TARGET BLAST',goal: 30,   stat: 'targetHits',        reward: { money: 150 } },
   { id: 'spammer',     name: 'SPAMMER',      desc: 'Get 35 clicks in CLICK STORM',    goal: 35,   stat: 'cpsClicks',         reward: { money: 200 } },
@@ -2838,6 +2978,8 @@ function applySkinColor(skin) {
   // Remove any existing crown
   const oldCrown = avatar.querySelector('.iceking-crown');
   if (oldCrown) oldCrown.remove();
+  // Reset skin-specific attribute (hat shows for pirate only)
+  avatar.removeAttribute('data-skin');
 
   if (skin.color === 'linear') {
     avatar.style.background = 'linear-gradient(135deg, #ff2bd6, #b026ff, #00f0ff)';
@@ -2882,6 +3024,15 @@ function applySkinColor(skin) {
     avatar.style.boxShadow = '0 0 30px #ff2bd6, 0 0 60px #00f0ff, inset -10px -10px 20px rgba(0,0,0,0.3)';
     avatar.style.animation = 'hologramSpin 3s linear infinite';
     document.documentElement.style.setProperty('--skin-color', '#00f0ff');
+  } else if (skin.color === 'pirate') {
+    // Tan adventurer skin tone with subtle warm glow.
+    // The straw hat is shown via the [data-skin="pirate"] CSS selector.
+    avatar.style.background = 'radial-gradient(circle at 35% 35%, #f7d8a8 0%, #e0a96d 60%, #a16a3a 100%)';
+    avatar.style.boxShadow = '0 0 20px rgba(224,169,109,0.5), inset -10px -10px 20px rgba(0,0,0,0.3)';
+    avatar.style.animation = '';
+    document.documentElement.style.setProperty('--skin-color', '#e0a96d');
+    avatar.setAttribute('data-skin', 'pirate');
+    return;
   } else {
     // Reset animation from any prior animated skin
     avatar.style.animation = '';
@@ -2970,6 +3121,14 @@ function skinFill(ctx, cx, cy, size) {
     g.addColorStop(1,    '#000000');
     return g;
   }
+  if (skin.color === 'pirate') {
+    // Warm tan radial — adventurer tone
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(size, 8));
+    g.addColorStop(0,    '#f7d8a8');
+    g.addColorStop(0.6,  '#e0a96d');
+    g.addColorStop(1,    '#a16a3a');
+    return g;
+  }
   if (skin.color === 'hologram') {
     // Animated linear cycling through pink/cyan/yellow
     const t = (Date.now() / 600) % (Math.PI * 2);
@@ -3007,6 +3166,7 @@ function skinGlow() {
     const h = (Date.now() / 8) % 360;
     return `hsl(${h}, 100%, 65%)`;
   }
+  if (skin.color === 'pirate') return '#e0a96d';
   return skin.color;
 }
 // Solid color fallback (for CSS use).
@@ -3020,6 +3180,7 @@ function skinSolid() {
   if (skin.color === 'midnight') return '#3d5af1';
   if (skin.color === 'galaxy')  return '#cc66ff';
   if (skin.color === 'hologram') return '#00f0ff';
+  if (skin.color === 'pirate')  return '#e0a96d';
   return skin.color;
 }
 
@@ -3156,6 +3317,7 @@ function setShopTab(tab) {
   document.getElementById('tab-skins').classList.toggle('active', tab === 'skins');
   document.getElementById('tab-extras').classList.toggle('active', tab === 'extras');
   document.getElementById('tab-potions').classList.toggle('active', tab === 'potions');
+  document.getElementById('tab-spins').classList.toggle('active', tab === 'spins');
   renderShop();
 }
 
@@ -3179,6 +3341,7 @@ function renderShop() {
 
   if (currentShopTab === 'extras')  { renderExtrasTab(grid); return; }
   if (currentShopTab === 'potions') { renderPotionsTab(grid); return; }
+  if (currentShopTab === 'spins')   { renderSpinsTab(grid); return; }
   // Default: skins tab
   // Cheapest first; exclusive (wheel-only) skins go to the very end
   const sortedSkins = [...SKINS].sort((a, b) => {
@@ -3211,6 +3374,9 @@ function renderShop() {
       bgStyle = 'background: radial-gradient(circle at 30% 30%, #ffffff 0%, #ff66cc 12%, #6633ff 35%, #1a0a3a 70%, #000000 100%); color: #cc66ff; animation: galaxySwirl 8s linear infinite;';
     } else if (skin.color === 'hologram') {
       bgStyle = 'background: conic-gradient(from 0deg, #ff2bd6, #00f0ff, #39ff14, #fff700, #ff2bd6); color: #00f0ff; animation: hologramSpin 3s linear infinite;';
+    } else if (skin.color === 'pirate') {
+      bgStyle = 'background: radial-gradient(circle at 35% 35%, #f7d8a8 0%, #e0a96d 60%, #a16a3a 100%); color: #e0a96d;';
+      crownHtml = '<div class="skin-preview-hair"></div><div class="skin-preview-hat"></div><div class="skin-preview-jacket"></div>';
     } else {
       bgStyle = `background: ${skin.color}; color: ${skin.color};`;
     }
@@ -3292,6 +3458,54 @@ function renderExtrasTab(grid) {
     `;
     grid.appendChild(card);
   });
+}
+
+// Renders the SPINS tab — bonus-spin packs. Same card shape as extras
+// but uses spin-pack data. Always available (no ownership tracking;
+// you can re-buy a pack any time).
+function renderSpinsTab(grid) {
+  const sortedPacks = [...SPIN_PACKS].sort((a, b) => a.price - b.price);
+  sortedPacks.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'extra-card';
+
+    // Discount check (reuses the same item-discount system as extras/potions)
+    let actualPrice = item.price;
+    let priceHtml;
+    const discounted = getDiscountedPrice('spin', item.id, item.price);
+    if (discounted !== null) {
+      actualPrice = discounted;
+      priceHtml = `<span class="strike">$${item.price}</span> <span class="sale">$${discounted}</span>`;
+    } else {
+      priceHtml = `$${item.price}`;
+    }
+
+    const action = `<button onclick="buySpinPack('${item.id}')" ${state.money < actualPrice ? 'disabled' : ''}>BUY</button>`;
+
+    card.innerHTML = `
+      <div class="extra-icon">${item.icon}</div>
+      <h4>${item.name}</h4>
+      <div class="extra-desc">${item.desc}</div>
+      <div class="extra-price">${priceHtml}</div>
+      ${action}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function buySpinPack(id) {
+  const pack = SPIN_PACKS.find(p => p.id === id);
+  if (!pack) return;
+  const discounted = getDiscountedPrice('spin', pack.id, pack.price);
+  const cost = discounted !== null ? discounted : pack.price;
+  if (state.money < cost) { toast('NOT ENOUGH MONEY!', true); return; }
+  state.money -= cost;
+  state.bonusSpins += pack.count;
+  saveState();
+  toast(`+${pack.count} SPIN${pack.count > 1 ? 'S' : ''}! 🎰`);
+  renderShop();
+  renderHub();
+  updateWheelUI();
 }
 
 function renderPotionsTab(grid) {
@@ -3526,9 +3740,8 @@ function loadTheme() {
 const CHEAT_CODES = {
   'amdinmode':         { type: 'admin',   label: 'ADMIN MODE UNLOCKED 👑' },
   'ultraadminmode':    { type: 'unadmin', label: 'ADMIN MODE REVOKED 🚫' },
-  'upd5':              { reward: 100, spins: 5, label: '5 SPINS + $100! 🎰' },
-  'tetris':            { reward: 100, spins: 5, label: '5 SPINS + $100! 🧩' },
-  'holoreturns':       { reward: 100, spins: 5, label: '5 SPINS + $100! ✨' },
+  'upd6':              { reward: 100, spins: 5, label: '5 SPINS + $100! 🎰' },
+  'flpybrd':           { reward: 100, spins: 5, label: '5 SPINS + $100! 🐦' },
   'elbillug':          { type: 'gullible', label: '' }
 };
 
@@ -3540,8 +3753,21 @@ const CHEAT_CODES = {
    ========================================================= */
 const UPDATE_LOG = [
   {
-    version: 'Update 5',
+    version: 'Update 6',
     date: 'This update',
+    changes: [
+      'New game: 🐦 FLAPPYBIRD — tap to flap through pipes, $10 per pipe',
+      '🏴‍☠️ New skin: PIRATE — straw hat, spiky hair, and a red jacket, $800',
+      'SPINS shop tab added — buy bonus wheel spins with cash',
+      'TETRIS payouts buffed — $20 per line base, up from $3',
+      'TETRIS bottom-row clipping fixed on small phones',
+      'BREAKER: extra balls now look different from the main ball, and +LIFE blocks need 3 paddle bounces to claim',
+      'Shop yellow toned down — easier on the eyes'
+    ]
+  },
+  {
+    version: 'Update 5',
+    date: 'Earlier',
     changes: [
       '✨ HOLOGRAM RETURNS — back in the shop for $1000',
       'WHAT BEATS PAPER replaced (it sucked, sorry)',
@@ -3625,9 +3851,8 @@ function renderUpdateLog() {
       <span class="ver">🎁 CODES</span>
       <span class="date">Type these in via the 🔐 CODE button</span>
       <ul>
-        <li><strong>HOLORETURNS</strong> — 5 spins and $100 ✨</li>
-        <li><strong>TETRIS</strong> — 5 spins and $100 🧩</li>
-        <li><strong>UPD5</strong> — 5 spins and $100 🎰</li>
+        <li><strong>UPD6</strong> — 5 spins and $100 🎰</li>
+        <li><strong>FLPYBRD</strong> — 5 spins and $100 🐦</li>
         <li><strong>ELBILLUG</strong> — "secret skin" 👀</li>
       </ul>
     </div>
@@ -4013,6 +4238,9 @@ games.targets = function() {
     } else if (skin.color === 'hologram') {
       bg = 'conic-gradient(from 0deg, #ff2bd6, #00f0ff, #39ff14, #fff700, #ff2bd6)';
       glow = '#00f0ff';
+    } else if (skin.color === 'pirate') {
+      bg = 'radial-gradient(circle, #f7d8a8 25%, #e0a96d 50%, #a16a3a 60%, transparent 62%)';
+      glow = '#e0a96d';
     } else if (/^#[0-9a-fA-F]{3,8}$/.test(skin.color)) {
       // Plain hex color — safe to interpolate into the gradient
       bg = `radial-gradient(circle, ${skin.color} 30%, ${skin.color}aa 50%, ${skin.color}55 60%, transparent 62%)`;
@@ -5907,13 +6135,20 @@ games.tetris = function() {
   // Math.min picks whichever dimension is more constrained, so the board
   // is always fully visible on phones (portrait & landscape) and tablets,
   // while still hitting a clean 28px cell on desktop.
+  // Reserves ~440px of vertical chrome (title, header, instructions, two
+  // button rows, quit/help row, padding). Floor dropped to 10px so the
+  // board stays fully visible even on very short viewports (small phones
+  // with the URL bar showing). Uses visualViewport when available — it
+  // reflects the true screen height minus dynamic browser UI.
   function calcCellSize() {
-    const availW = window.innerWidth  - 110;
-    const availH = window.innerHeight - 360;
+    const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    const vw = (window.visualViewport && window.visualViewport.width)  || window.innerWidth;
+    const availW = vw - 110;
+    const availH = vh - 440;
     const cellW = Math.floor(availW / COLS);
     const cellH = Math.floor(availH / ROWS);
-    // Hard-clamp: 14px floor (still readable), 32px ceiling (looks good on big screens)
-    return Math.max(14, Math.min(32, cellW, cellH));
+    // Hard-clamp: 10px floor (cramped but visible), 32px ceiling
+    return Math.max(10, Math.min(32, cellW, cellH));
   }
   let CELL = calcCellSize();
   canvas.width  = COLS * CELL;
@@ -5931,6 +6166,9 @@ games.tetris = function() {
   }
   window.addEventListener('resize', onResize);
   window.addEventListener('orientationchange', onResize);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', onResize);
+  }
 
   // Each piece: rotations expressed as 4×4 grids of 0/1, plus a neon color.
   const PIECES = {
@@ -6325,6 +6563,9 @@ games.tetris = function() {
     window.removeEventListener('keydown', onKey);
     window.removeEventListener('resize', onResize);
     window.removeEventListener('orientationchange', onResize);
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', onResize);
+    }
     delete window.tetMove;
     delete window.tetRotate;
     delete window.tetSoftDrop;
@@ -6332,6 +6573,312 @@ games.tetris = function() {
     delete window.tetResetTimer;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+    activeGame = null;
+  };
+};
+
+/* =========================================================
+   GAME 12: FLAPPY
+   Simple flappy-bird clone. Bird falls under gravity, tap/click/space
+   to flap upward. Pipes scroll from right to left with random gap
+   positions. $1 per pipe cleared. Crashing into a pipe or hitting
+   floor/ceiling ends the game.
+   ========================================================= */
+games.flappy = function() {
+  const canvas = document.getElementById('fl-canvas');
+  const ctx = canvas.getContext('2d');
+
+  // Size to fit the available viewport area
+  function calcSize() {
+    const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    const vw = (window.visualViewport && window.visualViewport.width)  || window.innerWidth;
+    const w = Math.min(400, vw - 30);
+    const h = Math.min(600, vh - 320);
+    return { w: Math.max(240, w), h: Math.max(280, h) };
+  }
+  const sz = calcSize();
+  canvas.width  = sz.w;
+  canvas.height = sz.h;
+
+  // Constants tuned for a playable feel
+  const GRAVITY = 0.45;
+  const FLAP_VY = -7.5;
+  const PIPE_W = 56;
+  const PIPE_GAP = Math.max(170, canvas.height * 0.38);
+  const PIPE_SPACING = 200;
+  const PIPE_SPEED = 2.4;
+  const BIRD_R = 14;
+  const FLOOR_H = 30;
+
+  // State
+  let bird = { x: canvas.width * 0.28, y: canvas.height * 0.4, vy: 0, angle: 0 };
+  let pipes = [];   // { x, gapY, scored }
+  let score = 0;
+  let best = 0;
+  try { best = parseInt(localStorage.getItem('flappyBest') || '0', 10) || 0; } catch {}
+  let phase = 'ready';  // 'ready' | 'playing' | 'dead'
+  let running = true;
+  let lastTime = 0;
+  let nextPipeAt = 0;
+
+  document.getElementById('fl-score').textContent = '0';
+  document.getElementById('fl-best').textContent = String(best);
+
+  function reset() {
+    bird = { x: canvas.width * 0.28, y: canvas.height * 0.4, vy: 0, angle: 0 };
+    pipes = [];
+    score = 0;
+    nextPipeAt = 0;
+    phase = 'ready';
+    document.getElementById('fl-score').textContent = '0';
+  }
+
+  function flap() {
+    if (gamePaused) return;
+    if (phase === 'ready') {
+      phase = 'playing';
+      bird.vy = FLAP_VY;
+    } else if (phase === 'playing') {
+      bird.vy = FLAP_VY;
+    } else if (phase === 'dead') {
+      reset();
+    }
+  }
+
+  function onClick(e) { e.preventDefault(); flap(); }
+  function onKey(e) {
+    if (e.key === ' ' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      flap();
+    }
+  }
+  canvas.addEventListener('mousedown', onClick);
+  canvas.addEventListener('touchstart', onClick, { passive: false });
+  window.addEventListener('keydown', onKey);
+
+  function spawnPipe() {
+    // Pick a gap position that's not too close to top/bottom
+    const margin = 50;
+    const playableH = canvas.height - FLOOR_H - margin * 2 - PIPE_GAP;
+    const gapY = margin + Math.random() * playableH;
+    pipes.push({ x: canvas.width, gapY, scored: false });
+  }
+
+  function hitsPipe(p) {
+    if (bird.x + BIRD_R < p.x) return false;
+    if (bird.x - BIRD_R > p.x + PIPE_W) return false;
+    // Inside pipe column horizontally — check gap
+    if (bird.y - BIRD_R < p.gapY) return true;          // hit top pipe
+    if (bird.y + BIRD_R > p.gapY + PIPE_GAP) return true; // hit bottom pipe
+    return false;
+  }
+
+  function die() {
+    if (phase === 'dead') return;
+    phase = 'dead';
+    // Award money based on score — $10 per pipe cleared
+    const reward = score * 10;
+    if (reward > 0) addMoney(reward);
+    if (score > best) {
+      best = score;
+      try { localStorage.setItem('flappyBest', String(best)); } catch {}
+      document.getElementById('fl-best').textContent = String(best);
+    }
+    trackGamePlayed('flappy');
+    trackQuest('moneyEarned', reward);
+  }
+
+  function update() {
+    if (phase === 'ready') {
+      // Bird bobs gently while waiting for first flap
+      bird.y = canvas.height * 0.4 + Math.sin(Date.now() / 250) * 8;
+      bird.angle = 0;
+      return;
+    }
+    if (phase === 'dead') {
+      // Let bird fall to floor for visual feedback
+      bird.vy += GRAVITY;
+      bird.y += bird.vy;
+      if (bird.y + BIRD_R > canvas.height - FLOOR_H) {
+        bird.y = canvas.height - FLOOR_H - BIRD_R;
+        bird.vy = 0;
+      }
+      bird.angle = Math.min(Math.PI / 2, bird.angle + 0.08);
+      return;
+    }
+
+    // Playing
+    bird.vy += GRAVITY;
+    bird.y += bird.vy;
+    // Tilt based on velocity
+    bird.angle = Math.max(-0.5, Math.min(Math.PI / 2, bird.vy / 10));
+
+    // Spawn pipes
+    nextPipeAt -= PIPE_SPEED;
+    if (nextPipeAt <= 0) {
+      spawnPipe();
+      nextPipeAt = PIPE_SPACING;
+    }
+
+    // Move pipes
+    pipes.forEach(p => { p.x -= PIPE_SPEED; });
+    // Score
+    pipes.forEach(p => {
+      if (!p.scored && p.x + PIPE_W < bird.x - BIRD_R) {
+        p.scored = true;
+        score++;
+        document.getElementById('fl-score').textContent = score;
+      }
+    });
+    // Cull off-screen
+    pipes = pipes.filter(p => p.x + PIPE_W > -10);
+
+    // Collisions
+    if (bird.y - BIRD_R < 0) die();
+    if (bird.y + BIRD_R > canvas.height - FLOOR_H) die();
+    pipes.forEach(p => { if (hitsPipe(p)) die(); });
+  }
+
+  function draw() {
+    // Sky background (already on canvas via CSS, but ensure clear)
+    ctx.fillStyle = 'rgba(10, 0, 48, 0.35)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Pipes — neon green
+    pipes.forEach(p => {
+      ctx.fillStyle = '#39ff14';
+      ctx.shadowColor = '#39ff14';
+      ctx.shadowBlur = 12;
+      // Top pipe
+      ctx.fillRect(p.x, 0, PIPE_W, p.gapY);
+      // Bottom pipe
+      ctx.fillRect(p.x, p.gapY + PIPE_GAP, PIPE_W, canvas.height - FLOOR_H - (p.gapY + PIPE_GAP));
+      ctx.shadowBlur = 0;
+      // Cap accents on each pipe end facing the gap
+      ctx.fillStyle = '#1eaa00';
+      ctx.fillRect(p.x - 3, p.gapY - 12, PIPE_W + 6, 12);
+      ctx.fillRect(p.x - 3, p.gapY + PIPE_GAP, PIPE_W + 6, 12);
+    });
+
+    // Floor
+    ctx.fillStyle = '#ff2bd6';
+    ctx.shadowColor = '#ff2bd6';
+    ctx.shadowBlur = 10;
+    ctx.fillRect(0, canvas.height - FLOOR_H, canvas.width, FLOOR_H);
+    ctx.shadowBlur = 0;
+    // Floor pattern (vertical stripes for motion sense)
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    const offset = (Date.now() / 20) % 16;
+    for (let x = -offset; x < canvas.width; x += 16) {
+      ctx.fillRect(x, canvas.height - FLOOR_H, 8, FLOOR_H);
+    }
+
+    // Bird — uses skin color
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+    ctx.rotate(bird.angle);
+    ctx.fillStyle = skinFill(ctx, 0, 0, BIRD_R);
+    ctx.shadowColor = skinGlow();
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.arc(0, 0, BIRD_R, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // Beak
+    ctx.fillStyle = '#ff7700';
+    ctx.beginPath();
+    ctx.moveTo(BIRD_R - 2, -3);
+    ctx.lineTo(BIRD_R + 8, 0);
+    ctx.lineTo(BIRD_R - 2, 3);
+    ctx.closePath();
+    ctx.fill();
+    // Eye
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(BIRD_R / 3, -BIRD_R / 3, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(BIRD_R / 3 + 1, -BIRD_R / 3, 2, 0, Math.PI * 2);
+    ctx.fill();
+    // Wing — small arc that flaps based on velocity
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath();
+    const wingAngle = bird.vy < 0 ? -0.4 : 0.4;
+    ctx.ellipse(-2, 2, 8, 5, wingAngle, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Phase overlays
+    if (phase === 'ready') {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      ctx.fillRect(0, canvas.height * 0.35, canvas.width, 100);
+      ctx.fillStyle = '#fff700';
+      ctx.shadowColor = '#fff700';
+      ctx.shadowBlur = 10;
+      ctx.font = 'bold 18px "Press Start 2P", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('TAP TO FLAP', canvas.width / 2, canvas.height * 0.45);
+      ctx.font = 'bold 11px "Press Start 2P", monospace';
+      ctx.fillStyle = '#ff2bd6';
+      ctx.shadowColor = '#ff2bd6';
+      ctx.fillText('AVOID THE PIPES', canvas.width / 2, canvas.height * 0.52);
+      ctx.shadowBlur = 0;
+    } else if (phase === 'dead') {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(0, canvas.height * 0.3, canvas.width, 160);
+      ctx.fillStyle = '#ff2e63';
+      ctx.shadowColor = '#ff2e63';
+      ctx.shadowBlur = 12;
+      ctx.font = 'bold 22px "Press Start 2P", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('GAME OVER', canvas.width / 2, canvas.height * 0.4);
+      ctx.fillStyle = '#fff700';
+      ctx.shadowColor = '#fff700';
+      ctx.font = 'bold 14px "Press Start 2P", monospace';
+      ctx.fillText(`SCORE: ${score}  +$${score * 10}`, canvas.width / 2, canvas.height * 0.47);
+      ctx.fillStyle = '#00f0ff';
+      ctx.shadowColor = '#00f0ff';
+      ctx.font = 'bold 11px "Press Start 2P", monospace';
+      ctx.fillText('TAP TO PLAY AGAIN', canvas.width / 2, canvas.height * 0.54);
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  function loop() {
+    if (!running) return;
+    if (!gamePaused) update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // Resize handling
+  function onResize() {
+    const ns = calcSize();
+    if (ns.w === canvas.width && ns.h === canvas.height) return;
+    canvas.width = ns.w;
+    canvas.height = ns.h;
+  }
+  window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', onResize);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', onResize);
+  }
+
+  registerPauseHooks(() => {}, () => { lastTime = 0; });
+
+  gameCleanup = () => {
+    running = false;
+    canvas.removeEventListener('mousedown', onClick);
+    canvas.removeEventListener('touchstart', onClick);
+    window.removeEventListener('keydown', onKey);
+    window.removeEventListener('resize', onResize);
+    window.removeEventListener('orientationchange', onResize);
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', onResize);
+    }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     activeGame = null;
   };
 };
