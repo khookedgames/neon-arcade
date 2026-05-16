@@ -1662,6 +1662,33 @@
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.12); }
   }
+  /* Pirate accessories on TARGET BLAST targets (72px circles) */
+  .target .target-hat,
+  .target .target-hair,
+  .target .target-jacket {
+    position: absolute;
+    pointer-events: none;
+  }
+  .target .target-hair {
+    width: 130%; height: 20px;
+    top: 2px; left: -15%;
+    z-index: 1;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'><path d='M0,0 L100,0 L100,10 L96,32 L92,16 L86,36 L80,18 L74,38 L66,18 L58,36 L50,40 L42,36 L34,18 L26,38 L20,18 L14,36 L8,16 L4,32 L0,10 Z' fill='%23121212' stroke='%23000' stroke-width='1' stroke-linejoin='miter'/></svg>") no-repeat center/100% 100%;
+  }
+  .target .target-hat {
+    width: 130%; height: 30px;
+    top: -15px; left: -15%;
+    z-index: 3;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 40' preserveAspectRatio='none'><ellipse cx='65' cy='28' rx='62' ry='8' fill='%23d6a464' stroke='%238b5a2b' stroke-width='1.5'/><path d='M30,28 Q32,8 65,7 Q98,8 100,28 Z' fill='%23e6b87a' stroke='%238b5a2b' stroke-width='1.5'/><rect x='30' y='22' width='70' height='6' fill='%23c0392b' stroke='%23801f15' stroke-width='0.8'/></svg>") no-repeat center/100% 100%;
+  }
+  .target .target-jacket {
+    width: 100%; height: 34px;
+    bottom: 0; left: 0;
+    z-index: 2;
+    border-radius: 0 0 50% 50% / 0 0 100% 100%;
+    overflow: hidden;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 40' preserveAspectRatio='none'><path d='M0,0 L8,0 L40,38 L72,0 L80,0 L80,40 L0,40 Z' fill='%23c0392b' stroke='%23801f15' stroke-width='1.5' stroke-linejoin='round'/><circle cx='40' cy='37' r='2.3' fill='%23ffd700' stroke='%238b5a2b' stroke-width='0.8'/></svg>") no-repeat center bottom/100% 100%;
+  }
   .target .t-eye {
     position: absolute;
     width: 10px; height: 10px;
@@ -3311,7 +3338,98 @@ function drawCrown(ctx, cx, cy, size) {
   ctx.restore();
 }
 
-let currentShopTab = 'skins';
+// Draws the PIRATE skin's hat, hair and jacket onto a round canvas
+// character (ball, snake head, target, etc). Called right after drawFace
+// in every game so the accessories travel with the character everywhere.
+// cx,cy = character center; r = character radius.
+function drawPirateAccessories(ctx, cx, cy, r) {
+  if (state.currentSkin !== 'pirate' || r < 5) return;
+  ctx.save();
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
+  ctx.lineJoin = 'round';
+
+  // --- Red jacket: fills the lower portion of the character ---
+  // Clipped to the character circle so it never spills outside.
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = '#c0392b';
+  ctx.strokeStyle = '#801f15';
+  ctx.lineWidth = Math.max(1, r * 0.08);
+  // Open V — lapels start near the top sides, meet at a point near the base
+  ctx.beginPath();
+  ctx.moveTo(cx - r,        cy + r * 0.15);
+  ctx.lineTo(cx - r * 0.8,  cy + r * 0.1);
+  ctx.lineTo(cx,            cy + r * 0.95);   // V point
+  ctx.lineTo(cx + r * 0.8,  cy + r * 0.1);
+  ctx.lineTo(cx + r,        cy + r * 0.15);
+  ctx.lineTo(cx + r,        cy + r * 1.2);
+  ctx.lineTo(cx - r,        cy + r * 1.2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // Gold knot where the lapels meet
+  ctx.fillStyle = '#ffd700';
+  ctx.beginPath();
+  ctx.arc(cx, cy + r * 0.85, Math.max(1.5, r * 0.12), 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // --- Spiky black hair: a row of sharp spikes around the crown ---
+  ctx.fillStyle = '#121212';
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = Math.max(0.5, r * 0.05);
+  const spikes = 7;
+  const hairTop = cy - r * 0.78;        // baseline the spikes rise from
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.95, hairTop + r * 0.5);
+  for (let i = 0; i <= spikes; i++) {
+    const t = i / spikes;
+    const x = cx - r * 0.95 + t * r * 1.9;
+    // alternate tall / short spikes pointing UP
+    const tall = (i % 2 === 0) ? r * 0.55 : r * 0.3;
+    ctx.lineTo(x, hairTop - tall);
+    if (i < spikes) {
+      const nx = cx - r * 0.95 + ((i + 0.5) / spikes) * r * 1.9;
+      ctx.lineTo(nx, hairTop + r * 0.15);
+    }
+  }
+  ctx.lineTo(cx + r * 0.95, hairTop + r * 0.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // --- Straw hat: brim ellipse + rounded crown + red band ---
+  const hatY = cy - r * 0.95;
+  // Brim
+  ctx.fillStyle = '#d6a464';
+  ctx.strokeStyle = '#8b5a2b';
+  ctx.lineWidth = Math.max(1, r * 0.07);
+  ctx.beginPath();
+  ctx.ellipse(cx, hatY + r * 0.12, r * 1.15, r * 0.32, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // Crown (dome)
+  ctx.fillStyle = '#e6b87a';
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.6, hatY + r * 0.12);
+  ctx.quadraticCurveTo(cx - r * 0.55, hatY - r * 0.5, cx, hatY - r * 0.52);
+  ctx.quadraticCurveTo(cx + r * 0.55, hatY - r * 0.5, cx + r * 0.6, hatY + r * 0.12);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // Red band
+  ctx.fillStyle = '#c0392b';
+  ctx.beginPath();
+  ctx.rect(cx - r * 0.6, hatY - r * 0.05, r * 1.2, r * 0.16);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+
 function setShopTab(tab) {
   currentShopTab = tab;
   document.getElementById('tab-skins').classList.toggle('active', tab === 'skins');
@@ -4260,7 +4378,12 @@ games.targets = function() {
     const t = document.createElement('div');
     t.className = 'target';
     styleTarget(t);
-    t.innerHTML = '<div class="t-eye left"></div><div class="t-eye right"></div><div class="t-mouth"></div>';
+    let inner = '<div class="t-eye left"></div><div class="t-eye right"></div><div class="t-mouth"></div>';
+    // Pirate skin: add hat / hair / jacket overlays to the target too
+    if (state.currentSkin === 'pirate') {
+      inner += '<div class="target-hair"></div><div class="target-hat"></div><div class="target-jacket"></div>';
+    }
+    t.innerHTML = inner;
     const r = area.getBoundingClientRect();
     const x = Math.random() * (r.width - 72);
     const y = Math.random() * (r.height - 72);
@@ -4641,6 +4764,7 @@ games.snake = function() {
       const head = snake[0];
       drawFace(ctx, head.x * cell + cell / 2, head.y * cell + cell / 2, (cell - 2) / 2);
       drawCrown(ctx, head.x * cell + cell / 2, head.y * cell + cell / 2, (cell - 2) / 2);
+      drawPirateAccessories(ctx, head.x * cell + cell / 2, head.y * cell + cell / 2, (cell - 2) / 2);
     }
   }
   draw();
@@ -5018,6 +5142,7 @@ games.breaker = function() {
         ctx.shadowBlur = 0;
         drawFace(ctx, ball.x, ball.y, ball.r);
         drawCrown(ctx, ball.x, ball.y, ball.r);
+        drawPirateAccessories(ctx, ball.x, ball.y, ball.r);
       }
     }
 
@@ -5296,6 +5421,7 @@ games.pong = function() {
     ctx.shadowBlur = 0;
     drawFace(ctx, ball.x, ball.y, ball.r);
     drawCrown(ctx, ball.x, ball.y, ball.r);
+    drawPirateAccessories(ctx, ball.x, ball.y, ball.r);
 
     requestAnimationFrame(loop);
   }
@@ -5514,6 +5640,7 @@ games.basketball = function() {
     // face on the orb
     drawFace(ctx, cx, cy, hubR);
     drawCrown(ctx, cx, cy, hubR);
+    drawPirateAccessories(ctx, cx, cy, hubR);
 
     // arrow (uses skin color)
     const arrowTipX = cx + Math.cos(arrowAngle) * (radius + 22);
@@ -6807,6 +6934,8 @@ games.flappy = function() {
     const wingAngle = bird.vy < 0 ? -0.4 : 0.4;
     ctx.ellipse(-2, 2, 8, 5, wingAngle, 0, Math.PI * 2);
     ctx.fill();
+    // Pirate accessories travel with the bird (inside the rotated frame)
+    drawPirateAccessories(ctx, 0, 0, BIRD_R);
     ctx.restore();
 
     // Phase overlays
